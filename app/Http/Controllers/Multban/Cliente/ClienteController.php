@@ -53,8 +53,17 @@ class ClienteController extends Controller
      */
     public function create()
     {
-        $emp_id = Auth::user()->emp_id;
+       $emp_id = Auth::user()->emp_id;
         $userRole = Auth::user()->roles->pluck('name', 'name')->all();
+
+        $status = ClienteStatus::all();
+        $tipos = ClienteTipo::all();
+        $cardTipos = CardTipo::all();
+        $cardMod = CardMod::all();
+        $cardCateg = CardCateg::all();
+        $cliente = new Cliente();
+        $convenios = TbDmConvenios::all();
+
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
 
@@ -63,14 +72,6 @@ class ClienteController extends Controller
             }
         }
 
-        $status = ClienteStatus::all();
-        $tipos = ClienteTipo::all();
-        $cardTipos = CardTipo::all();
-        $cardMod = CardMod::all();
-        $cardCateg = CardCateg::all();
-
-        $cliente = new Cliente();
-
         return response()->view('Multban.cliente.edit', compact(
             'cliente',
             'status',
@@ -78,7 +79,8 @@ class ClienteController extends Controller
             'cardTipos',
             'cardMod',
             'cardCateg',
-            'canChangeStatus'
+            'canChangeStatus',
+            'convenios'
         ));
     }
 
@@ -131,6 +133,7 @@ class ClienteController extends Controller
 
             $cliente->cliente_tipo       = $request->cliente_tipo;
             $cliente->convenio_id        = $request->convenio_id;
+            $cliente->carteirinha        = $request->carteirinha;
             $cliente->cliente_dt_nasc    = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
             $cliente->cliente_doc        = removerCNPJ($request->cliente_doc);
             $cliente->cliente_rg         = removerCNPJ($request->cliente_rg);

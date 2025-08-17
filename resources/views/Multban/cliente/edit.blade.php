@@ -219,7 +219,7 @@
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
                                             <label for="convenio_id">Convênio:*</label>
-                                            <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Tipo"
+                                            <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Convênio"
                                             id="convenio_id" name="convenio_id">
                                             <option></option>
                                             @foreach($convenios as $key => $convenio)
@@ -230,11 +230,11 @@
                                         </div>
 
                                         <div class="form-group col-md-2">
-                                            <label for="cliente_telfixo">Telefone Fixo:</label>
+                                            <label for="carteirinha">Carteirinha:</label>
                                             <input autocomplete="off" type="text"
-                                                class="form-control phone_with_ddd form-control-sm" id="cliente_telfixo"
-                                                name="cliente_telfixo" value="{{$cliente->cliente_telfixo}}"
-                                                placeholder="Digite o Telefone">
+                                                class="form-control form-control-sm" id="carteirinha"
+                                                name="carteirinha" value="{{$cliente->carteirinha}}"
+                                                placeholder="Digite a Carteirinha">
                                         </div>
 
                                         <div class="form-group col-md-2">
