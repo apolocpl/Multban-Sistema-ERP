@@ -179,7 +179,7 @@ class ClienteController extends Controller
             $tbdm_clientes_emp = DB::connection('dbsysclient')->table('tbdm_clientes_emp')->insert([
                 'emp_id' => $emp_id,
                 'cliente_id' => $cliente->cliente_id,
-                'cliente_uuid' => Str::uuid()->toString(),
+                'cliente_uuid' =>$cliente->cliente_uuid,
                 'cliente_doc' => removerCNPJ($cliente->cliente_doc),
                 'cliente_pasprt' => $cliente->cliente_pasprt,
                 'cad_liberado' => '',

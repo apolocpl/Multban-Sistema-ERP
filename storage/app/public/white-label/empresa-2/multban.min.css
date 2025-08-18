@@ -7122,7 +7122,7 @@ a.disabled.mailbox-attachment-close {
     max-width: 200px;
     padding: .25rem .5rem;
     color: #fff;
-    text-align: center;
+    text-align: left!important;
     background-color: #000;
     border-radius: .25rem
 }

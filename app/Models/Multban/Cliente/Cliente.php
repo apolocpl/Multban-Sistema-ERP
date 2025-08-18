@@ -86,6 +86,20 @@ class Cliente extends Model
         ];
     }
 
+    public function rulesAgendamento($id = '')
+    {
+        return [
+            'cliente_tipo' => 'required',
+            'cliente_doc' => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
+            'cliente_sts' => 'required',
+            'cliente_nome' => 'required|max:80',
+            'cliente_rg' => 'max:14',
+            'carteirinha' => 'max:20',
+            'cliente_email' => 'required|email',
+            'cliente_cel' => 'required',
+        ];
+    }
+
     public function attributes()
     {
         return [

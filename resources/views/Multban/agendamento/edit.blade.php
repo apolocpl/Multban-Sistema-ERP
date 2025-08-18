@@ -60,8 +60,8 @@
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="cliente_id">Nome:* @if($agendamento->cliente)
-                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}" class="text- text-primary" >[ <i class="fa fa-address-card"></i> Ver prontuário]</a></label>
-                            @endif
+                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}/alterar" class="text- text-primary" >[ <i class="fa fa-address-card"></i> Ver prontuário]</a>
+                            @endif</label>
                             <select id="cliente_id" name="cliente_id"
                                 class="form-control select2 select2-hidden-accessible"
                                 data-placeholder="Pesquise o paciente" style="width: 100%;" aria-hidden="true">
@@ -96,16 +96,6 @@
                     <div class="form-row">
 
                         <div class="form-group col-md-3">
-                            <label for="cliente_dt_nasc">Data de Nascimento:*</label>
-                            <input autocomplete="off" type="text"
-                                class="form-control datetimepicker-input form-control-sm" id="cliente_dt_nasc" name="cliente_dt_nasc"
-                                value="{{!empty($agendamento->cliente) ? formatarData( $agendamento->cliente->cliente_dt_nasc,'Y-m-d', 'd/m/Y') : ''}}"
-                                data-toggle="datetimepicker" data-target="#cliente_dt_nasc" placeholder="Data de Nascimento">
-                            <span id="cliente_dt_nascError" class="text-danger text-sm"></span>
-                        </div>
-
-
-                        <div class="form-group col-md-3">
                             <label for="cliente_cel">Número de Celular:*</label>
                             <input autocomplete="off" type="text" class="form-control cell_with_ddd form-control-sm"
                                 id="cliente_cel" name="cliente_cel"
@@ -131,17 +121,32 @@
                     </div>
 
                     <div class="form-row">
+
+                        <div class="form-group col-md-3">
+                            <label for="cliente_dt_nasc">Data de Nascimento:*</label>
+                            <input autocomplete="off" type="text"
+                                class="form-control datetimepicker-input form-control-sm" id="cliente_dt_nasc" name="cliente_dt_nasc"
+                                value="{{!empty($agendamento->cliente) ? formatarData( $agendamento->cliente->cliente_dt_nasc,'Y-m-d', 'd/m/Y') : ''}}"
+                                data-toggle="datetimepicker" data-target="#cliente_dt_nasc" placeholder="Data de Nascimento">
+                        </div>
                         <div class="form-group col-md-3">
                             <label for="convenio">Convênio:</label>
-                            <input autocomplete="off" type="text" class="form-control form-control-sm" id="convenio"
-                                name="convenio" value="{{$agendamento->convenio}}" placeholder="Convênio"
-                                maxlength="50">
+                              <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Convênio"
+                                            id="convenio_id" name="convenio_id">
+                                            <option></option>
+                                            @foreach($convenios as $key => $convenio)
+                                            <option value="{{$convenio->convenio_id}}" @if($agendamento->cliente)
+                                                {{$convenio->convenio_id == $agendamento->cliente->convenio_id ? 'selected' : ''}}
+                                            @endif>{{$convenio->convenio_desc}}
+                                            </option>
+                                            @endforeach
+                                        </select>
                         </div>
 
                         <div class="form-group col-md-3">
                             <label for="nro_carteirinha">Nro carteirinha:</label>
                             <input autocomplete="off" type="text" class="form-control form-control-sm"
-                                id="nro_carteirinha" name="nro_carteirinha" value="{{$agendamento->nro_carteirinha }}"
+                                id="nro_carteirinha" name="nro_carteirinha" value="{{!empty($agendamento->cliente) ? $agendamento->cliente->carteirinha : ''}}"
                                 placeholder="Nro carteirinha">
 
                         </div>
@@ -173,8 +178,8 @@
                             <label for="date">Data:*</label>
                             <input autocomplete="off" type="text"
                                 class="form-control datetimepicker-input form-control-sm" id="date" name="date"
-                                value="{{$agendamento->date}}" data-toggle="datetimepicker" placeholder="hh:mm"
-                                data-target="#date" placeholder="Data">
+                                value="{{$agendamento->date}}" data-toggle="datetimepicker" placeholder="dd/mm/aaaa"
+                                data-target="#date">
                             <span id="dateError" class="text-danger text-sm"></span>
                         </div>
 
@@ -254,8 +259,13 @@
             format: 'LT',
             locale: 'pt-br'
         });
-        $('#termino').datetimepicker({
+
+        $('#end').datetimepicker({
             format: 'LT',
+            locale: 'pt-br'
+        });
+        $('#cliente_dt_nasc').datetimepicker({
+            format: 'DD/MM/YYYY',
             locale: 'pt-br'
         });
 

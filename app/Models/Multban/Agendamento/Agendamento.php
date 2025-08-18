@@ -52,7 +52,7 @@ class Agendamento extends Model
     {
         return [
             'cliente_id' => 'required',
-            'cliente_doc' => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
+            'cliente_doc' => 'min:11|max:14|string|required',
             'status' => 'required',
             'cliente_dt_nasc' => 'required',
             'cliente_email' => 'required|email',

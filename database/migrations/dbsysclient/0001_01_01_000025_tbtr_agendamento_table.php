@@ -23,9 +23,7 @@ return new class extends Migration
             $table->dateTime('start');
             $table->dateTime('end');
             $table->text('observacao')->nullable();
-            $table->string('backgroundColor')->nullable();
-            $table->string('borderColor')->nullable();
-            $table->string('textColor')->nullable();
+            $table->string('class_name')->nullable();
             $table->string('status', 2)->default('AG'); // AT - Atendido, CA - Cancelado, AG - Agendado
             $table->integer('criador')->nullable();
             $table->timestamp('dthr_cr')->nullable();

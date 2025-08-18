@@ -148,12 +148,20 @@
                                                 value="{{$cliente->cliente_nome}}">
                                         </div>
 
-                                        <div class="form-group col-md-4">
+                                        <div class="form-group col-md-2">
                                             <label for="cliente_nm_alt">Nome Alternativo:</label>
                                             <input autocomplete="off" maxlength="255"
                                                 class="form-control  form-control-sm"
                                                 placeholder="Digite o nome alternativo" name="cliente_nm_alt"
                                                 type="text" id="cliente_nm_alt" value="{{$cliente->cliente_nm_alt}}">
+                                        </div>
+
+                                         <div class="form-group col-md-2">
+                                            <label for="cliente_dt_nasc">Data de Nascimento:*</label>
+                                            <input class="form-control  form-control-sm"
+                                                placeholder="Digite a data de nascimento" name="cliente_dt_nasc"
+                                                type="date" id="cliente_dt_nasc" value="{{$cliente->cliente_dt_nasc}}"
+                                                required>
                                         </div>
 
                                     </div>
@@ -223,7 +231,7 @@
                                             id="convenio_id" name="convenio_id">
                                             <option></option>
                                             @foreach($convenios as $key => $convenio)
-                                            <option value="{{$convenio->convenio_id}}">{{$convenio->convenio_desc}}
+                                            <option value="{{$convenio->convenio_id}}" {{$convenio->convenio_id == $cliente->convenio_id ? 'selected' : ''}}>{{$convenio->convenio_desc}}
                                             </option>
                                             @endforeach
                                         </select>
@@ -236,28 +244,6 @@
                                                 name="carteirinha" value="{{$cliente->carteirinha}}"
                                                 placeholder="Digite a Carteirinha">
                                         </div>
-
-                                        <div class="form-group col-md-2">
-                                            <label for="cliente_rendam">Renda Mensal Aprox.:*</label>
-                                            <div class="input-group input-group-sm">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">R$</span>
-                                                </div>
-                                                <input autocomplete="off" class="form-control money form-control-sm"
-                                                    placeholder="Digite a renda mensal aproximada" name="cliente_rendam"
-                                                    type="text" id="cliente_rendam" value="{{$cliente->cliente_rendam}}"
-                                                    required>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group col-md-2">
-                                            <label for="cliente_dt_fech">Dia para Fech.:*</label>
-                                            <input class="form-control  form-control-sm"
-                                                placeholder="Digite o melhor dia para fechamento" name="cliente_dt_fech"
-                                                type="number" id="cliente_dt_fech" value="{{$cliente->cliente_dt_fech}}"
-                                                required>
-                                        </div>
-
                                     </div>
                                 </div>
                                 <!-- /.card-body -->
@@ -498,12 +484,10 @@
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
 
-                                    <label for="cliente_dt_nasc">Data de Vencimento da Mensalidade:*</label>
-                                    <input autocomplete="off" type="text" class="form-control datetimepicker-input form-control-sm"
-                                        id="cliente_dt_nasc" name="cliente_dt_nasc" value="{{$cliente->cliente_dt_nasc}}"
-                                        data-toggle="datetimepicker" placeholder="dd/mm/aaaa" data-target="#cliente_dt_nasc"
-                                        placeholder="Data de Vencimento da Mensalidade">
-                                    <span id="cliente_dt_nascError" class="text-danger text-sm"></span>
+                                    <label for="dt_vencimento_mod">Data de Vencimento da Mensalidade:*</label>
+                                    <input type="date"
+                                                class="form-control  form-control-sm" id="dt_vencimento_mod"
+                                                name="dt_vencimento_mod">
                                         </div>
 
                                         <div class="form-group col-md-2">
@@ -515,9 +499,9 @@
 
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
-                                            <label for="dt_vencimento">Data de Pagamento:</label>
-                                            <input type="date" class="form-control  form-control-sm" id="dt_vencimento"
-                                                name="dt_vencimento">
+                                            <label for="dt_pagamento">Data de Pagamento:</label>
+                                            <input type="date" class="form-control  form-control-sm" id="dt_pagamento"
+                                                name="dt_pagamento">
                                         </div>
 
                                         <div class="form-group col-md-2">
@@ -1663,11 +1647,6 @@
 <script type="text/javascript">
     $(document).ready(function () {
 
-            $('#cliente_dt_nasc').datetimepicker({
-                format: 'DD/MM/YYYY',
-                locale: 'pt-br'
-            });
-
          // Verifica o status do usuário e ajusta o texto do botão de ativação/inativação
         if ("{{$cliente->cliente_sts}}" == "EX" ) {
             $("#btnInativar").text("Ativar");
@@ -2046,8 +2025,6 @@
 <script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
    <!-- Moment -->
     <script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
-    <script src="{{ asset('assets/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-    <script src="{{ asset('assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
 <script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
 
 <!-- Summernote -->
