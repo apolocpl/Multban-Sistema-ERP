@@ -74,6 +74,7 @@ function notify(type, message) {
     var estado;
     var pais;
 
+        console.log('emp_or_cli', emp_or_cli);
     switch (emp_or_cli) {
         case 'cliente':
             rua = $("input[name='cliente_end']");

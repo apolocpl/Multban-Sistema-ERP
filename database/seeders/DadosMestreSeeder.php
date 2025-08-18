@@ -1270,5 +1270,74 @@ class DadosMestreSeeder extends Seeder
         ];
 
         DB::table('tbdm_agendamento_sts')->insert($tbdm_agendamento_sts);
+
+        $tbdm_convenios = [
+
+            ["convenio_desc" => "Alice Saúde"],
+            ["convenio_desc" => "Allianz Saúde"],
+            ["convenio_desc" => "Ameplan Saúde"],
+            ["convenio_desc" => "Amil"],
+            ["convenio_desc" => "Ampla Saúde"],
+            ["convenio_desc" => "Ana Costa Saúde"],
+            ["convenio_desc" => "Ativia Saúde"],
+            ["convenio_desc" => "Biosaúde"],
+            ["convenio_desc" => "Biovida Saúde"],
+            ["convenio_desc" => "Blue Med Saúde"],
+            ["convenio_desc" => "Bradesco Saúde"],
+            ["convenio_desc" => "Caixa Saúde"],
+            ["convenio_desc" => "Care Plus"],
+            ["convenio_desc" => "Classes Laboriosas"],
+            ["convenio_desc" => "Cruz Azul Saúde"],
+            ["convenio_desc" => "Cuidar.Me"],
+            ["convenio_desc" => "Garantia de Saúde"],
+            ["convenio_desc" => "Go Care Saúde"],
+            ["convenio_desc" => "Golden Cross"],
+            ["convenio_desc" => "Greenline Saúde"],
+            ["convenio_desc" => "Hapvida"],
+            ["convenio_desc" => "Hbc Saúde"],
+            ["convenio_desc" => "Health Santaris"],
+            ["convenio_desc" => "Interclinicas"],
+            ["convenio_desc" => "Medical Health"],
+            ["convenio_desc" => "Medsenior Saúde"],
+            ["convenio_desc" => "Med Tour Saúde"],
+            ["convenio_desc" => "Notre Dame Intermédica"],
+            ["convenio_desc" => "One Health"],
+            ["convenio_desc" => "Plansaúde"],
+            ["convenio_desc" => "Plena Saúde"],
+            ["convenio_desc" => "Porto Seguro Saúde"],
+            ["convenio_desc" => "Prevent Senior"],
+            ["convenio_desc" => "QSaúde"],
+            ["convenio_desc" => "Sagrada Familia Saúde"],
+            ["convenio_desc" => "Sami Saúde"],
+            ["convenio_desc" => "Santa Casa de Maua"],
+            ["convenio_desc" => "Santa Helena Saúde"],
+            ["convenio_desc" => "Santa Saúde"],
+            ["convenio_desc" => "São Camilo Saúde"],
+            ["convenio_desc" => "São Cristóvão Saúde"],
+        ];
+
+        DB::table('tbdm_convenios')->insert($tbdm_convenios);
+
+        $tbtr_agendamento = [
+            'id' =>    1,
+            'agendamento_tipo' =>    2,
+            'cliente_id' =>    1,
+            'user_id' =>    1,
+            'prontuario_id' =>    1,
+            'title' =>    'teste title',
+            'description' =>    'teste',
+            'date' =>    date_create()->format('Y-m-d'),
+            'start' =>    date_create()->format('Y-m-d H:i:s'),
+            'end' =>    date_create()->format('Y-m-d H:i:s'),
+            'observacao' =>    'teste',
+            'class_name' =>    NULL,
+            'status' =>    'RE',
+            'criador' =>    1,
+            'dthr_cr' =>    date_create()->format('Y-m-d H:i:s'),
+            'modificador' =>    1,
+            'dthr_ch' =>    date_create()->format('Y-m-d H:i:s')
+        ];
+
+        DB::table('tbtr_agendamento')->insert($tbtr_agendamento);
     }
 }

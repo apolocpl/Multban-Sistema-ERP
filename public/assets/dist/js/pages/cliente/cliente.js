@@ -532,12 +532,12 @@ $(function () {
 
         //Cliente Física
         if (clientetipo == 1) {
-            labelCnpj.html("CPF:");
+            labelCnpj.html("CPF:*");
             cliente_doc.mask("999.999.999-99");
             cliente_doc.attr("placeholder", "Digite o CPF");
         } else {
             //Cliente Jurídica
-            labelCnpj.html("CNPJ:");
+            labelCnpj.html("CNPJ:*");
             cliente_doc.mask("99.999.999/9999-99");
             cliente_doc.attr("placeholder", "Digite o CNPJ");
         }

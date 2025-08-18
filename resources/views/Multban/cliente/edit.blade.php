@@ -128,12 +128,12 @@
                                             </div>
                                         </div>
                                         <div class="form-group col-md-2">
-                                            <label for="cliente_pasprt">Número do Passaporte:</label>
+                                            <label for="cliente_rg">RG:</label>
                                             <div class="input-group input-group-sm">
-                                                <input type="text" maxlength="15" id="cliente_pasprt"
-                                                    name="cliente_pasprt" class="form-control  form-control-sm"
-                                                    placeholder="Digite o Número do Passaporte"
-                                                    value="{{$cliente->cliente_pasprt}}">
+                                                <input type="text" maxlength="15" id="cliente_rg"
+                                                    name="cliente_rg" class="form-control  form-control-sm"
+                                                    placeholder="Digite o RG"
+                                                    value="{{$cliente->cliente_rg}}">
                                             </div>
                                         </div>
                                     </div>
@@ -148,12 +148,20 @@
                                                 value="{{$cliente->cliente_nome}}">
                                         </div>
 
-                                        <div class="form-group col-md-4">
+                                        <div class="form-group col-md-2">
                                             <label for="cliente_nm_alt">Nome Alternativo:</label>
                                             <input autocomplete="off" maxlength="255"
                                                 class="form-control  form-control-sm"
                                                 placeholder="Digite o nome alternativo" name="cliente_nm_alt"
                                                 type="text" id="cliente_nm_alt" value="{{$cliente->cliente_nm_alt}}">
+                                        </div>
+
+                                         <div class="form-group col-md-2">
+                                            <label for="cliente_dt_nasc">Data de Nascimento:*</label>
+                                            <input class="form-control  form-control-sm"
+                                                placeholder="Digite a data de nascimento" name="cliente_dt_nasc"
+                                                type="date" id="cliente_dt_nasc" value="{{$cliente->cliente_dt_nasc}}"
+                                                required>
                                         </div>
 
                                     </div>
@@ -216,7 +224,27 @@
                                         </div>
 
                                     </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-2">
+                                            <label for="convenio_id">Convênio:*</label>
+                                            <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Convênio"
+                                            id="convenio_id" name="convenio_id">
+                                            <option></option>
+                                            @foreach($convenios as $key => $convenio)
+                                            <option value="{{$convenio->convenio_id}}" {{$convenio->convenio_id == $cliente->convenio_id ? 'selected' : ''}}>{{$convenio->convenio_desc}}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                        </div>
 
+                                        <div class="form-group col-md-2">
+                                            <label for="carteirinha">Carteirinha:</label>
+                                            <input autocomplete="off" type="text"
+                                                class="form-control form-control-sm" id="carteirinha"
+                                                name="carteirinha" value="{{$cliente->carteirinha}}"
+                                                placeholder="Digite a Carteirinha">
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- /.card-body -->
                             </div>
@@ -455,9 +483,11 @@
                                     <!-- FILTROS -->
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
-                                            <label for="dt_movimento">Data da Compra:</label>
-                                            <input type="date" class="form-control  form-control-sm" id="dt_movimento"
-                                                name="dt_movimento">
+
+                                    <label for="dt_vencimento_mod">Data de Vencimento da Mensalidade:*</label>
+                                    <input type="date"
+                                                class="form-control  form-control-sm" id="dt_vencimento_mod"
+                                                name="dt_vencimento_mod">
                                         </div>
 
                                         <div class="form-group col-md-2">
@@ -469,9 +499,9 @@
 
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
-                                            <label for="dt_vencimento">Data de Pagamento:</label>
-                                            <input type="date" class="form-control  form-control-sm" id="dt_vencimento"
-                                                name="dt_vencimento">
+                                            <label for="dt_pagamento">Data de Pagamento:</label>
+                                            <input type="date" class="form-control  form-control-sm" id="dt_pagamento"
+                                                name="dt_pagamento">
                                         </div>
 
                                         <div class="form-group col-md-2">
@@ -1993,10 +2023,8 @@
 <script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
-<!-- InputMask -->
-<script src="{{ asset('assets/dist/js/app.js') }}"></script>
-<script src="{{ asset('assets/dist/js/pages/empresa/gridempresa.js') }}"></script>
-<script src="{{ asset('assets/plugins/moment/moment.min.js') }}"></script>
+   <!-- Moment -->
+    <script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
 <script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
 
 <!-- Summernote -->
@@ -2004,8 +2032,5 @@
 <link rel="stylesheet" href="{{asset('assets/dist/css/app.css') }}" />
 <script src="{{asset('assets/dist/js/app.js') }}"></script>
 <script src="{{asset('assets/dist/js/pages/cliente/cliente.js') }}"></script>
-
-<!-- jQuery Mask Plugin -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 
 @endpush

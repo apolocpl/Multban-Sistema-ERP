@@ -45,15 +45,16 @@ $(function () {
         slotDuration: '00:15:00', // 30 minutes slots
         //slotLabelInterval: '00:15', // 1 hour intervals for time labels
         slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false }, // 24-hour format for time labels
-        timeFormat: 'h(:mm)t',
-        // eventContent: function(arg) {
-        //     console.log('eventContent: ', arg);
-        //     // Customize the content of the event
-        //     // You can return a string or an object with html property
-        //     // Here we are returning a div with the event description
-        //     // and a dot for the event color
-        //   return { html: '<div class="fc-daygrid-event-dot"></div><div class="fc-event-time">'+arg.event.startStr+'</div><div class="fc-event-title">TEste</div>' };
-        // },
+//         eventContent: function(arg) {
+//             console.log('eventContent: ', arg);
+//           return {
+
+// backgroundColor: 'red',
+//             borderColor: arg.event.borderColor,
+//             textColor: arg.event.textColor,
+
+//             html: '<div class="fc-daygrid-event-dot"></div><div class="fc-event-time">'+arg.event.startStr+'</div><div class="fc-event-title">'+arg.event.title+'</div>' };
+//         },
         eventDidMount: function (info) {
             console.log('eventDidMount: ', info.event);
             new bootstrap.Tooltip(info.el, {
@@ -61,8 +62,12 @@ $(function () {
                 placement: 'top', // Adjust placement as needed
                 trigger: 'hover', // Show on hover
                 container: 'body', // Attach to the body to prevent clipping
-                delay: { "show": 500, "hide": 100 } // Optional delay for showing/hiding
+                html: true, // Allow HTML content
+
+                delay: { "show": 100, "hide": 100 } // Optional delay for showing/hiding
             });
+
+    $('.fc-daygrid-event-dot').hide();
         },
         eventTimeFormat: { // like '14:30:00'
             hour: '2-digit',

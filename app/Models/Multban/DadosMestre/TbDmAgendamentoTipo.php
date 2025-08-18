@@ -14,6 +14,8 @@ class TbDmAgendamentoTipo extends Model
 
     public $timestamps = false;
 
+    protected $primaryKey = 'agendamento_tipo';
+
     protected $fillable = [
         'agendamento_sts',
         'langu',

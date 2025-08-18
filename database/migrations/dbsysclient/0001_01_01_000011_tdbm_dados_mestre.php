@@ -228,6 +228,11 @@ return new class extends Migration
             $table->primary(['tax_categ', 'langu']);
         });
 
+        Schema::create('tbdm_convenios', function (Blueprint $table) {
+            $table->id('convenio_id');
+            $table->string('convenio_desc', 50);
+        });
+
         Schema::create('tbdm_msg_categ', function (Blueprint $table) {
             $table->string('msg_categ', 5);
             $table->string('langu', 4);
@@ -317,5 +322,6 @@ return new class extends Migration
         Schema::dropIfExists('tbdm_meio_pag');
         Schema::dropIfExists('tbdm_prt_tp');
         Schema::dropIfExists('tbdm_agendamento_tp');
+        Schema::dropIfExists('tbdm_convenios');
     }
 };

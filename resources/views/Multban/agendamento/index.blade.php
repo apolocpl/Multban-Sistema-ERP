@@ -45,8 +45,7 @@
                                     Agendar
                                 </button>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#" id="btnAgendamento">Atendimento</a>
-                                    <a class="dropdown-item" href="#">Urgência</a>
+                                    <a class="dropdown-item" href="{{ route('agendamento.create') }}" id="btnAgendamento">Atendimento</a>
                                 </div>
                             </div>
                         </div>
