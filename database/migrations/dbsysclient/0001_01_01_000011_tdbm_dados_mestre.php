@@ -30,6 +30,7 @@ return new class extends Migration
             $table->integer('user_func');
             $table->string('langu', 4);
             $table->string('user_func_desc', 30);
+            $table->string('user_func_grp', 50)->nullable();
             //KEYS
             $table->primary(['user_func', 'langu']);
         });

@@ -45,16 +45,16 @@ $(function () {
         slotDuration: '00:15:00', // 30 minutes slots
         //slotLabelInterval: '00:15', // 1 hour intervals for time labels
         slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false }, // 24-hour format for time labels
-//         eventContent: function(arg) {
-//             console.log('eventContent: ', arg);
-//           return {
+        //         eventContent: function(arg) {
+        //             console.log('eventContent: ', arg);
+        //           return {
 
-// backgroundColor: 'red',
-//             borderColor: arg.event.borderColor,
-//             textColor: arg.event.textColor,
+        // backgroundColor: 'red',
+        //             borderColor: arg.event.borderColor,
+        //             textColor: arg.event.textColor,
 
-//             html: '<div class="fc-daygrid-event-dot"></div><div class="fc-event-time">'+arg.event.startStr+'</div><div class="fc-event-title">'+arg.event.title+'</div>' };
-//         },
+        //             html: '<div class="fc-daygrid-event-dot"></div><div class="fc-event-time">'+arg.event.startStr+'</div><div class="fc-event-title">'+arg.event.title+'</div>' };
+        //         },
         eventDidMount: function (info) {
             console.log('eventDidMount: ', info.event);
             new bootstrap.Tooltip(info.el, {
@@ -67,7 +67,8 @@ $(function () {
                 delay: { "show": 100, "hide": 100 } // Optional delay for showing/hiding
             });
 
-    $('.fc-daygrid-event-dot').hide();
+            $('.fc-daygrid-event-dot').hide();
+            $('.fc-list-event-graphic').hide();
         },
         eventTimeFormat: { // like '14:30:00'
             hour: '2-digit',

@@ -124,10 +124,10 @@
 
                         <div class="form-group col-md-3">
                             <label for="cliente_dt_nasc">Data de Nascimento:*</label>
-                            <input autocomplete="off" type="text"
-                                class="form-control datetimepicker-input form-control-sm" id="cliente_dt_nasc" name="cliente_dt_nasc"
-                                value="{{!empty($agendamento->cliente) ? formatarData( $agendamento->cliente->cliente_dt_nasc,'Y-m-d', 'd/m/Y') : ''}}"
-                                data-toggle="datetimepicker" data-target="#cliente_dt_nasc" placeholder="Data de Nascimento">
+                            <input autocomplete="off" type="date"
+                                class="form-control form-control-sm" id="cliente_dt_nasc" name="cliente_dt_nasc"
+                                value="{{!empty($agendamento->cliente) ? $agendamento->cliente->cliente_dt_nasc : ''}}"
+                                placeholder="Data de Nascimento">
                         </div>
                         <div class="form-group col-md-3">
                             <label for="convenio">Convênio:</label>
@@ -176,29 +176,23 @@
 
                         <div class="form-group col-md-2">
                             <label for="date">Data:*</label>
-                            <input autocomplete="off" type="text"
-                                class="form-control datetimepicker-input form-control-sm" id="date" name="date"
-                                value="{{$agendamento->date}}" data-toggle="datetimepicker" placeholder="dd/mm/aaaa"
-                                data-target="#date">
-                            <span id="dateError" class="text-danger text-sm"></span>
+                            <input autocomplete="off" type="date"
+                                class="form-control form-control-sm" id="date" name="date"
+                                value="{{$agendamento->date}}" placeholder="Data" >
                         </div>
 
 
                         <div class="form-group col-md-2">
                             <label for="start">Início:*</label>
-                            <input autocomplete="off" type="text"
-                                class="form-control datetimepicker-input form-control-sm" id="start" name="start"
-                                value="{{$agendamento->start}}" data-toggle="datetimepicker" placeholder="hh:mm"
-                                data-target="#start">
-                            <span id="startError" class="text-danger text-sm"></span>
+                            <input autocomplete="off" type="time"
+                                class="form-control form-control-sm" id="start" name="start"
+                                value="{{$agendamento->start}}" placeholder="hh:mm">
                         </div>
                         <div class="form-group col-md-2">
                             <label for="end">Término:*</label>
-                            <input autocomplete="off" role="presentation" type="text"
-                                class="form-control datetimepicker-input form-control-sm" id="end" name="end"
-                                value="{{$agendamento->end}}" data-toggle="datetimepicker" placeholder="hh:mm"
-                                data-target="#end">
-                            <span id="endError" class="text-danger text-sm"></span>
+                            <input autocomplete="off" type="time"
+                                class="form-control form-control-sm" id="end" name="end"
+                                value="{{$agendamento->end}}" placeholder="hh:mm">
 
                             <!-- /.input group -->
                         </div>
@@ -248,27 +242,6 @@
 <script type="text/javascript">
     $(document).ready(function(e) {
 
-        // Inicializa o seletor de data
-        $('#date').datetimepicker({
-            format: 'DD/MM/YYYY',
-            locale: 'pt-br'
-        });
-
-        // Inicializa o seletor de hora
-        $('#start').datetimepicker({
-            format: 'LT',
-            locale: 'pt-br'
-        });
-
-        $('#end').datetimepicker({
-            format: 'LT',
-            locale: 'pt-br'
-        });
-        $('#cliente_dt_nasc').datetimepicker({
-            format: 'DD/MM/YYYY',
-            locale: 'pt-br'
-        });
-
         // Verifica o status do usuário e ajusta o texto do botão de ativação/inativação
         if ("{{$agendamento->user_sts}}" == "EX" ) {
             $("#btnInativar").text("Ativar");
@@ -298,8 +271,6 @@
 <script src="{{ asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
 <!-- Moment -->
 <script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
-<script src="{{ asset('assets/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
 <script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
 <link rel="stylesheet" href="{{asset('assets/dist/css/app.css') }}" />
 <script src="{{asset('assets/dist/js/app.js') }}"></script>

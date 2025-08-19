@@ -6,7 +6,6 @@ $(function () {
 
     $('#cliente_id').on('select2:select', function (event) {
         var selectedItem = event.params.data;
-        console.log('data: ', selectedItem);
         if (selectedItem) {
             $("#cliente_doc").val(selectedItem.cliente_doc);
             $("#cliente_rg").val(selectedItem.cliente_rg);
@@ -15,20 +14,23 @@ $(function () {
             $("#cliente_cel").val(selectedItem.cliente_cel);
             $("#cliente_telfixo").val(selectedItem.cliente_telfixo);
             $("#cliente_dt_nasc").val(selectedItem.cliente_dt_nasc);
+            $("#convenio_id").val(selectedItem.convenio_id);
+            $("#nro_carteirinha").val(selectedItem.carteirinha);
+            $("#cliente_dt_nasc").val(selectedItem.cliente_dt_nasc);
 
-            $("#cliente_doc").trigger('change');
-            $("#cliente_rg").trigger('change');
-            $("#cliente_nome").trigger('change');
-            $("#cliente_email").trigger('change');
-            $("#cliente_cel").trigger('change');
-            $("#cliente_telfixo").trigger('change');
-            $("#cliente_dt_nasc").trigger('change');
+            $("#cliente_doc").trigger('input');
+            $("#cliente_rg").trigger('input');
+            $("#cliente_nome").trigger('input');
+            $("#cliente_email").trigger('input');
+            $("#cliente_cel").trigger('input');
+            $("#cliente_telfixo").trigger('input');
+            $("#cliente_dt_nasc").trigger('input');
+            $("#convenio_id").trigger('change');
 
         }
     });
 
     $('body').on('click', '#btnInativar', function (e) {
-        console.log($(this).text())
         var status = $(this).text().trim();
 
         e.preventDefault();
@@ -56,11 +58,13 @@ $(function () {
     ns.comboBoxSelectTags("cliente_id", "/agendamento/get-cliente", "cidade_ibge");
 
     var inserir = document.URL.split("/")[4] == "inserir";
-    console.log('inserir: ', inserir);
     if (inserir) {
         $("input[type='text']").each(function () {
             $(this).val('');
         });
+
+        $('#status').val('AG');
+        $('#status').trigger('change');
     }
 
     $.ajaxSetup({

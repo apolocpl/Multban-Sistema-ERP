@@ -74,7 +74,7 @@ function notify(type, message) {
     var estado;
     var pais;
 
-        console.log('emp_or_cli', emp_or_cli);
+    console.log('emp_or_cli', emp_or_cli);
     switch (emp_or_cli) {
         case 'cliente':
             rua = $("input[name='cliente_end']");
@@ -1123,6 +1123,26 @@ function notify(type, message) {
                     Swal.fire("Sucesso!", data.message, "success");
                     $("#btnSalvar").html('<i class="icon fas fa-save"></i> Salvar');
                     $('#btnSalvar').habilitar();
+                    console.log('data', data);
+
+                    Swal.fire({
+                        title: 'Sucesso',
+                        text: data.message,
+                        icon: 'success',
+                        showCancelButton: false,
+                        allowOutsideClick: false,
+                    }).then(function (result) {
+                        if (data.redirect) {
+                            if (data.redirect == 'reload') {
+                                location.reload();
+                            } else {
+                                window.location.href = data.redirect;
+                            }
+                        }
+
+                    });
+
+
 
                 },
                 error: function (xhr, status, error) {
@@ -1174,10 +1194,10 @@ function notify(type, message) {
                             Swal.fire("Erro", xhr.responseJSON.message_type, "error");
                         } else {
                             $.each(abaComErro, function (key, item) {
-                            console.log(item);
-                            $("#errors").append("<li>" + item + "</li>");
-                            toastr.error('Existem campos obrigatórios na aba "' + item.id + '" que não foram preenchidos.');
-                        });
+                                console.log(item);
+                                $("#errors").append("<li>" + item + "</li>");
+                                toastr.error('Existem campos obrigatórios na aba "' + item.id + '" que não foram preenchidos.');
+                            });
                         }
 
 
