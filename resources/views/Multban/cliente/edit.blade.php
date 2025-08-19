@@ -15,13 +15,13 @@
 @section('content')
 <!-- Main content -->
 <section class="content">
-    @if($routeAction)
+
+     @if($routeAction)
 
     <form class="form-horizontal" id="formPrincipal" role="form" method="POST"
         action="{{ route('cliente.update', $cliente->cliente_id) }}">
         @method('PATCH')
         @else
-
         <form class="form-horizontal" id="formPrincipal" role="form" method="POST"
             action="{{ route('cliente.store') }}">
             @method('POST')
@@ -37,7 +37,7 @@
                     <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
 
                         <li class="nav-item">
-                            <a class="nav-link active" id="tabs-dados-tab" data-toggle="pill" href="#tabs-dados"
+                            <a class="nav-link {{!request()->has('pront') ? 'active' : ''}}" id="tabs-dados-tab" data-toggle="pill" href="#tabs-dados"
                                 role="tab" aria-controls="tabs-dados" aria-selected="true">Dados Gerais</a>
                         </li>
 
@@ -62,7 +62,7 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" id="tabs-prontuario-tab" data-toggle="pill" href="#tabs-prontuario"
+                            <a class="nav-link {{request()->has('pront') ? 'active' : ''}}" id="tabs-prontuario-tab" data-toggle="pill" href="#tabs-prontuario"
                                 role="tab" aria-controls="tabs-prontuario" aria-selected="false">Prontuário</a>
                         </li>
 
@@ -79,7 +79,7 @@
                     <div class="tab-content" id="custom-tabs-two-tabContent">
 
                         <!--ABA DADOS GERAIS-->
-                        <div class="tab-pane fade active show" id="tabs-dados" role="tabpanel"
+                        <div class="tab-pane fade {{!request()->has('pront') ? 'active show' : ''}}" id="tabs-dados" role="tabpanel"
                             aria-labelledby="tabs-dados-tab">
 
                             <div class="card card-primary">
@@ -828,7 +828,7 @@
                         </div>
 
                         <!--ABA PROTUÁRIO-->
-                        <div class="tab-pane fade" id="tabs-prontuario" role="tabpanel"
+                        <div class="tab-pane fade {{request()->has('pront') ? 'active show' : ''}}" id="tabs-prontuario" role="tabpanel"
                             aria-labelledby="tabs-prontuario-tab">
 
                             <!-- Seção Inicial: Linha do tempo -->
@@ -1646,6 +1646,11 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
+
+        @if ( request()->has('pront') )
+            $('#btnCancelar').attr('onclick', 'location.href="{{ route('agendamento.edit', request('pront')) }}"');
+
+        @endif
 
          // Verifica o status do usuário e ajusta o texto do botão de ativação/inativação
         if ("{{$cliente->cliente_sts}}" == "EX" ) {

@@ -60,7 +60,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="cliente_id">Nome:* @if($agendamento->cliente)
-                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}/alterar" class="text- text-primary" >[ <i class="fa fa-address-card"></i> Ver prontuário]</a>
+                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}/alterar?pront={{$agendamento->id}}" class="text- text-primary" >[ <i class="fa fa-address-card"></i> Ver prontuário]</a>
                             @endif</label>
                             <select id="cliente_id" name="cliente_id"
                                 class="form-control select2 select2-hidden-accessible"

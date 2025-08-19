@@ -6,6 +6,7 @@ $(function () {
     ns.comboBoxSelect("cliente_endcid", "/empresa/obter-cidade", "cidade_ibge");
     ns.comboBoxSelect("emp_id", "/empresa/obter-empresas", "emp_id", "", "", "modalCriarCartao");
 
+
     function isNumeric(n) {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
@@ -83,7 +84,7 @@ $(function () {
                                     .addClass("text-danger");
                             });
 
-                            if(xhr.responseJSON.message_type) {
+                            if (xhr.responseJSON.message_type) {
                                 Swal.fire("Erro", xhr.responseJSON.message_type, "error");
                             } else {
                                 Swal.fire("Erro", "Existem um ou mais campos obrigatórios não preenchidos.", "error");
@@ -365,7 +366,7 @@ $(function () {
         ns.cepOnClickS("cliente_cep_s");
     });
 
-    $('body').on('click','#btnCriarCartao',function () {
+    $('body').on('click', '#btnCriarCartao', function () {
         $('#modalCriarCartao').modal('show');
     });
 
