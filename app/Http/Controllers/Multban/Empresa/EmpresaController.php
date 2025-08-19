@@ -1109,12 +1109,22 @@ class EmpresaController extends Controller
             $campo = $request->campo;
         }
 
-        return Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
-            ->whereRaw(DB::raw($campo . " LIKE '%" . $parametro . "%' OR emp_cnpj LIKE '%" . $parametro . "%' OR emp_id = '%" . $parametro . "%'"))
-            ->get()
-            ->toArray();
+        $query = Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
+            ->where(function($q) use ($campo, $parametro) {
+                $q->where($campo, 'like', "%$parametro%")
+                  ->orWhere('emp_cnpj', 'like', "%$parametro%")
+                  ->orWhere('emp_id', 'like', "%$parametro%");
+            });
+
+        // Se o filtro cod_franqueadora estiver preenchido, filtra pelo campo emp_frqmst
+        if (!empty($request->cod_franqueadora)) {
+            $query->Where('emp_frqmst', $request->cod_franqueadora);
+        }
+
+        return $query->get()->toArray();
     }
 
+    // FUNÇÃO QUE BUSCA DADOS DE USUÁRIOS
     public function getObterUsers(Request $request)
     {
         $parametro = $request != null ? $request->all()['parametro'] : '';
@@ -1123,22 +1133,31 @@ class EmpresaController extends Controller
             return [];
         }
 
-        return User::select(DB::raw('user_id as id, user_id, UPPER(user_name) text'))
-            ->whereRaw(DB::raw("user_name LIKE '%$parametro%' OR user_cpf LIKE '%$parametro%' OR user_id = '$parametro'"))
+        return User::select(DB::raw('user_id as id, user_id, user_cpf, UPPER(user_name) text'))
+            ->where(function($q) use ($parametro) {
+                $q->where('user_name', 'like', "%$parametro%")
+                ->orWhere('user_cpf', 'like', "%$parametro%")
+                ->orWhere('user_id', $parametro);
+            })
             ->get()
             ->toArray();
     }
 
+    // FUNÇÃO QUE BUSCA DADOS DE PAÍSES
     public function getObterPais(Request $request)
     {
         $parametro = $request != null ? $request->all()['parametro'] : '';
 
         return Pais::select(DB::raw('pais as id, pais, UPPER(pais_desc) text'))
-            ->whereRaw("pais LIKE '%$parametro%' OR pais_desc LIKE '%$parametro%'")
+            ->where(function($q) use ($parametro) {
+                $q->where('pais', 'like', "%$parametro%")
+                ->orWhere('pais_desc', 'like', "%$parametro%");
+            })
             ->get()
             ->toArray();
     }
 
+    // FUNÇÃO QUE BUSCA DADOS DE ESTADOS
     public function getObterEstado(Request $request)
     {
         $parametro = $request != null ? $request->all()['parametro'] : '';
@@ -1148,23 +1167,33 @@ class EmpresaController extends Controller
         }
 
         return Estados::select(DB::raw('estado as id, estado, UPPER(estado_desc) text'))
-            ->whereRaw("(estado LIKE '%$parametro%' OR estado_desc LIKE '%$parametro%') AND estado_pais = '$request->pais'")
+            ->where(function($q) use ($parametro) {
+                $q->where('estado', 'like', "%$parametro%")
+                ->orWhere('estado_desc', 'like', "%$parametro%");
+            })
+            ->where('estado_pais', $request->pais)
             ->get()
             ->toArray();
     }
 
+    // FUNÇÃO QUE BUSCA DADOS DE CIDADES
     public function getObterCidade(Request $request)
     {
         $parametro = $request != null ? $request->all()['parametro'] : '';
         if (empty($request->estado)) {
             return [];
         }
-        return Cidade::select(DB::raw('cidade as id, cidade_ibge, UPPER(cidade_desc) text'))
-            ->whereRaw("(cidade_ibge LIKE '%$parametro%' OR cidade_desc LIKE '%$parametro%') AND cidade_est = '$request->estado'")
+        return Cidade::select(DB::raw('cidade_ibge as id, cidade_ibge, UPPER(cidade_desc) text'))
+            ->where(function($q) use ($parametro) {
+                $q->where('cidade_ibge', 'like', "%$parametro%")
+                ->orWhere('cidade_desc', 'like', "%$parametro%");
+            })
+            ->where('cidade_est', $request->estado)
             ->get()
             ->toArray();
     }
 
+    // FUNÇÃO QUE BUSCA DADOS DE ESTADOS POR PAÍS
     public function getCityEstPais(Request $request)
     {
         $cidade = Cidade::where('cidade_ibge', $request['parametro'])->first();
@@ -1178,6 +1207,7 @@ class EmpresaController extends Controller
         return $data;
     }
 
+    // FUNÇÃO QUE VALIDA TAXAS
     public function validaTaxas(Request $request): array
     {
 
@@ -1312,6 +1342,7 @@ class EmpresaController extends Controller
         return ["hasError" => $hasError, "error_list" => $error_list];
     }
 
+    // FUNÇÃO QUE GRAVA TAXAS
     public function gravaTaxas(Request $request, $emp_id)
     {
 

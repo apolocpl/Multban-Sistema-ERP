@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class AgendamentoController extends Controller
 {
@@ -136,8 +137,8 @@ class AgendamentoController extends Controller
     {
         try {
 
-            DB::beginTransaction();
-            $emp_id = auth()->user()->emp_id;
+            $emp_id = Auth::user()->emp_id;
+            $emp_id = Auth::user()->emp_id;
 
             $agendamento = new Agendamento();
             //dd($request->all());
@@ -226,8 +227,8 @@ class AgendamentoController extends Controller
                 $cliente->cliente_email      = $request->cliente_email;
                 $cliente->cliente_cel        = removerMascaraTelefone($request->cliente_cel);
                 $cliente->cliente_telfixo    = removerMascaraTelefone($request->cliente_telfixo);
-                $cliente->criador            = auth()->user()->user_id;
-                $cliente->modificador        = auth()->user()->user_id;
+                $cliente->criador            = Auth::user()->user_id;
+                $cliente->modificador        = Auth::user()->user_id;
                 $cliente->dthr_cr            = Carbon::now();
                 $cliente->dthr_ch            = Carbon::now();
 
@@ -241,9 +242,9 @@ class AgendamentoController extends Controller
                     'cliente_doc' => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
                     'cad_liberado' => '',
-                    'criador' => auth()->user()->user_id,
+                    'criador' => Auth::user()->user_id,
                     'dthr_cr' => Carbon::now(),
-                    'modificador' => auth()->user()->user_id,
+                    'modificador' => Auth::user()->user_id,
                     'dthr_ch' => Carbon::now(),
                 ]);
             }
@@ -256,7 +257,7 @@ class AgendamentoController extends Controller
 
             $agendamento->observacao = $request->observacao;
             $agendamento->status = $request->status;
-            $agendamento->modificador = auth()->user()->user_id;
+            $agendamento->modificador = Auth::user()->user_id;
             $agendamento->dthr_ch = now();
             $agendamento->save();
             DB::commit();
@@ -327,7 +328,7 @@ class AgendamentoController extends Controller
         try {
 
             DB::beginTransaction();
-            $emp_id = auth()->user()->emp_id;
+            $emp_id = Auth::user()->emp_id;
 
             $agendamento = Agendamento::find($id);
             //dd($request->all());
@@ -416,8 +417,8 @@ class AgendamentoController extends Controller
                 $cliente->cliente_email      = $request->cliente_email;
                 $cliente->cliente_cel        = removerMascaraTelefone($request->cliente_cel);
                 $cliente->cliente_telfixo    = removerMascaraTelefone($request->cliente_telfixo);
-                $cliente->criador            = auth()->user()->user_id;
-                $cliente->modificador        = auth()->user()->user_id;
+                $cliente->criador            = Auth::user()->user_id;
+                $cliente->modificador        = Auth::user()->user_id;
                 $cliente->dthr_cr            = Carbon::now();
                 $cliente->dthr_ch            = Carbon::now();
 
@@ -431,9 +432,9 @@ class AgendamentoController extends Controller
                     'cliente_doc' => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
                     'cad_liberado' => '',
-                    'criador' => auth()->user()->user_id,
+                    'criador' => Auth::user()->user_id,
                     'dthr_cr' => Carbon::now(),
-                    'modificador' => auth()->user()->user_id,
+                    'modificador' => Auth::user()->user_id,
                     'dthr_ch' => Carbon::now(),
                 ]);
             }
@@ -446,7 +447,7 @@ class AgendamentoController extends Controller
 
             $agendamento->observacao = $request->observacao;
             $agendamento->status = $request->status;
-            $agendamento->modificador = auth()->user()->user_id;
+            $agendamento->modificador = Auth::user()->user_id;
             $agendamento->dthr_ch = now();
             $agendamento->save();
             DB::commit();

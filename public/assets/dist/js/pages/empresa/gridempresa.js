@@ -8,6 +8,13 @@ $(document).ready(function () {
         ns.comboBoxSelect("nome_fantasia", "/empresa/obter-empresas", "emp_id");
         ns.comboBoxSelect("nome_multmais", "/empresa/obter-empresas", "emp_id");
 
+        $('#cod_franqueadora').on('change', function() {
+            var franqueadoraId = $(this).val();
+            // Chame a função que popula o select de empresa, passando o cod_franqueadora
+            ns.comboBoxSelectTags("empresa_id", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
+            ns.comboBoxSelect("nome_fantasia", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
+            ns.comboBoxSelect("nome_multmais", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
+        });
 
         $('#btnPesquisar').click(function () {
             var totaliza = {};
