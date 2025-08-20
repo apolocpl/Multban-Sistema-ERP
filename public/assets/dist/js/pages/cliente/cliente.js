@@ -121,6 +121,7 @@ $(function () {
             }
 
         },
+
         gridDataTable: function (
             colunas,
             colunasConfiguracao,

@@ -1099,6 +1099,35 @@ class EmpresaController extends Controller
     public function getObterEmpresas(Request $request)
     {
         $parametro = $request != null ? $request->all()['parametro'] : '';
+        $campo = 'emp_nfant';
+
+        if (empty($parametro)) {
+            return [];
+        }
+
+        if (!empty($request->campo)) {
+            $campo = $request->campo;
+        }
+
+        $query = Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
+            ->where(function($q) use ($campo, $parametro) {
+                $q->where($campo, 'like', "%$parametro%")
+                  ->orWhere('emp_cnpj', 'like', "%$parametro%")
+                  ->orWhere('emp_id', 'like', "%$parametro%");
+            });
+
+        // Se o filtro cod_franqueadora estiver preenchido, filtra pelo campo emp_frqmst
+        if (!empty($request->cod_franqueadora)) {
+            $query->Where('emp_frqmst', $request->cod_franqueadora);
+        }
+
+        return $query->get()->toArray();
+    }
+
+    // FUNÇÃO QUE BUSCA DADOS DO FILTRO EMPRESA
+    public function getObterEmpresasNmult(Request $request)
+    {
+        $parametro = $request != null ? $request->all()['parametro'] : '';
         $campo = 'emp_nmult';
 
         if (empty($parametro)) {

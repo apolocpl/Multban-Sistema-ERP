@@ -2,7 +2,7 @@
 @section('page.title', 'Produto')
 @push('script-head')
     <!-- Select2 -->
-    <link rel="stylesheet" href="/assets/plugins/select2/css/select2.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/plugins/select2/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/plugins/datatables-select/css/select.bootstrap4.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" />
@@ -12,64 +12,72 @@
 @section('content')
     <!-- Main content -->
     <section class="content">
-
-        @if (count($errors) > 0)
-            @foreach ($errors->all() as $error)
-                <div class="col-sm-12">
-                    <div class="alert alert-danger alert-dismissible">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                        <h5><i class="icon fas fa-check"></i> Alerta!</h5>
-                        {{ $error }}
-                    </div>
+        @if (session()->get('success'))
+            <div class="col-sm-12">
+                <div class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h5><i class="icon fas fa-check"></i> Sucesso!</h5>
+                    {{ session()->get('success') }}
                 </div>
-
-            @endforeach
+            </div>
         @endif
 
+        @if (session()->get('warning'))
+            <div class="col-sm-12">
+                <div class="alert alert-warning alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h5><i class="icon fas fa-check"></i> Alerta!</h5>
+                    {{ session()->get('warning') }}
+                </div>
+            </div>
+        @endif
+
+        <!-- QUADRO DO FORMULÁRIO DE PESQUISA -->
         <div class="card card-outline card-primary">
 
-            <div class="card-body">
+            <div class="card-body" id="filtro-pesquisa">
+
                 <!-- PRIMEIRA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
+
                     <!-- FILTRO DO NOME DA EMPRESA -->
                     <div class="form-group col-md-3">
-                        <label for="emp_id">Empresa:</label>
-                        <select id="emp_id" name="emp_id" class="form-control select2 select2-hidden-accessible"
-                            data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true">
+                        <label for="empresa_id">Empresa:*</label>
+                        <select id="empresa_id" name="empresa_id" class="form-control select2 select2-hidden-accessible" data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true" required>
                         </select>
                     </div>
                     <div class="form-group col-md-2">
                         <label id="produto_id">Código do Produto:</label>
                         <div class="input-group input-group-sm">
-                            <input type="text" id="produto_id" class="form-control  form-control-sm"
+                            <input type="text" id="produto_id" name="produto_id" class="form-control  form-control-sm"
                                 placeholder="Digite o código do produto">
                         </div>
                     </div>
                     <div class="form-group col-md-2">
-                        <label id="produto_tipo">Tipo de Produto:</label>
-                        <select class="form-control select2" id="produto_tipo" data-placeholder="Selecione o Tipo de Produto"
-                            style="width: 100%;">
-                            <!--Exemplo de status-->
+                        <label for="produto_tipo">Tipo de Produto:</label>
+                        <select class="form-control select2" id="produto_tipo" name="produto_tipo" data-placeholder="Selecione o Tipo de Produto" data-allow-clear="true" style="width: 100%;">
                             <option></option>
-                            <option value="OP">Buscar dados da tabela TBDM_PRODUTO_TP</option>
+                            @foreach($tipos as $tipo)
+                                <option value="{{$tipo->produto_tipo}}">{{$tipo->produto_tipo_desc ?? $tipo->produto_tipo}}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
                 <!-- SEGUNDA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
                     <div class="form-group col-md-3">
-                        <label id="produto_dm">Descrição do Produto:</label>
+                        <label id="desc_produto">Descrição do Produto:</label>
                         <select id="produto_dm" name="produto_dm" class="form-control select2 select2-hidden-accessible"
                             data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
                         </select>
                     </div>
                     <div class="form-group col-md-2">
-                        <label id="produto_sts">Status:</label>
-                        <select class="form-control select2" id="produto_sts" data-placeholder="Selecione o Status"
-                            style="width: 100%;">
-                            <!--Exemplo de status-->
+                        <label for="produto_sts">Status:</label>
+                        <select class="form-control select2" id="produto_sts" name="produto_sts" data-placeholder="Selecione o Status" data-allow-clear="true" style="width: 100%;">
                             <option></option>
-                            <option value="OP">Buscar dados da tabela TBDM_PRODUTO_STS</option>
+                            @foreach($status as $sta)
+                                <option value="{{$sta->produto_sts}}">{{$sta->produto_sts_desc ?? $sta->produto_sts}}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="form-group col-md-3 align-self-end d-flex">
@@ -79,15 +87,19 @@
             </div>
         </div>
 
+        <!-- QUADRO DO GRID DE PRODUTOS -->
         <div class="card card-outline card-primary">
-            @can('usuario.create')
+
+            <!-- BOTÃO PARA CRIAR NOVO PRODUTO -->
+            @can('produto.create')
                 <div class="card-header">
                     <a href="/produtos/inserir" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Criar novo</a>
                 </div>
             @endcan
 
+            <!-- CORPO DO QUADRO DO GRID DE PRODUTOS -->
             <div class="card-body">
-                <!--Tabela do resultado da pesquisa-->
+
                 <div class="table-responsive">
                     <table id="gridtemplate" class="table table-striped table-bordered nowrap">
                         <thead>
@@ -95,7 +107,9 @@
                                 <th>Ações</th>
                                 <th>Código do Produto</th>
                                 <th>Tipo de Produto</th>
-                                <th>Descrição do Produto</th>
+                                <th>Descrição Curta</th>
+                                <th>Descrição Média</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                     </table>
@@ -127,23 +141,36 @@
     </section>
 
 @endsection
+
 @push('scripts')
     <!-- Select2 -->
     <script src="{{ asset('assets/plugins/select2/js/select2.full.min.js') }}"></script>
+    <script src="{{ asset('assets/plugins/select2/js/i18n/pt-BR.js') }}"></script>
     <script src="{{ asset('assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js')}}"></script>
+    <script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{asset('assets/dist/js/app.js') }}"></script>
+    <script src="{{ asset('assets/dist/js/app.js') }}"></script>
+    <script src="{{ asset('assets/dist/js/pages/produto/gridproduto.js') }}"></script>
 
     <script type="text/javascript">
 
         $(document).ready(function () {
+
             $('#inputPesquisa').on('keyup', function (e) {
                 if (e.key === 'Enter') {
-                    $("#btnPesquisar").trigger("click");
+                    $('#btnPesquisar').trigger('click');
+                }
+            });
+
+            $('#btnPesquisar').on('click', function(e) {
+                if (!$('#empresa_id').val()) {
+                    e.preventDefault();
+                    toastr.error('Selecione uma Empresa antes de pesquisar.', 'Campo obrigatório');
+                    $('#empresa_id').focus();
+                    return false;
                 }
             });
 
@@ -154,23 +181,12 @@
                 });
 
             @if ($message = Session::get('success'))
-
+                $("#empresa_id").val({{ Session::get('idModeloInserido') }})
                 toastr.success("{{ $message }}", "Sucesso");
-                console.log('idModeloInserido', "{{Session::get('idModeloInserido')}}")
-                $("#inputPesquisa").val("{{Session::get('idModeloInserido')}}")
-                setTimeout(function () {
-                    $("#btnPesquisar").trigger("click");
-                    $("#inputPesquisa").val("");
-                }, 200);
             @endif
 
-            @if($message = Session::get('error'))
-                $("#inputPesquisa").val({{Session::get('idModeloInserido')}})
+            @if ($message = Session::get('error'))
                 toastr.error("{{ $message }}", "Erro");
-                setTimeout(function () {
-                    $("#btnPesquisar").trigger("click");
-                    $("#inputPesquisa").val("");
-                }, 200);
             @endif
 
             @if (count($errors) > 0)
@@ -178,7 +194,6 @@
                     toastr.error("{{ $error }}", "Erro");
                 @endforeach
             @endif
-
 
     });
     </script>
