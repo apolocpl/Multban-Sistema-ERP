@@ -116,26 +116,6 @@
                 </div>
             </div>
 
-            <b>FONTE:</b>
-            TBDM_PRODUTOS_GERAL<br>
-            <b>FILTROS:</b>
-            EMP_ID = FILTRO DE EMPRESA (variável empresa_id)<br>
-            PRODUTO_ID = FILTRO DE CÓDIGO DO PRODUTO (variável produto_id)<br>
-            PRODUTO_STS = FILTRO DE STATUS DO PRODUTO (variável produto_sts)<br>
-            PRODUTO_TIPO = FILTRO DE TIPO DO PRODUTO (variável produto_tipo)<br>
-            <br>
-            O FILTRO DE EMPRESA TEM QUE SER OBRIGATÓRIO E TEM QUE SER IGUAL AOS DEMAIOS FILTRO DE EMPRESA DAS DEMAIS PÁGINAS ONDE,<br>
-            DIGITANDO UM NOME DE EMPRESA, DEVE APRESENTAR UMA LISTA DE OPÇÕES QUE TENHA A MESMA TAG DIGITADA, DAR A OPÇÃO DE<br>
-            SELECIONAR APENAS A TAG OU SELECIOAR UMA OPÇÃO APRESENTADA NO FILTRO<br>
-            <br>
-            O FILTRO DO NOME DO PRODUTO TEM QUE SER IGUAL AOS DEMAIOS FILTRO DE EMPRESA DAS DEMAIS PÁGINAS ONDE,<br>
-            DIGITANDO UM NOME DE PRODUTO, DEVE APRESENTAR UMA LISTA DE OPÇÕES QUE TENHA A MESMA TAG DIGITADA, DAR A OPÇÃO DE<br>
-            SELECIONAR APENAS A TAG OU SELECIOAR UMA OPÇÃO APRESENTADA NO FILTRO<br>
-            <br>
-            O FILTRO DE EMPRESA TEM SER SOBRE O CAMPO EMP_NMULT da TABELA TBDM_EMPRESA_GERAL
-            <br>
-            CORRIGIR O BOTÃO PESQUISAR
-
         </div>
 
     </section>
