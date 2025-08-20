@@ -29,6 +29,7 @@ class EmpresaRoute
         Route::get('empresa/obter-pais', [EmpresaController::class, 'getObterPais']);
         Route::get('empresa/obter-empresas-franqueadoras', [EmpresaController::class, 'getObterEmpresasFranqueadoras']);
         Route::get('empresa/obter-empresas', [EmpresaController::class, 'getObterEmpresas']);
+        Route::get('empresa/obter-empresas-nmult', [EmpresaController::class, 'getObterEmpresasNmult']);
         Route::get('empresa/obter-users', [EmpresaController::class, 'getObterUsers']);
     }
 }

@@ -3,17 +3,18 @@ $(document).ready(function () {
 
         //Initialize Select2 Elements
         $('.select2').select2();
-        ns.comboBoxSelect("cod_franqueadora", "/empresa/obter-empresas-franqueadoras", "emp_id");
         ns.comboBoxSelectTags("empresa_id", "/empresa/obter-empresas", "emp_id");
-        ns.comboBoxSelect("nome_fantasia", "/empresa/obter-empresas", "emp_id");
-        ns.comboBoxSelect("nome_multmais", "/empresa/obter-empresas", "emp_id");
+        ns.comboBoxSelectTags("nome_fantasia", "/empresa/obter-empresas", "emp_id");
+        ns.comboBoxSelectTags("nome_multmais", "/empresa/obter-empresas-nmult", "emp_id");
+        ns.comboBoxSelect("cod_franqueadora", "/empresa/obter-empresas-franqueadoras", "emp_id");
 
         $('#cod_franqueadora').on('change', function() {
             var franqueadoraId = $(this).val();
             // Chame a função que popula o select de empresa, passando o cod_franqueadora
             ns.comboBoxSelectTags("empresa_id", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
-            ns.comboBoxSelect("nome_fantasia", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
-            ns.comboBoxSelect("nome_multmais", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
+            ns.comboBoxSelectTags("nome_fantasia", "/empresa/obter-empresas?cod_franqueadora=" + franqueadoraId, "emp_id");
+            ns.comboBoxSelectTags("nome_multmais", "/empresa/obter-empresas-nmult?cod_franqueadora=" + franqueadoraId, "emp_id");
+
         });
 
         $('#btnPesquisar').click(function () {

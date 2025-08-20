@@ -60,7 +60,7 @@
 
                     <!-- FILTRO DO STATUS DA EMPRESA -->
                     <div class="form-group col-md-2">
-                        <label for="emp_sts">Status:*</label>
+                        <label for="emp_sts">Status:</label>
                         <select class="form-control select2" name="emp_sts" id="emp_sts"
                             data-placeholder="Selecione" data-allow-clear="true" style="width: 100%;">
                             <option></option>
@@ -131,7 +131,6 @@
                         </thead>
                     </table>
                 </div>
-
             </div>
 
         </div>
