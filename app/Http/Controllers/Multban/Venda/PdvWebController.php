@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Multban\Venda;
 use App\Http\Controllers\Controller;
 use App\Models\Multban\DadosMestre\MeioDePagamento;
 use Illuminate\Http\Request;
+use App\Models\Multban\Venda\RegrasParc;
 
 class PdvWebController extends Controller
 {
@@ -13,8 +14,9 @@ class PdvWebController extends Controller
      */
     public function index()
     {
+        $RegrasParc = RegrasParc::all();
         $meioDePagamento = MeioDePagamento::orderBy('meio_order')->get();
-        return view('Multban.venda.pdv.index', compact('meioDePagamento'));
+        return view('Multban.venda.pdv.index', compact('meioDePagamento', 'RegrasParc'));
     }
 
     /**
@@ -63,5 +65,15 @@ class PdvWebController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function pdv()
+    {
+        // Busca todas as regras de parcelamento
+        $RegrasParc = RegrasParc::all();
+
+        // ... outros dados necessários para a view
+
+        return view('Multban.venda.pdv.index', compact('RegrasParc', /* outros dados */));
     }
 }

@@ -252,6 +252,7 @@ class AgendamentoController extends Controller
             $profissional = User::find($request->user_id);
             $agendamento->title = $cliente->cliente_nome . ' - ' . $profissional->cargo->user_func_desc;
             $agendamento->description = '';
+            // Se o campo é apenas hora, combine com a data para criar o datetime
             $agendamento->start = Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->start)->format('Y-m-d H:i:s');
             $agendamento->end = Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $request->end)->format('Y-m-d H:i:s');
 

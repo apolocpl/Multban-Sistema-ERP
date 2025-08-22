@@ -269,6 +269,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_sellers' => 'sd5g6sa54gv6xz',
                 'blt_ctr' => 'x',
                 'tax_blt' => '2.1',
+                'blt_parclib' => '10',
                 'lib_cnscore' => 'x',
                 'intervalo_mes' => '3',
                 'qtde_cns_freem' => '10',
@@ -341,6 +342,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_sellers' => 'sd5g6sa54gv6xz',
                 'blt_ctr' => 'x',
                 'tax_blt' => '2.1',
+                'blt_parclib' => '10',
                 'lib_cnscore' => 'x',
                 'intervalo_mes' => '3',
                 'qtde_cns_freem' => '10',
@@ -413,6 +415,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_sellers' => 'sd5g6sa54gv6xz',
                 'blt_ctr' => 'x',
                 'tax_blt' => '2.1',
+                'blt_parclib' => '10',
                 'lib_cnscore' => 'x',
                 'intervalo_mes' => '3',
                 'qtde_cns_freem' => '10',
@@ -485,6 +488,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_sellers' => 'sd5g6sa54gv6xz',
                 'blt_ctr' => 'x',
                 'tax_blt' => '2.1',
+                'blt_parclib' => '10',
                 'lib_cnscore' => 'x',
                 'intervalo_mes' => '3',
                 'qtde_cns_freem' => '10',
@@ -1308,6 +1312,63 @@ class DadosMestreSeeder extends Seeder
         ];
 
         DB::table('tbdm_agendamento_sts')->insert($tbdm_agendamento_sts);
+
+        $tbdm_cnd_pag = [
+            ['langu' => 'PORT', "cnd_pag" => "1", "cnd_pag_desc" => "À Vista"],
+            ['langu' => 'PORT', "cnd_pag" => "2", "cnd_pag_desc" => "Parcelado"],
+        ];
+
+        DB::table('tbdm_cnd_pag')->insert($tbdm_cnd_pag);
+
+        $tbdm_parcela_sts = [
+            ['langu' => 'PORT', "parcela_sts" => "ANT", "parcela_sts_desc" => "ANTECIPADO"],
+            ['langu' => 'PORT', "parcela_sts" => "ANB", "parcela_sts_desc" => "ANTECIPADO BAIXADO"],
+            ['langu' => 'PORT', "parcela_sts" => "ANI", "parcela_sts_desc" => "ANTECIPADO INADIMPLENTE"],
+            ['langu' => 'PORT', "parcela_sts" => "BXD", "parcela_sts_desc" => "BAIXADO"],
+            ['langu' => 'PORT', "parcela_sts" => "BIN", "parcela_sts_desc" => "BAIXADO INADIMPLENTE"],
+            ['langu' => 'PORT', "parcela_sts" => "BPT", "parcela_sts_desc" => "BAIXADO PONTOS"],
+            ['langu' => 'PORT', "parcela_sts" => "BDI", "parcela_sts_desc" => "BAIXADO DINHEIRO"],
+            ['langu' => 'PORT', "parcela_sts" => "BPX", "parcela_sts_desc" => "BAIXADO PIX"],
+            ['langu' => 'PORT', "parcela_sts" => "REG", "parcela_sts_desc" => "REGISTRADO"],
+        ];
+
+        DB::table('tbdm_parcela_sts')->insert($tbdm_parcela_sts);
+
+        $tbdm_lanc_tp = [
+            ['langu' => 'PORT', "lanc_tp" => "COMISSAO", "lanc_tp_desc" => "Comissão Paga para Vendedores e Representantes"],
+            ['langu' => 'PORT', "lanc_tp" => "DIV_JUR", "lanc_tp_desc" => "Divisão dos Juros das Vendas Parceladas"],
+            ['langu' => 'PORT', "lanc_tp" => "DIV_MJ", "lanc_tp_desc" => "Divisão Multa e Juros por Atraso"],
+            ['langu' => 'PORT', "lanc_tp" => "PONTOS", "lanc_tp_desc" => "Pontos Utilizados para Liquidação da Venda"],
+            ['langu' => 'PORT', "lanc_tp" => "REBATE", "lanc_tp_desc" => "Rebate pago para Parceiros"],
+            ['langu' => 'PORT', "lanc_tp" => "REPASSE", "lanc_tp_desc" => "Valor da venda referente ao Estabelecimento"],
+            ['langu' => 'PORT', "lanc_tp" => "TAX_ADM", "lanc_tp_desc" => "Valor da venda referente a Taxa Administrativa"],
+            ['langu' => 'PORT', "lanc_tp" => "TAX_ATM", "lanc_tp_desc" => "Valor da Taxa de Antecipação"],
+            ['langu' => 'PORT', "lanc_tp" => "TAX_BAC", "lanc_tp_desc" => "Valor referente a taxa do Banco Central"],
+            ['langu' => 'PORT', "lanc_tp" => "ROYALTIES", "lanc_tp_desc" => "Royalties pago para Tercerios"],
+        ];
+
+        DB::table('tbdm_lanc_tp')->insert($tbdm_lanc_tp);
+
+        $tbdm_fatura_sts = [
+            ['langu' => 'PORT', "fatura_sts" => "1", "fatura_sts_desc" => "ABERTA"],
+            ['langu' => 'PORT', "fatura_sts" => "2", "fatura_sts_desc" => "FECHADA"],
+        ];
+
+        DB::table('tbdm_fatura_sts')->insert($tbdm_fatura_sts);
+
+        $tbdm_regra_parc = [
+            ['langu' => 'PORT', "opcao_parc" => "1", "meio_pag" => "BL", "opcao_parc_desc" => "À Vista", "regra_parc" => "5"],
+            ['langu' => 'PORT', "opcao_parc" => "2", "meio_pag" => "BL", "opcao_parc_desc" => "30 dias", "regra_parc" => "30"],
+            ['langu' => 'PORT', "opcao_parc" => "3", "meio_pag" => "BL", "opcao_parc_desc" => "60 dias", "regra_parc" => "60"],
+            ['langu' => 'PORT', "opcao_parc" => "4", "meio_pag" => "BL", "opcao_parc_desc" => "90 dias", "regra_parc" => "90"],
+            ['langu' => 'PORT', "opcao_parc" => "5", "meio_pag" => "BL", "opcao_parc_desc" => "Personalizado", "regra_parc" => NULL],
+            ['langu' => 'PORT', "opcao_parc" => "6", "meio_pag" => "CM", "opcao_parc_desc" => "Rotativo", "regra_parc" => NULL],
+            ['langu' => 'PORT', "opcao_parc" => "7", "meio_pag" => "CM", "opcao_parc_desc" => "30 dias", "regra_parc" => "30"],
+            ['langu' => 'PORT', "opcao_parc" => "8", "meio_pag" => "CM", "opcao_parc_desc" => "60 dias", "regra_parc" => "60"],
+            ['langu' => 'PORT', "opcao_parc" => "9", "meio_pag" => "CM", "opcao_parc_desc" => "90 dias", "regra_parc" => "90"],
+        ];
+
+        DB::table('tbdm_regra_parc')->insert($tbdm_regra_parc);
 
         $tbdm_convenios = [
 

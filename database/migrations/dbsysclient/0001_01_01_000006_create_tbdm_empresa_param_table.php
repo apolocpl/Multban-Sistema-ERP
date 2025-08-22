@@ -31,6 +31,7 @@ class CreateTbdmEmpresaParamTable extends Migration
             $table->string('emp_sellers', 100)->nullable();
             $table->string('blt_ctr', 1)->nullable();
             $table->float('tax_blt')->nullable();
+            $table->integer('blt_parclib')->length(2)->nullable();
             $table->string('lib_cnscore', 1)->nullable();
             $table->integer('intervalo_mes')->nullable()->nullable();
             $table->integer('qtde_cns_freem')->length(10)->nullable();

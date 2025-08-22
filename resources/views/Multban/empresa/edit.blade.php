@@ -801,7 +801,6 @@
                                             </div>
                                         </div>
                                         <div class="card-tools">
-
                                             <button type="button" class="btn btn-tool" id="blt_ctr_coll"
                                                 data-card-widget="collapse">
                                                 <i class="fas fa-plus"></i>
@@ -817,6 +816,13 @@
                                                     value="{{$empresaParam->tax_blt}}"
                                                     class="form-control porcentagem form-control-sm" placeholder='0,00'>
                                                 <span id="tax_bltError" class="text-danger text-sm"></span>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label for='blt_parclib'>Quantidade de Parcelas liberadas:*</label>
+                                                <input type="number" id='blt_parclib' name='blt_parclib'
+                                                    value="{{$empresaParam->blt_parclib}}" class="form-control form-control-sm"
+                                                    placeholder='0'>
+                                                <span id="blt_parclibError" class="text-danger text-sm"></span>
                                             </div>
                                         </div>
                                     </div>

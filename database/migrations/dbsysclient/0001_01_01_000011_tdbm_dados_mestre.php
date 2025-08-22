@@ -284,6 +284,48 @@ return new class extends Migration
             $table->primary(['protocolo_tp', 'langu']);
         });
 
+        Schema::create('tbdm_cnd_pag', function (Blueprint $table) {
+            $table->integer('cnd_pag', 2);
+            $table->string('langu', 4);
+            $table->string('cnd_pag_desc', 50);
+            //KEYS
+            $table->primary(['cnd_pag', 'langu']);
+        });
+
+        Schema::create('tbdm_parcela_sts', function (Blueprint $table) {
+            $table->string('parcela_sts', 3);
+            $table->string('langu', 4);
+            $table->string('parcela_sts_desc', 50);
+            //KEYS
+            $table->primary(['parcela_sts', 'langu']);
+        });
+
+        Schema::create('tbdm_lanc_tp', function (Blueprint $table) {
+            $table->string('lanc_tp', 10);
+            $table->string('langu', 4);
+            $table->string('lanc_tp_desc', 50);
+            //KEYS
+            $table->primary(['lanc_tp', 'langu']);
+        });
+
+        Schema::create('tbdm_fatura_sts', function (Blueprint $table) {
+            $table->integer('fatura_sts', 2);
+            $table->string('langu', 4);
+            $table->string('fatura_sts_desc', 50);
+            //KEYS
+            $table->primary(['fatura_sts', 'langu']);
+        });
+
+        Schema::create('tbdm_regra_parc', function (Blueprint $table) {
+            $table->integer('opcao_parc', 2);
+            $table->string('meio_pag', 2);
+            $table->string('langu', 4);
+            $table->string('opcao_parc_desc', 50);
+            $table->string('regra_parc', 50) ->nullable();
+            //KEYS
+            $table->primary(['opcao_parc', 'langu']);
+        });
+
     }
 
     /**
@@ -324,5 +366,11 @@ return new class extends Migration
         Schema::dropIfExists('tbdm_prt_tp');
         Schema::dropIfExists('tbdm_agendamento_tp');
         Schema::dropIfExists('tbdm_convenios');
+        Schema::dropIfExists('tbdm_agendamento_sts');
+        Schema::dropIfExists('tbdm_cnd_pag');
+        Schema::dropIfExists('tbdm_parcela_sts');
+        Schema::dropIfExists('tbdm_lanc_tp');
+        Schema::dropIfExists('tbdm_fatura_sts');
+        Schema::dropIfExists('tbdm_regra_parc');
     }
 };
