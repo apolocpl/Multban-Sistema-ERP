@@ -27,11 +27,18 @@
 
 <div class="row" id="row-top" style="">
   <div class=" navbar-fixed-top fixed nav-opcoes">
+
+    <!-- FAIXA DE OPÇÕES SALVAR -->
     <button id="btnSalvar" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-save"></i> Salvar</button>
+
     @if (!request()->is('*/inserir'))
-    <button id="btnInativar" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-times"></i> Inativar</button>
-    <button id="btnExcluir" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-trash"></i> Exluir</button>
+        <!-- FAIXA DE OPÇÕES INATIVAR -->
+        <button id="btnInativar" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-times"></i> Inativar</button>
+        <!-- FAIXA DE OPÇÕES EXCLUIR -->
+        <button id="btnExcluir" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-trash"></i> Excluir</button>
     @endif
+
+    <!-- FAIXA DE OPÇÕES VOLTAR -->
     <button id="btnCancelar" onclick="location.href='{{url($route)}}'" type="button" class="btnCancelar btn btn-secundary-multban btn-sm"><i class="icon fas fa-arrow-left"></i> Voltar</button>
 
 

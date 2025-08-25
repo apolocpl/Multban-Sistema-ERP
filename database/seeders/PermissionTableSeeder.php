@@ -87,14 +87,14 @@ class PermissionTableSeeder extends Seeder
             ['description' => 'Programa de Pontos', 'icon' => 'fas fa-credit-card', 'name' => 'programa-de-pontos.destroy', 'parent_id' => $Cadastros],
 
             //CADASTRO / Produtos
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.store', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.create', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.edit', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.update', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.copy', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.index', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.show', 'parent_id' => $Cadastros],
-            ['description' => 'Produtos', 'icon' => 'fas fa-box-check', 'name' => 'produtos.destroy', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.store', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.create', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.edit', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.update', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.copy', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.index', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.show', 'parent_id' => $Cadastros],
+            ['description' => 'Produto', 'icon' => 'fas fa-box-check', 'name' => 'produto.destroy', 'parent_id' => $Cadastros],
 
             //VENDAS / Comprovantes Pgto.
             // ['description' => 'Comprovantes Pgto.', 'icon' => 'far fa-receipt', 'name' => 'comprovantes-pgto.store', 'parent_id' => $Vendas],

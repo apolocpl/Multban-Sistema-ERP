@@ -11,5 +11,7 @@ class TbDmBncCode extends Model
 
     protected $table = "tbdm_bnccode";
 
+    protected $primaryKey = 'cdgbc';
+
     public $timestamps = false;
 }

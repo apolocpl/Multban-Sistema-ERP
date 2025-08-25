@@ -21,6 +21,7 @@ class CreateTbdmProdutosGeralTable extends Migration
             $table->integer('produto_tipo')->length(2);
             //FIELDS
             $table->float('partcp_pvlaor')->nullable();
+            $table->integer('partcp_empid')->nullable();
             $table->string('partcp_seller', 100)->nullable();
             $table->string('partcp_pgsplit', 1)->nullable();
             $table->string('partcp_pgtransf', 1)->nullable();

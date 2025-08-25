@@ -43,7 +43,8 @@
                     <!-- FILTRO DO NOME DA EMPRESA -->
                     <div class="form-group col-md-3">
                         <label for="empresa_id">Empresa:*</label>
-                        <select id="empresa_id" name="empresa_id" class="form-control select2 select2-hidden-accessible" data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true" required>
+                        <select id="empresa_id" name="empresa_id" class="form-control select2 select2-hidden-accessible"
+                            data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true" required>
                         </select>
                     </div>
                     <div class="form-group col-md-2">
@@ -66,7 +67,7 @@
                 <!-- SEGUNDA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
                     <div class="form-group col-md-3">
-                        <label id="desc_produto">Descrição do Produto:</label>
+                        <label for="produto_dm">Descrição do Produto:</label>
                         <select id="produto_dm" name="produto_dm" class="form-control select2 select2-hidden-accessible"
                             data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
                         </select>
@@ -91,9 +92,9 @@
         <div class="card card-outline card-primary">
 
             <!-- BOTÃO PARA CRIAR NOVO PRODUTO -->
-            @can('produto.create')
+            @can('produto.store')
                 <div class="card-header">
-                    <a href="/produtos/inserir" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Criar novo</a>
+                    <a href="/produto/inserir" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Criar novo</a>
                 </div>
             @endcan
 
@@ -137,43 +138,34 @@
 
     <script type="text/javascript">
 
-        $(document).ready(function () {
+    $(document).ready(function () {
 
-            $('#inputPesquisa').on('keyup', function (e) {
-                if (e.key === 'Enter') {
-                    $('#btnPesquisar').trigger('click');
-                }
-            });
+        $('#inputPesquisa').on('keyup', function (e) {
+            if (e.key === 'Enter') {
+                $('#btnPesquisar').trigger('click');
+            }
+        });
 
-            $('#btnPesquisar').on('click', function(e) {
-                if (!$('#empresa_id').val()) {
-                    e.preventDefault();
-                    toastr.error('Selecione uma Empresa antes de pesquisar.', 'Campo obrigatório');
-                    $('#empresa_id').focus();
-                    return false;
-                }
-            });
+        $(".alert-dismissible")
+            .fadeTo(2000, 500)
+            .slideUp(500, function () {
+            $(".alert-dismissible").alert("close");
+        });
 
-            $(".alert-dismissible")
-                .fadeTo(10000, 500)
-                .slideUp(500, function () {
-                    $(".alert-dismissible").alert("close");
-                });
+        @if ($message = Session::get('success'))
+            $("#empresa_id").val({{ Session::get('idModeloInserido') }})
+            toastr.success("{{ $message }}", "Sucesso");
+        @endif
 
-            @if ($message = Session::get('success'))
-                $("#empresa_id").val({{ Session::get('idModeloInserido') }})
-                toastr.success("{{ $message }}", "Sucesso");
-            @endif
+        @if ($message = Session::get('error'))
+            toastr.error("{{ $message }}", "Erro");
+        @endif
 
-            @if ($message = Session::get('error'))
-                toastr.error("{{ $message }}", "Erro");
-            @endif
-
-            @if (count($errors) > 0)
-                @foreach ($errors->all() as $error)
-                    toastr.error("{{ $error }}", "Erro");
-                @endforeach
-            @endif
+        @if (count($errors) > 0)
+            @foreach ($errors->all() as $error)
+                toastr.error("{{ $error }}", "Erro");
+            @endforeach
+        @endif
 
     });
     </script>

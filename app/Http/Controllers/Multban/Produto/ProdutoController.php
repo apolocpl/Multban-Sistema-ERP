@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Produto\ProdutoTipo;
 use App\Models\Multban\Produto\ProdutoStatus;
+use App\Models\Multban\DadosMestre\TbDmBncCode;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,9 +24,11 @@ class ProdutoController extends Controller
      */
     public function index()
     {
-        $tipos = ProdutoTipo::all();
-        $status = ProdutoStatus::all();
-        return view('Multban.produto.index', compact('tipos', 'status'));
+    $tipos = ProdutoTipo::all();
+    $status = ProdutoStatus::all();
+    $empresas = Empresa::all();
+    $bancos = TbDmBncCode::all();
+    return view('Multban.produto.index', compact('tipos', 'status', 'empresas', 'bancos'));
     }
 
     /**
@@ -36,7 +39,8 @@ class ProdutoController extends Controller
         $produto = new Produto();
         $tipos = ProdutoTipo::all();
         $status = ProdutoStatus::all();
-        return view('Multban.produto.create', compact('produto', 'tipos', 'status'));
+        $bancos = TbDmBncCode::all();
+        return view('Multban.produto.edit', compact('produto', 'tipos', 'status', 'bancos'));
     }
 
     /**
@@ -89,10 +93,10 @@ class ProdutoController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'message' => 'Produto cadastrado com sucesso!',
-                'redirect' => route('produtos.create')
+                'redirect' => route('produto.edit')
             ]);
         }
-        return redirect()->route('produtos.create')
+        return redirect()->route('produto.edit')
             ->with('success', 'Produto cadastrado com sucesso!');
     }
 
@@ -110,9 +114,33 @@ class ProdutoController extends Controller
     public function edit(string $id)
     {
         $produto = Produto::find($id);
+        $empresaDesc = null;
+        if ($produto && $produto->emp_id) {
+            $empresa = Empresa::where('emp_id', $produto->emp_id)->first();
+            $empresaDesc = $empresa ? $empresa->emp_nmult : null;
+        }
         $tipos = ProdutoTipo::all();
         $status = ProdutoStatus::all();
-        return view('Multban.produto.edit', compact('produto', 'tipos', 'status'));
+        $bancos = TbDmBncCode::all();
+            $empresaPartOption = null;
+            if (!empty($produto->partcp_empid)) {
+                $empresa = \App\Models\Multban\Empresa\Empresa::where('emp_id', $produto->partcp_empid)->first();
+                if ($empresa) {
+                    $empresaPartOption = [
+                        'id' => $empresa->emp_id,
+                        'text' => $empresa->emp_id . ' - ' . $empresa->emp_nmult
+                    ];
+                }
+            }
+            return view('Multban.produto.edit', [
+                'produto' => $produto,
+                'tipos' => $tipos,
+                'status' => $status,
+                'bancos' => $bancos,
+                'empresaDesc' => $empresaDesc,
+                'empresaPartOption' => $empresaPartOption,
+                'routeAction' => true,
+            ]);
     }
 
     /**
@@ -149,6 +177,11 @@ class ProdutoController extends Controller
         $validated = $request->validate($rules);
 
         $data = $request->except(['_token', '_method']);
+        // Converte o valor para formato correto antes do update
+        $request->merge([
+            'partcp_pvlaor' => str_replace(',', '.', $request->input('partcp_pvlaor'))
+        ]);
+        $data = $request->all();
         $data['produto_ctrl'] = isset($data['produto_ctrl']) ? 'X' : '';
         $data['emp_id'] = $user->emp_id;
         if (isset($data['produto_vlr'])) {
@@ -164,10 +197,10 @@ class ProdutoController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'message' => 'Produto atualizado com sucesso!',
-                'redirect' => route('produtos.edit', $produto->produto_id)
+                'redirect' => route('produto.edit', $produto->produto_id)
             ]);
         }
-        return redirect()->route('produtos.edit', $produto->produto_id)
+        return redirect()->route('produto.edit', $produto->produto_id)
             ->with('success', 'Produto atualizado com sucesso!');
     }
 
@@ -199,6 +232,7 @@ class ProdutoController extends Controller
         return $query->get()->toArray();
     }
 
+
     // FUNÇÃO QUE BUSCA DADOS DO FILTRO DESCRIÇÃO DO PRODUTO
     public function getObterDescricaoProduto(Request $request)
     {
@@ -221,6 +255,12 @@ class ProdutoController extends Controller
     // FUNÇÃO QUE RETORNA OS PRODUTOS AO CLICAR EM PESQUISAR
     public function getObterGridPesquisa(Request $request)
     {
+        if (empty($request->empresa_id)) {
+            return response()->json([
+                'error' => 'Selecione uma Empresa antes de pesquisar.'
+            ], 422);
+        }
+
         if (!Auth::check()) {
             abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
         }
@@ -289,10 +329,10 @@ class ProdutoController extends Controller
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '';
-                if (in_array('produtos.edit', $this->permissions)) {
-                    $btn .= '<a href="produtos/' . $row->produto_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
-                }
-                if (in_array('produtos.destroy', $this->permissions)) {
+                    if (in_array('produto.edit', $this->permissions)) {
+                        $btn .= '<a href="produto/' . $row->produto_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
+                    }
+                if (in_array('produto.destroy', $this->permissions)) {
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" id="delete_grid_id" data-url="produtos" data-id="' . $row->produto_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
                 }
                 return $btn;
