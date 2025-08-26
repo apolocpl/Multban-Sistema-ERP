@@ -43,13 +43,14 @@
                     <!-- FILTRO DO NOME DA EMPRESA -->
                     <div class="form-group col-md-3">
                         <label for="empresa_id">Empresa:*</label>
-                        <select id="empresa_id" name="empresa_id" class="form-control select2 select2-hidden-accessible" data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true" required>
+                        <select id="empresa_id" name="empresa_id" class="form-control select2 select2-hidden-accessible"
+                            data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true" required>
                         </select>
                     </div>
                     <div class="form-group col-md-2">
                         <label id="produto_id">Código do Produto:</label>
                         <div class="input-group input-group-sm">
-                            <input type="text" id="produto_id" name="produto_id" class="form-control  form-control-sm"
+                            <input type="id" id="produto_id" name="produto_id" class="form-control  form-control-sm"
                                 placeholder="Digite o código do produto">
                         </div>
                     </div>
@@ -66,10 +67,11 @@
                 <!-- SEGUNDA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
                     <div class="form-group col-md-3">
-                        <label id="desc_produto">Descrição do Produto:</label>
-                        <select id="produto_dm" name="produto_dm" class="form-control select2 select2-hidden-accessible"
+                        <label for="produto_dmf">Descrição do Produto:</label>
+                        <select id="produto_dmf" name="produto_dmf" class="form-control select2 select2-hidden-accessible"
                             data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
                         </select>
+                        <input type="hidden" id="produto_dmf_id" name="produto_dmf_id" value="">
                     </div>
                     <div class="form-group col-md-2">
                         <label for="produto_sts">Status:</label>
@@ -91,9 +93,9 @@
         <div class="card card-outline card-primary">
 
             <!-- BOTÃO PARA CRIAR NOVO PRODUTO -->
-            @can('produto.create')
+            @can('produto.store')
                 <div class="card-header">
-                    <a href="/produtos/inserir" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Criar novo</a>
+                    <a href="/produto/inserir" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Criar novo</a>
                 </div>
             @endcan
 
@@ -137,43 +139,34 @@
 
     <script type="text/javascript">
 
-        $(document).ready(function () {
+    $(document).ready(function () {
 
-            $('#inputPesquisa').on('keyup', function (e) {
-                if (e.key === 'Enter') {
-                    $('#btnPesquisar').trigger('click');
-                }
-            });
+        $('#inputPesquisa').on('keyup', function (e) {
+            if (e.key === 'Enter') {
+                $('#btnPesquisar').trigger('click');
+            }
+        });
 
-            $('#btnPesquisar').on('click', function(e) {
-                if (!$('#empresa_id').val()) {
-                    e.preventDefault();
-                    toastr.error('Selecione uma Empresa antes de pesquisar.', 'Campo obrigatório');
-                    $('#empresa_id').focus();
-                    return false;
-                }
-            });
+        $(".alert-dismissible")
+            .fadeTo(2000, 500)
+            .slideUp(500, function () {
+            $(".alert-dismissible").alert("close");
+        });
 
-            $(".alert-dismissible")
-                .fadeTo(10000, 500)
-                .slideUp(500, function () {
-                    $(".alert-dismissible").alert("close");
-                });
+        @if ($message = Session::get('success'))
+            $("#empresa_id").val({{ Session::get('idModeloInserido') }})
+            toastr.success("{{ $message }}", "Sucesso");
+        @endif
 
-            @if ($message = Session::get('success'))
-                $("#empresa_id").val({{ Session::get('idModeloInserido') }})
-                toastr.success("{{ $message }}", "Sucesso");
-            @endif
+        @if ($message = Session::get('error'))
+            toastr.error("{{ $message }}", "Erro");
+        @endif
 
-            @if ($message = Session::get('error'))
-                toastr.error("{{ $message }}", "Erro");
-            @endif
-
-            @if (count($errors) > 0)
-                @foreach ($errors->all() as $error)
-                    toastr.error("{{ $error }}", "Erro");
-                @endforeach
-            @endif
+        @if (count($errors) > 0)
+            @foreach ($errors->all() as $error)
+                toastr.error("{{ $error }}", "Erro");
+            @endforeach
+        @endif
 
     });
     </script>

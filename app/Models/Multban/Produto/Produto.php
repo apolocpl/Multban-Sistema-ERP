@@ -13,6 +13,7 @@ class Produto extends Model
         'produto_sts',
         'produto_tipo',
         'partcp_pvlaor',
+        'partcp_empid',
         'partcp_seller',
         'partcp_pgsplit',
         'partcp_pgtransf',

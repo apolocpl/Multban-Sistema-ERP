@@ -84,6 +84,7 @@
                         <select id="nome_multmais" name="nome_multmais"
                             class="form-control select2 select2-hidden-accessible"
                             data-placeholder="Pesquise o Nome MultMais" style="width: 100%;" aria-hidden="true">
+                            <option></option>
                         </select>
                     </div>
 
@@ -154,6 +155,59 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            // Select2 AJAX para pesquisar nomes MultMais
+            $('#nome_multmais').select2({
+                placeholder: 'Pesquise o Nome MultMais',
+                minimumInputLength: 2,
+                ajax: {
+                    url: '/empresa/obter-nmult', // ajuste conforme sua rota/controller
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            parametro: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (nmult) {
+                                return {
+                                    id: nmult.id,
+                                    text: nmult.text
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+            // Select2 AJAX para pesquisar franqueadoras
+            $('#cod_franqueadora').select2({
+                placeholder: 'Pesquise a Franqueadora',
+                minimumInputLength: 2,
+                ajax: {
+                    url: '/empresa/obter-franqueadoras', // ajuste conforme sua rota/controller
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            parametro: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (franqueadora) {
+                                return {
+                                    id: franqueadora.id,
+                                    text: franqueadora.text
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
             @if ($message = Session::get('success'))
                 $("#empresa_id").val({{ Session::get('idModeloInserido') }})
                 toastr.success("{{ $message }}", "Sucesso");

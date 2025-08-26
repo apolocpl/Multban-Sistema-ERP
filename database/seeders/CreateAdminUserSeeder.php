@@ -35,6 +35,18 @@ class CreateAdminUserSeeder extends Seeder
             'dthr_cr' => date_create()
         ]);
 
+        // $user = User::create([
+        //     'user_name' => 'Medico',
+        //     'user_email' => 'medico@admin.com',
+        //     'user_logon' => 'medico',
+        //     'user_func' => 12,
+        //     'emp_id' => 1,
+        //     'user_cpf' => '00000000001',
+        //     'user_sts' => 'AT',
+        //     'user_pass' => Hash::make('12345678'),
+        //     'dthr_cr' => date_create()
+        // ]);
+
         $conexão = ConexoesBcEmp::create([
             'emp_id' => $user->emp_id,
             'bc_emp_host' => Crypt::encryptString('localhost'),

@@ -174,6 +174,7 @@ class EmpresaController extends Controller
             $input['tax_gift'] = formatarTextoParaDecimal($request->tax_gift);
             $input['tax_fid'] = formatarTextoParaDecimal($request->tax_fid);
             $input['card_posparc'] = formatarTextoParaDecimal($request->card_posparc);
+            $input['blt_parclib'] = formatarTextoParaDecimal($request->blt_parclib);
             $input['tax_comiss'] = formatarTextoParaDecimal($request->tax_comiss);
             $input['tax_royalties'] = formatarTextoParaDecimal($request->tax_royalties);
             $input['tax_rebate'] = formatarTextoParaDecimal($request->tax_rebate);
@@ -287,6 +288,7 @@ class EmpresaController extends Controller
             $empresaParam->qtde_cns_cntrm = $request->qtde_cns_cntrm;
             $empresaParam->card_posctr = $request->card_posctr == "on" ? "x" : "";
             $empresaParam->card_posparc = formatarTextoParaDecimal($request->card_posparc);
+            $empresaParam->blt_parclib = formatarTextoParaDecimal($request->blt_parclib);
             $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == "on" ? "x" : "";
             $empresaParam->perc_mlt_atr = formatarTextoParaDecimal($request->perc_mlt_atr);
             $empresaParam->perc_jrs_atr = formatarTextoParaDecimal($request->perc_jrs_atr);
@@ -664,6 +666,7 @@ class EmpresaController extends Controller
             $input['tax_gift'] = formatarTextoParaDecimal($request->tax_gift);
             $input['tax_fid'] = formatarTextoParaDecimal($request->tax_fid);
             $input['card_posparc'] = formatarTextoParaDecimal($request->card_posparc);
+            $input['blt_parclib'] = formatarTextoParaDecimal($request->blt_parclib);
             $input['tax_comiss'] = formatarTextoParaDecimal($request->tax_comiss);
             $input['tax_royalties'] = formatarTextoParaDecimal($request->tax_royalties);
             $input['tax_rebate'] = formatarTextoParaDecimal($request->tax_rebate);
@@ -816,6 +819,7 @@ class EmpresaController extends Controller
                 $empresaParam->qtde_cns_cntrm = $request->qtde_cns_cntrm;
                 $empresaParam->card_posctr = $request->card_posctr == "on" ? "x" : "";
                 $empresaParam->card_posparc = formatarTextoParaDecimal($request->card_posparc);
+                $empresaParam->blt_parclib = formatarTextoParaDecimal($request->blt_parclib);
                 $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == "on" ? "x" : "";
                 $empresaParam->perc_mlt_atr = formatarTextoParaDecimal($request->perc_mlt_atr);
                 $empresaParam->perc_jrs_atr = formatarTextoParaDecimal($request->perc_jrs_atr);
@@ -1510,7 +1514,7 @@ class EmpresaController extends Controller
         // RESULTADO FINAL DA PESQUISA
         $data = $query->get();
 
-        $this->permissions = \Illuminate\Support\Facades\Auth::user()->getAllPermissions()->pluck('name')->toArray();
+        $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
         return DataTables::of($data)
             ->addIndexColumn()
