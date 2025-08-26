@@ -50,7 +50,7 @@
                     <div class="form-group col-md-2">
                         <label id="produto_id">Código do Produto:</label>
                         <div class="input-group input-group-sm">
-                            <input type="text" id="produto_id" name="produto_id" class="form-control  form-control-sm"
+                            <input type="id" id="produto_id" name="produto_id" class="form-control  form-control-sm"
                                 placeholder="Digite o código do produto">
                         </div>
                     </div>
@@ -67,10 +67,11 @@
                 <!-- SEGUNDA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
                     <div class="form-group col-md-3">
-                        <label for="produto_dm">Descrição do Produto:</label>
-                        <select id="produto_dm" name="produto_dm" class="form-control select2 select2-hidden-accessible"
+                        <label for="produto_dmf">Descrição do Produto:</label>
+                        <select id="produto_dmf" name="produto_dmf" class="form-control select2 select2-hidden-accessible"
                             data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
                         </select>
+                        <input type="hidden" id="produto_dmf_id" name="produto_dmf_id" value="">
                     </div>
                     <div class="form-group col-md-2">
                         <label for="produto_sts">Status:</label>

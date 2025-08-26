@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Multban\Produto;
 
+use App\Enums\ProdutoStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Multban\Produto\Produto;
 use Illuminate\Http\Request;
@@ -77,6 +78,15 @@ class ProdutoController extends Controller
         $validated = $request->validate($rules);
 
         $data = $request->except(['_token', '_method']);
+        // Regra para partcp_pvlaor
+        if (isset($data['partcp_pvlaor'])) {
+            $partcp_pvlaor = str_replace(',', '.', $data['partcp_pvlaor']);
+            if ($partcp_pvlaor === '' || $partcp_pvlaor === null) {
+                unset($data['partcp_pvlaor']);
+            } else {
+                $data['partcp_pvlaor'] = $partcp_pvlaor;
+            }
+        }
         $data['produto_ctrl'] = isset($data['produto_ctrl']) ? 'X' : '';
         $data['emp_id'] = $user->emp_id;
         if (isset($data['produto_vlr'])) {
@@ -124,7 +134,7 @@ class ProdutoController extends Controller
         $bancos = TbDmBncCode::all();
             $empresaPartOption = null;
             if (!empty($produto->partcp_empid)) {
-                $empresa = \App\Models\Multban\Empresa\Empresa::where('emp_id', $produto->partcp_empid)->first();
+                $empresa = Empresa::where('emp_id', $produto->partcp_empid)->first();
                 if ($empresa) {
                     $empresaPartOption = [
                         'id' => $empresa->emp_id,
@@ -177,10 +187,17 @@ class ProdutoController extends Controller
         $validated = $request->validate($rules);
 
         $data = $request->except(['_token', '_method']);
+
         // Converte o valor para formato correto antes do update
-        $request->merge([
-            'partcp_pvlaor' => str_replace(',', '.', $request->input('partcp_pvlaor'))
-        ]);
+        $partcp_pvlaor = str_replace(',', '.', $request->input('partcp_pvlaor'));
+        if ($partcp_pvlaor === '' || $partcp_pvlaor === null) {
+            $request->request->remove('partcp_pvlaor');
+        } else {
+            $request->merge([
+                'partcp_pvlaor' => $partcp_pvlaor
+            ]);
+        }
+
         $data = $request->all();
         $data['produto_ctrl'] = isset($data['produto_ctrl']) ? 'X' : '';
         $data['emp_id'] = $user->emp_id;
@@ -209,29 +226,84 @@ class ProdutoController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-    }
-
-    // FUNÇÃO QUE BUSCA DADOS DO FILTRO EMPRESA
-    public function getObterEmpresas(Request $request)
-    {
-        $parametro = $request != null ? $request->all()['parametro'] : '';
-        $campo = 'emp_nfant';
-
-        if (empty($parametro)) {
-            return [];
+        try {
+            $produto = Produto::find($id);
+            if ($produto) {
+                $produto->produto_sts = 'EX'; // Excluído
+                $produto->save();
+                return response()->json([
+                    'title' => 'Sucesso',
+                    'text' => 'Produto excluído com sucesso!',
+                    'type' => 'success'
+                ]);
+            }
+            return response()->json([
+                'title' => 'Erro',
+                'text' => 'Produto não encontrado!',
+                'type' => 'error'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'title' => 'Erro',
+                'text' => $e->getMessage(),
+                'type' => 'error'
+            ], 500);
         }
-
-        $query = Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
-            ->where(function($q) use ($campo, $parametro) {
-                $q->where($campo, 'like', "%$parametro%")
-                  ->orWhere('emp_cnpj', 'like', "%$parametro%")
-                  ->orWhere('emp_id', 'like', "%$parametro%");
-            });
-
-        return $query->get()->toArray();
     }
 
+    public function inactive($id)
+    {
+        try {
+            $produto = Produto::find($id);
+            if ($produto) {
+                $produto->produto_sts = 'IN'; // Inativo
+                $produto->save();
+                return response()->json([
+                    'title' => 'Sucesso',
+                    'text' => 'Produto inativado com sucesso!',
+                    'type' => 'success'
+                ]);
+            }
+            return response()->json([
+                'title' => 'Erro',
+                'text' => 'Produto não encontrado!',
+                'type' => 'error'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'title' => 'Erro',
+                'text' => $e->getMessage(),
+                'type' => 'error'
+            ], 500);
+        }
+    }
+
+    public function active(string $id)
+    {
+        try {
+            $produto = Produto::find($id);
+            if ($produto) {
+                $produto->produto_sts = 'AT'; // Ativo
+                $produto->save();
+                return response()->json([
+                    'title' => 'Sucesso',
+                    'text' => 'Produto ativado com sucesso!',
+                    'type' => 'success'
+                ]);
+            }
+            return response()->json([
+                'title' => 'Erro',
+                'text' => 'Produto não encontrado!',
+                'type' => 'error'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'title' => 'Erro',
+                'text' => $e->getMessage(),
+                'type' => 'error'
+            ], 500);
+        }
+    }
 
     // FUNÇÃO QUE BUSCA DADOS DO FILTRO DESCRIÇÃO DO PRODUTO
     public function getObterDescricaoProduto(Request $request)
@@ -267,8 +339,8 @@ class ProdutoController extends Controller
 
         $emp_id = "";
         $produto_id = "";
+        $produto_dm_id = "";
         $produto_tipo = "";
-        $produto_dm = "";
         $produto_sts = "";
 
         $data = new Collection();
@@ -281,12 +353,12 @@ class ProdutoController extends Controller
             $produto_id = $request->produto_id;
         }
 
-        if (!empty($request->produto_tipo)) {
-            $produto_tipo = $request->produto_tipo;
+        if (!empty($request->produto_dmf_id)) {
+            $produto_dm_id = $request->produto_dmf_id;
         }
 
-        if (!empty($request->produto_dm)) {
-            $produto_dm = $request->produto_dm;
+        if (!empty($request->produto_tipo)) {
+            $produto_tipo = $request->produto_tipo;
         }
 
         if (!empty($request->produto_sts)) {
@@ -300,20 +372,16 @@ class ProdutoController extends Controller
             $query->where('emp_id', '=', $emp_id);
         }
 
-        if (!empty($produto_id)) {
-            if (is_numeric($produto_id) && intval($produto_id) > 0) {
-                $query->where('produto_id', '=', $produto_id);
-            } else {
-                $query->where('produto_dm', 'like', '%' . $produto_dm . '%');
-            }
+        if (!empty($produto_id) && is_numeric($produto_id) && intval($produto_id) > 0) {
+            $query->where('produto_id', '=', $produto_id);
+        }
+
+        if (!empty($produto_dm_id)) {
+            $query->where('produto_id', '=', $produto_dm_id);
         }
 
         if (!empty($produto_tipo)) {
             $query->where('produto_tipo', '=', $produto_tipo);
-        }
-
-        if (!empty($produto_dm)) {
-            $query->where('produto_dm', '=', $produto_dm);
         }
 
         if (!empty($produto_sts)) {
@@ -329,9 +397,22 @@ class ProdutoController extends Controller
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '';
-                    if (in_array('produto.edit', $this->permissions)) {
-                        $btn .= '<a href="produto/' . $row->produto_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
-                    }
+                if (in_array('produto.edit', $this->permissions)) {
+                    $btn .= '<a href="produto/' . $row->produto_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
+                }
+
+                $disabled = "";
+                if ($row->produto_sts == ProdutoStatusEnum::ATIVO)
+                    $disabled = "disabled";
+
+                $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="active_grid_id" data-url="produto" data-id="' . $row->produto_id . '" title="Ativar"><i class="far fa-check-circle"></i></button>';
+
+                $disabled = "";
+                if ($row->produto_sts == ProdutoStatusEnum::INATIVO)
+                    $disabled = "disabled";
+
+                $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="inactive_grid_id" data-url="produto" data-id="' . $row->produto_id . '" title="Inativar"><i class="fas fa-ban"></i></button>';
+
                 if (in_array('produto.destroy', $this->permissions)) {
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" id="delete_grid_id" data-url="produtos" data-id="' . $row->produto_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
                 }

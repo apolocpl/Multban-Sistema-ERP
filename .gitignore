@@ -12,6 +12,7 @@ yarn-error.log
 # Build output
 dist/
 build/
+!public/assets/dist/js/pages/produto/
 
 # IDE and editor files
 .idea/
