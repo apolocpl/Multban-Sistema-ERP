@@ -45,11 +45,12 @@
 
                         <div class="form-group col-md-3">
                             <label for="status">Status:*</label>
-                            <select class="form-control select2" name="status" id="status"
-                                data-placeholder="Selecione" style="width: 100%;">
+                            <select class="form-control select2" name="status" id="status" data-placeholder="Selecione"
+                                style="width: 100%;">
                                 <option></option>
                                 @foreach ($status as $sts)
-                                <option value="{{$sts->agendamento_sts}}" {{ $sts->agendamento_sts == $agendamento->status ?
+                                <option value="{{$sts->agendamento_sts}}" {{ $sts->agendamento_sts ==
+                                    $agendamento->status ?
                                     'selected' : '' }}>{{$sts->agendamento_sts_desc}}</option>
                                 @endforeach
                             </select>
@@ -60,14 +61,16 @@
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="cliente_id">Nome:* @if($agendamento->cliente)
-                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}/alterar?pront={{$agendamento->id}}" class="text- text-primary" >[ <i class="fa fa-address-card"></i> Ver prontuário]</a>
-                            @endif</label>
+                                <a href="/cliente/{{$agendamento->cliente->cliente_id}}/alterar?pront={{$agendamento->id}}"
+                                    class="text- text-primary">[ <i class="fa fa-address-card"></i> Ver prontuário]</a>
+                                @endif</label>
                             <select id="cliente_id" name="cliente_id"
                                 class="form-control select2 select2-hidden-accessible"
                                 data-placeholder="Pesquise o paciente" style="width: 100%;" aria-hidden="true">
                                 @if($agendamento->cliente)
                                 <option value="{{$agendamento->cliente->cliente_id}}">
-                                    {{str_pad($agendamento->cliente->cliente_id, 5, '0', STR_PAD_LEFT)}} - {{$agendamento->cliente->cliente_nome}}
+                                    {{str_pad($agendamento->cliente->cliente_id, 5, '0', STR_PAD_LEFT)}} -
+                                    {{$agendamento->cliente->cliente_nome}}
                                 </option>
                                 @endif
                             </select>
@@ -124,29 +127,30 @@
 
                         <div class="form-group col-md-3">
                             <label for="cliente_dt_nasc">Data de Nascimento:*</label>
-                            <input autocomplete="off" type="date"
-                                class="form-control form-control-sm" id="cliente_dt_nasc" name="cliente_dt_nasc"
+                            <input autocomplete="off" type="date" class="form-control form-control-sm"
+                                id="cliente_dt_nasc" name="cliente_dt_nasc"
                                 value="{{!empty($agendamento->cliente) ? $agendamento->cliente->cliente_dt_nasc : ''}}"
                                 placeholder="Data de Nascimento">
                         </div>
                         <div class="form-group col-md-3">
                             <label for="convenio">Convênio:</label>
-                              <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Convênio"
-                                            id="convenio_id" name="convenio_id">
-                                            <option></option>
-                                            @foreach($convenios as $key => $convenio)
-                                            <option value="{{$convenio->convenio_id}}" @if($agendamento->cliente)
-                                                {{$convenio->convenio_id == $agendamento->cliente->convenio_id ? 'selected' : ''}}
-                                            @endif>{{$convenio->convenio_desc}}
-                                            </option>
-                                            @endforeach
-                                        </select>
+                            <select class="form-control select2" style="width: 100%;"
+                                data-placeholder="Selecione o Convênio" id="convenio_id" name="convenio_id">
+                                <option></option>
+                                @foreach($convenios as $key => $convenio)
+                                <option value="{{$convenio->convenio_id}}" @if($agendamento->cliente)
+                                    {{$convenio->convenio_id == $agendamento->cliente->convenio_id ? 'selected' : ''}}
+                                    @endif>{{$convenio->convenio_desc}}
+                                </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="form-group col-md-3">
                             <label for="nro_carteirinha">Nro carteirinha:</label>
                             <input autocomplete="off" type="text" class="form-control form-control-sm"
-                                id="nro_carteirinha" name="nro_carteirinha" value="{{!empty($agendamento->cliente) ? $agendamento->cliente->carteirinha : ''}}"
+                                id="nro_carteirinha" name="nro_carteirinha"
+                                value="{{!empty($agendamento->cliente) ? $agendamento->cliente->carteirinha : ''}}"
                                 placeholder="Nro carteirinha">
 
                         </div>
@@ -168,7 +172,8 @@
                                 <option></option>
                                 @foreach ($users as $user)
                                 <option value="{{$user->user_id}}" {{ $user->user_id == $agendamento->user_id ?
-                                    'selected' : '' }}>{{$user->user_name}} @if ($user->cargo) - {{$user->cargo->user_func_desc}}
+                                    'selected' : '' }}>{{$user->user_name}} @if ($user->cargo) -
+                                    {{$user->cargo->user_func_desc}}
                                     @endif </option>
                                 @endforeach
                             </select>
@@ -176,23 +181,20 @@
 
                         <div class="form-group col-md-2">
                             <label for="date">Data:*</label>
-                            <input autocomplete="off" type="date"
-                                class="form-control form-control-sm" id="date" name="date"
-                                value="{{$agendamento->date}}" placeholder="Data" >
+                            <input autocomplete="off" type="date" class="form-control form-control-sm" id="date"
+                                name="date" value="{{$agendamento->date}}" placeholder="Data">
                         </div>
 
 
                         <div class="form-group col-md-2">
                             <label for="start">Início:*</label>
-                            <input autocomplete="off" type="time"
-                                class="form-control form-control-sm" id="start" name="start"
-                                value="{{$agendamento->start}}" placeholder="hh:mm">
+                            <input autocomplete="off" type="time" class="form-control form-control-sm" id="start"
+                                name="start" value="{{$agendamento->start}}" placeholder="hh:mm">
                         </div>
                         <div class="form-group col-md-2">
                             <label for="end">Término:*</label>
-                            <input autocomplete="off" type="time"
-                                class="form-control form-control-sm" id="end" name="end"
-                                value="{{$agendamento->end}}" placeholder="hh:mm">
+                            <input autocomplete="off" type="time" class="form-control form-control-sm" id="end"
+                                name="end" value="{{$agendamento->end}}" placeholder="hh:mm">
 
                             <!-- /.input group -->
                         </div>
@@ -241,6 +243,18 @@
 
 <script type="text/javascript">
     $(document).ready(function(e) {
+
+        @if ( request()->has('date') )
+            $('#date').val("{{ request('date') }}");
+        @endif
+
+        @if ( request()->has('start') )
+            $('#start').val("{{ request('start') }}");
+        @endif
+
+        @if ( request()->has('end') )
+            $('#end').val("{{ request('end') }}");
+        @endif
 
         // Verifica o status do usuário e ajusta o texto do botão de ativação/inativação
         if ("{{$agendamento->user_sts}}" == "EX" ) {

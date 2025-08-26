@@ -63,6 +63,11 @@ class Cliente extends Model
         return $this->belongsTo(Cidade::class, 'cliente_endcid_s', 'cidade');
     }
 
+    public function prontuario()
+    {
+        return $this->hasOne(ClienteProntuario::class, 'cliente_id', 'cliente_id');
+    }
+
 
     public function rules($id = '')
     {

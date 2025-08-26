@@ -35,19 +35,35 @@
 
                 <div class="sticky-top mb-3">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title">Agendamento</h4>
-                        </div>
                         <div class="card-body">
-                            <!-- the events -->
-                            <div class="input-group mb-3">
-                                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-                                    Agendar
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="{{ route('agendamento.create') }}" id="btnAgendamento">Atendimento</a>
+                            <div class="form-row">
+                                <div class="form-group col-md-2">
+                                    <label for="date">Data:</label>
+                                    <input autocomplete="off" type="date" class="form-control form-control-sm" id="date"
+                                        name="date" value="" placeholder="Data">
                                 </div>
+
+
+                                <div class="form-group col-md-2">
+                                    <label for="start">Início:</label>
+                                    <input autocomplete="off" type="time" class="form-control form-control-sm"
+                                        id="start" name="start" value="" placeholder="hh:mm">
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <label for="end">Término:</label>
+                                    <input autocomplete="off" type="time" class="form-control form-control-sm" id="end"
+                                        name="end" value="" placeholder="hh:mm">
+
+                                    <!-- /.input group -->
+                                </div>
+
+                                <div class="form-group col-md-2 align-self-end">
+                                    <a href="{{ route('agendamento.create') }}" id="btnAgendamento"
+                                        class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Novo Agendamento</a>
+                                </div>
+
                             </div>
+
                         </div>
                         <!-- /.card-body -->
                     </div>

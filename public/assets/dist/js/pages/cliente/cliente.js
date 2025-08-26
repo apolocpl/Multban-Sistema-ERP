@@ -1,6 +1,4 @@
-$(function () {
 
-    "use strict";
     ns.comboBoxSelect("cliente_endpais", "/empresa/obter-pais", "pais");
     ns.comboBoxSelect("cliente_endest", "/empresa/obter-estado", "estado");
     ns.comboBoxSelect("cliente_endcid", "/empresa/obter-cidade", "cidade_ibge");
@@ -11,7 +9,213 @@ $(function () {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
+    var colunas = [
+
+        {
+            data: 'protocolo',
+            name: 'protocolo'
+        },
+        {
+            data: 'protocolo_tp',
+            name: 'protocolo_tp',
+        },
+        {
+            data: 'medico',
+            name: 'medico',
+        },
+        {
+            data: 'anexo',
+            name: 'anexo',
+        },
+        {
+            data: 'action',
+            name: 'action',
+            orderable: false,
+            searchable: false
+        }
+    ];
+
+    var colunasConfiguracao = [
+
+    ];
+$(function () {
+    "use strict";
+
     window.clientejs = ({
+        submitFormPrt: function (formId, btnSubmit, btnPesquisar, url, modal) {
+            $(btnSubmit).text("Salvando...");
+            $(btnSubmit).desabilitar();
+            try {
+                $.ajaxSetup({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    },
+                });
+
+                const myDiv = document.getElementById(formId);
+                const inputElements = myDiv.querySelectorAll('input, select, textarea, file');
+
+                var formData = new FormData();
+                var isEdit = $('#is_edit').val();
+                if (isEdit === "0") {
+                    formData.append("emp_id", $("#empresa_id option:selected").val());
+                } else {
+                    formData.append("emp_id", $(btnSubmit).data('emp-id'));
+                }
+
+                formData.append("cliente_id", $("#cliente_id").val());
+                inputElements.forEach(input => {
+
+                    if (input.type === 'checkbox') {
+                        formData.append(input.name, input.checked ? 'x' : '');
+                    } else if (input.type === 'file') {
+                        const file = input.files[0];
+                        if (input.value.length > 0) {
+                            // Append the file to the FormData object
+                            formData.append(input.name, file, file.name);
+
+                        }
+                    }
+
+                    else {
+                        formData.append(input.name, !isNumeric(input.value.replace("%", "").replace(".", "").replace(",", ".")) ? input.value : $.tratarValor(input.value));
+                    }
+
+                });
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: formData,
+                    cache: false,
+                    dataType: "json",
+                    contentType: false,
+                    processData: false,
+                    success: function (data) {
+                        Swal.fire(data.title, data.text, data.type);
+                        $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                        $(btnSubmit).habilitar();
+                        $(btnSubmit).attr('data-emp-id', '');
+                        $("#" + btnPesquisar).trigger('click');
+                        $("#" + modal).modal('hide');
+                    },
+                    error: function (xhr, status, error) {
+
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.message;
+                            Object.keys(errors).forEach(async function (key, value) {
+
+                                $("#" + key).addClass("is-invalid");
+
+                                $("#" + key)
+                                    .closest(".form-group")
+                                    .find(".select2-selection")
+                                    .css("border-color", "#dc3545")
+                                    .addClass("text-danger");
+                            });
+
+                            if (xhr.responseJSON.message_type) {
+                                Swal.fire("Erro", xhr.responseJSON.message_type, "error");
+                            } else {
+                                Swal.fire("Erro", "Existem um ou mais campos obrigatórios não preenchidos.", "error");
+                            }
+
+                        }
+
+                        else if (XMLHttpRequest.status == 401) {
+                            Swal.fire({
+                                title: "Erro",
+                                text:
+                                    "Sua sessão expirou, é preciso fazer o login novamente.",
+                                icon: "error",
+                                showCancelButton: false,
+                                allowOutsideClick: false,
+                            }).then(function (result) {
+                                $.limparBloqueioSairDaTela();
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(xhr.responseJSON.title, xhr.responseJSON.text, xhr.responseJSON.type);
+                        }
+
+                        $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                        $(btnSubmit).habilitar();
+
+                    },
+                });
+            } catch (error) {
+                $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                $(btnSubmit).habilitar();
+                toastr.error(error);
+                console.error(error);
+            }
+
+        },
+
+        loadDatatablePrt: function (dados) {
+            console.log('loadDatatablePrt', dados)
+            var griditem = $('#gridprotocolo').DataTable();
+            griditem.clear().destroy();
+
+            griditem = $('#gridprotocolo').DataTable({
+                data: dados,
+                columns: colunas,
+                rowId: "protocolo",
+                columnDefs: colunasConfiguracao,
+                fixedColumns: false,
+                //select: "multi",
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                "pageLength": 100,
+                lengthMenu: [
+                    [10, 50, 100, -1],
+                    [10, 50, 100, 'Todos']
+                ],
+                language: {
+                    select: {
+                        rows: {
+                            _: "%d selecionados",
+                            0: "",
+                            1: "1 selecionado",
+                        },
+                    },
+                    sEmptyTable: "Nenhum registro encontrado",
+                    sInfo:
+                        "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando 0 até 0 de 0 registros",
+                    sInfoFiltered: "(Filtrados de _MAX_ registros)",
+                    sInfoPostFix: "",
+                    sInfoThousands: ".",
+                    sLengthMenu: "_MENU_ resultados por página",
+                    sLoadingRecords: "Carregando...",
+                    sProcessing: "Processando...",
+                    sZeroRecords: "Nenhum registro encontrado",
+                    sSearch: "Pesquisar",
+                    oPaginate: {
+                        sNext: "Próximo",
+                        sPrevious: "Anterior",
+                        sFirst: "Primeiro",
+                        sLast: "Último",
+                    },
+                    oAria: {
+                        sSortAscending:
+                            ": Ordenar colunas de forma ascendente",
+                        sSortDescending:
+                            ": Ordenar colunas de forma descendente",
+                    },
+                },
+                order: [[2, "asc"]],
+            });
+
+            if (griditem.data().count() == 0) {
+                $("#deleteAll").attr('disabled', true);
+            } else {
+                $("#deleteAll").attr('disabled', false);
+            }
+
+        },
         submitForm: function (formId, btnSubmit, btnPesquisar, url, modal) {
             $(btnSubmit).text("Salvando...");
             $(btnSubmit).desabilitar();
@@ -276,6 +480,20 @@ $(function () {
         var url = "/cliente/update-card";
         if (isEdit === "0") {
             url = "/cliente/store-card";
+        }
+        //formId, btnSubmit, btnPesquisar, URL, Modal
+        clientejs.submitForm('formCriarCartao', this, 'btnPesquisarPdMsg', url, "modalCriarCartao");
+    });
+
+
+
+    $('body').on('click', '#btnSalvarPrt', function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var isEdit = $("#is_edit_prt").val();
+        var url = "/cliente/update-prt";
+        if (isEdit === "0") {
+            url = "/cliente/store-prt";
         }
         //formId, btnSubmit, btnPesquisar, URL, Modal
         clientejs.submitForm('formCriarCartao', this, 'btnPesquisarPdMsg', url, "modalCriarCartao");

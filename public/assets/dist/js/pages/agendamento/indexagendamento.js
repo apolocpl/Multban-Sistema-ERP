@@ -29,7 +29,7 @@ $(function () {
             },
         },
         locale: 'pt-br',
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek',
         timeZone: 'UTC',
         slotMinTime: "08:00:00",
         slotMaxTime: "20:00:00",
@@ -42,19 +42,47 @@ $(function () {
         displayEventTime: true,
         displayEventEnd: true,
         firstDay: 1, // Monday as the first day of the week
-        slotDuration: '00:15:00', // 30 minutes slots
-        //slotLabelInterval: '00:15', // 1 hour intervals for time labels
+        slotDuration: '00:15', // 15 minutes slots
+        slotLabelInterval: '00:10', // 10 minutes intervals for time labels
         slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false }, // 24-hour format for time labels
-        //         eventContent: function(arg) {
-        //             console.log('eventContent: ', arg);
-        //           return {
+        dateClick: function (info) {
+            // let eventTitle = prompt('Enter event title:'); // Get event title from user
+            // if (eventTitle) {
+            //     calendar.addEvent({
+            //         title: eventTitle,
+            //         start: info.dateStr, // Use the clicked date as the start
+            //         end: info.endStr,   // You can adjust the end time as needed
+            //         allDay: false, // Or set to false for a specific time
+            //         extendedProps: {
+            //             description: 'teste'
+            //         }
+            //     });
+            // }
+        },
+        select: function (info) {
 
-        // backgroundColor: 'red',
+            Pace.restart();
+            // You can use the event ID to fetch more details or perform actions
+            console.log('Selected from ' + info.startStr + ' to ' + info.endStr);
+            $('#date').val(info.startStr.substring(0, 10));
+            $('#start').val(info.startStr.substring(11, 16));
+            $('#end').val(info.endStr.substring(11, 16));
+            $('#btnAgendamento').attr('href', "/agendamento/inserir?date=" + info.startStr.substring(0, 10) + "&start=" + info.startStr.substring(11, 16) + "&end=" + info.endStr.substring(11, 16));
+
+
+
+            //alert('selected ' + info.startStr + ' to ' + info.endStr);
+        },
+        //eventContent: function(arg) {
+        // console.log('eventContent: ', arg);
+        // return {
+
+        //  backgroundColor: 'red',
         //             borderColor: arg.event.borderColor,
         //             textColor: arg.event.textColor,
 
         //             html: '<div class="fc-daygrid-event-dot"></div><div class="fc-event-time">'+arg.event.startStr+'</div><div class="fc-event-title">'+arg.event.title+'</div>' };
-        //         },
+        //},
         eventDidMount: function (info) {
             console.log('eventDidMount: ', info.event);
             new bootstrap.Tooltip(info.el, {
@@ -96,9 +124,6 @@ $(function () {
                 console.log('Event ID: ', info.event.id);
                 window.location.href = "/agendamento/" + info.event.id + "/alterar";
             });
-
-            // change the border color just for fun
-            info.el.style.borderColor = 'red';
         },
         headerToolbar: {
             left: 'prev,next,today',

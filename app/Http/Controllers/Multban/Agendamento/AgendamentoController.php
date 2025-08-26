@@ -90,7 +90,7 @@ class AgendamentoController extends Controller
                         break;
                 }
 
-                if($item->agendamento_tipo == 4) {
+                if ($item->agendamento_tipo == 4) {
                     $tipoClass = 'text-danger';
                 } else {
                     $tipoClass = 'text-secondary';
@@ -122,7 +122,7 @@ class AgendamentoController extends Controller
         $tipos = TbDmAgendamentoTipo::all();
 
         $dbsysclient = DB::connection('dbsysclient');
-        $users = User::join($dbsysclient->getDatabaseName().'.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
+        $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
             ->where('user_func_grp', '=', 'consulta')->get();
 
         $convenios = TbDmConvenios::all();
@@ -296,20 +296,10 @@ class AgendamentoController extends Controller
 
         $status = TbDmAgendamentoStatus::all();
         $tipos = TbDmAgendamentoTipo::all();
-        $users = User::whereIn('user_func', [
-            '1',
-            '2',
-            '5',
-            '6',
-            '7',
-            '9',
-            '10',
-            '12',
-            '13',
-            '14',
-            '15',
-            '21',
-        ])->get();
+
+        $dbsysclient = DB::connection('dbsysclient');
+        $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
+            ->where('user_func_grp', '=', 'consulta')->get();
 
         $convenios = TbDmConvenios::all();
 

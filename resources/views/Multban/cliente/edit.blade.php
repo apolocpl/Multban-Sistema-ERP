@@ -16,7 +16,7 @@
 <!-- Main content -->
 <section class="content">
 
-     @if($routeAction)
+    @if($routeAction)
 
     <form class="form-horizontal" id="formPrincipal" role="form" method="POST"
         action="{{ route('cliente.update', $cliente->cliente_id) }}">
@@ -30,6 +30,7 @@
 
             <input type="hidden" id="cliente_id" name="cliente_id" value="{{$cliente->cliente_id}}" />
             <input type="hidden" id="is_edit" value="1" />
+            <input type="hidden" id="is_edit_prt" value="0" />
 
             <div class="card card-primary card-outline card-outline-tabs">
                 <!-- MENU ABAS/TABS -->
@@ -37,8 +38,9 @@
                     <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
 
                         <li class="nav-item">
-                            <a class="nav-link {{!request()->has('pront') ? 'active' : ''}}" id="tabs-dados-tab" data-toggle="pill" href="#tabs-dados"
-                                role="tab" aria-controls="tabs-dados" aria-selected="true">Dados Gerais</a>
+                            <a class="nav-link {{!request()->has('pront') ? 'active' : ''}}" id="tabs-dados-tab"
+                                data-toggle="pill" href="#tabs-dados" role="tab" aria-controls="tabs-dados"
+                                aria-selected="true">Dados Gerais</a>
                         </li>
 
                         <li class="nav-item">
@@ -62,8 +64,9 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{request()->has('pront') ? 'active' : ''}}" id="tabs-prontuario-tab" data-toggle="pill" href="#tabs-prontuario"
-                                role="tab" aria-controls="tabs-prontuario" aria-selected="false">Prontuário</a>
+                            <a class="nav-link {{request()->has('pront') ? 'active' : ''}}" id="tabs-prontuario-tab"
+                                data-toggle="pill" href="#tabs-prontuario" role="tab" aria-controls="tabs-prontuario"
+                                aria-selected="false">Prontuário</a>
                         </li>
 
                         <li class="nav-item">
@@ -79,8 +82,8 @@
                     <div class="tab-content" id="custom-tabs-two-tabContent">
 
                         <!--ABA DADOS GERAIS-->
-                        <div class="tab-pane fade {{!request()->has('pront') ? 'active show' : ''}}" id="tabs-dados" role="tabpanel"
-                            aria-labelledby="tabs-dados-tab">
+                        <div class="tab-pane fade {{!request()->has('pront') ? 'active show' : ''}}" id="tabs-dados"
+                            role="tabpanel" aria-labelledby="tabs-dados-tab">
 
                             <div class="card card-primary">
 
@@ -130,9 +133,8 @@
                                         <div class="form-group col-md-2">
                                             <label for="cliente_rg">RG:</label>
                                             <div class="input-group input-group-sm">
-                                                <input type="text" maxlength="15" id="cliente_rg"
-                                                    name="cliente_rg" class="form-control  form-control-sm"
-                                                    placeholder="Digite o RG"
+                                                <input type="text" maxlength="15" id="cliente_rg" name="cliente_rg"
+                                                    class="form-control  form-control-sm" placeholder="Digite o RG"
                                                     value="{{$cliente->cliente_rg}}">
                                             </div>
                                         </div>
@@ -156,7 +158,7 @@
                                                 type="text" id="cliente_nm_alt" value="{{$cliente->cliente_nm_alt}}">
                                         </div>
 
-                                         <div class="form-group col-md-2">
+                                        <div class="form-group col-md-2">
                                             <label for="cliente_dt_nasc">Data de Nascimento:*</label>
                                             <input class="form-control  form-control-sm"
                                                 placeholder="Digite a data de nascimento" name="cliente_dt_nasc"
@@ -227,21 +229,23 @@
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
                                             <label for="convenio_id">Convênio:*</label>
-                                            <select class="form-control select2" style="width: 100%;" data-placeholder="Selecione o Convênio"
-                                            id="convenio_id" name="convenio_id">
-                                            <option></option>
-                                            @foreach($convenios as $key => $convenio)
-                                            <option value="{{$convenio->convenio_id}}" {{$convenio->convenio_id == $cliente->convenio_id ? 'selected' : ''}}>{{$convenio->convenio_desc}}
-                                            </option>
-                                            @endforeach
-                                        </select>
+                                            <select class="form-control select2" style="width: 100%;"
+                                                data-placeholder="Selecione o Convênio" id="convenio_id"
+                                                name="convenio_id">
+                                                <option></option>
+                                                @foreach($convenios as $key => $convenio)
+                                                <option value="{{$convenio->convenio_id}}" {{$convenio->convenio_id ==
+                                                    $cliente->convenio_id ? 'selected' :
+                                                    ''}}>{{$convenio->convenio_desc}}
+                                                </option>
+                                                @endforeach
+                                            </select>
                                         </div>
 
                                         <div class="form-group col-md-2">
                                             <label for="carteirinha">Carteirinha:</label>
-                                            <input autocomplete="off" type="text"
-                                                class="form-control form-control-sm" id="carteirinha"
-                                                name="carteirinha" value="{{$cliente->carteirinha}}"
+                                            <input autocomplete="off" type="text" class="form-control form-control-sm"
+                                                id="carteirinha" name="carteirinha" value="{{$cliente->carteirinha}}"
                                                 placeholder="Digite a Carteirinha">
                                         </div>
                                     </div>
@@ -484,10 +488,9 @@
                                     <div class="form-row">
                                         <div class="form-group col-md-2">
 
-                                    <label for="dt_vencimento_mod">Data de Vencimento da Mensalidade:*</label>
-                                    <input type="date"
-                                                class="form-control  form-control-sm" id="dt_vencimento_mod"
-                                                name="dt_vencimento_mod">
+                                            <label for="dt_vencimento_mod">Data de Vencimento da Mensalidade:*</label>
+                                            <input type="date" class="form-control  form-control-sm"
+                                                id="dt_vencimento_mod" name="dt_vencimento_mod">
                                         </div>
 
                                         <div class="form-group col-md-2">
@@ -530,31 +533,38 @@
                                     <!-- AÇÕES GERAIS -->
                                     <div class="form-row">
                                         <div class="form-group col-md-2 align-self-end input-group-sm">
-                                            <button type="button" class="form-control form-control-sm btn btn-primary" id="btnImprimirTudo">
+                                            <button type="button" class="form-control form-control-sm btn btn-primary"
+                                                id="btnImprimirTudo">
                                                 <i class="fas fa-shredder"></i> Imprimir Boletos</button>
                                         </div>
 
                                         <div class="form-group col-md-2 align-self-end input-group-sm">
-                                            <button type="button" class="form-control form-control-sm btn btn-primary" id="btnAlterarTudo">
+                                            <button type="button" class="form-control form-control-sm btn btn-primary"
+                                                id="btnAlterarTudo">
                                                 <i class="fas fa-sync-alt"></i> Alteração em Massa</button>
                                         </div>
                                         <div class="form-group col-md-2 align-self-end input-group-sm">
-                                            <button type="button" class="form-control form-control-sm btn btn-primary" id="btnEnviarLinkCompra">
-                                                <i class="fas fa-money-check-edit-alt"></i> Enviar Link de Pagto</button>
+                                            <button type="button" class="form-control form-control-sm btn btn-primary"
+                                                id="btnEnviarLinkCompra">
+                                                <i class="fas fa-money-check-edit-alt"></i> Enviar Link de
+                                                Pagto</button>
                                         </div>
                                         <div class="form-group col-md-2 align-self-end input-group-sm">
-                                            <button type="button" class="form-control form-control-sm btn btn-primary" id="btnEnviarLinkFatura">
+                                            <button type="button" class="form-control form-control-sm btn btn-primary"
+                                                id="btnEnviarLinkFatura">
                                                 <i class="fas fa-credit-card"></i> Enviar Link da Fatura</button>
                                         </div>
                                     </div>
 
                                     <!-- TABELA DE DADOS -->
                                     <div class="table-responsive table-sm">
-                                        <table id="gridtemplate" class="table table-striped table-bordered nowrap table-sm">
+                                        <table id="gridtemplate"
+                                            class="table table-striped table-bordered nowrap table-sm">
                                             <thead>
                                                 <tr>
                                                     <th style="width: 20px;">
-                                                        <input type="checkbox" id="selectAll" class="mr-2" title="Selecionar Todos" />
+                                                        <input type="checkbox" id="selectAll" class="mr-2"
+                                                            title="Selecionar Todos" />
                                                     </th>
                                                     <th style="width: 230px;">Ações</th>
                                                     <th>ID Emp.</th>
@@ -571,129 +581,158 @@
                                                 </tr>
 
                                                 <!-- Exemplo de dados estáticos -->
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <input type="checkbox" class="mr-2" />
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Imprimir Comprovante">
-                                                                <i class="fas fa-print"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Manutenção de Título">
-                                                                <i class="fas fa-wrench"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Pagar">
-                                                                <i class="fas fa-usd-square"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Cancelar">
-                                                                <i class="fas fa-ban"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Baixa Manual">
-                                                                <i class="fas fa-hands-usd"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Cobrança">
-                                                                <i class="far fa-file-invoice-dollar"></i>
-                                                            </button>
-                                                        </td>
-                                                        <td>1</td>
-                                                        <td>12345</td>
-                                                        <td>Cliente Teste</td>
-                                                        <td>2</td>
-                                                        <td>R$ 100,00</td>
-                                                        <td>R$ 1,50</td>
-                                                        <th>R$ 101,50</th>
-                                                        <td>Cartão</td>
-                                                        <td>10/05/2025</td>
-                                                        <td>10/07/2025</td>
-                                                        <td><span class="badge badge-success">Pago</span></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <input type="checkbox" class="mr-2" />
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Imprimir Comprovante">
-                                                                <i class="fas fa-print"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Manutenção de Título">
-                                                                <i class="fas fa-wrench"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Pagar">
-                                                                <i class="fas fa-usd-square"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Cancelar">
-                                                                <i class="fas fa-ban"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Baixa Manual">
-                                                                <i class="fas fa-hands-usd"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-primary mt-1" title="Cobrança">
-                                                                <i class="far fa-file-invoice-dollar"></i>
-                                                            </button>
-                                                        </td>
-                                                        <td>1</td>
-                                                        <td>12345</td>
-                                                        <td>Cliente Teste</td>
-                                                        <td>2</td>
-                                                        <td>R$ 100,00</td>
-                                                        <td>R$ 1,50</td>
-                                                        <th>R$ 101,50</th>
-                                                        <td>Cartão</td>
-                                                        <td>10/05/2025</td>
-                                                        <td>10/07/2025</td>
-                                                        <td><span class="badge badge-danger">Vencido</span></td>
-                                                    </tr>
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" class="mr-2" />
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Imprimir Comprovante">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Manutenção de Título">
+                                                            <i class="fas fa-wrench"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Pagar">
+                                                            <i class="fas fa-usd-square"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cancelar">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Baixa Manual">
+                                                            <i class="fas fa-hands-usd"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cobrança">
+                                                            <i class="far fa-file-invoice-dollar"></i>
+                                                        </button>
+                                                    </td>
+                                                    <td>1</td>
+                                                    <td>12345</td>
+                                                    <td>Cliente Teste</td>
+                                                    <td>2</td>
+                                                    <td>R$ 100,00</td>
+                                                    <td>R$ 1,50</td>
+                                                    <th>R$ 101,50</th>
+                                                    <td>Cartão</td>
+                                                    <td>10/05/2025</td>
+                                                    <td>10/07/2025</td>
+                                                    <td><span class="badge badge-success">Pago</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" class="mr-2" />
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Imprimir Comprovante">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Manutenção de Título">
+                                                            <i class="fas fa-wrench"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Pagar">
+                                                            <i class="fas fa-usd-square"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cancelar">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Baixa Manual">
+                                                            <i class="fas fa-hands-usd"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cobrança">
+                                                            <i class="far fa-file-invoice-dollar"></i>
+                                                        </button>
+                                                    </td>
+                                                    <td>1</td>
+                                                    <td>12345</td>
+                                                    <td>Cliente Teste</td>
+                                                    <td>2</td>
+                                                    <td>R$ 100,00</td>
+                                                    <td>R$ 1,50</td>
+                                                    <th>R$ 101,50</th>
+                                                    <td>Cartão</td>
+                                                    <td>10/05/2025</td>
+                                                    <td>10/07/2025</td>
+                                                    <td><span class="badge badge-danger">Vencido</span></td>
+                                                </tr>
 
-                                                </tbody>
+                                            </tbody>
                                             </thead>
                                         </table>
                                     </div>
 
                                     O CAMPO EMPRESA DEVERÁ VIR PREENCHIDO COM A EMPRESA DO USUÁRIO LOGADO, SOMENTE<br>
-                                    NO CASO DO USUÁRIO SER DA MULTBAN OU DE UMA EMPRESA WHITE LABEL, ESTE CAMPO PODERÁ ESTAR DISPONÍVEL<br>
-                                    PARA SELECIONAR ALGUMA EMPRESA, NESTE CASO, ELE DEVE SEGUIR O PADRÃO DE CONSULTA, PESQUISANDO SOBRE O<br>
+                                    NO CASO DO USUÁRIO SER DA MULTBAN OU DE UMA EMPRESA WHITE LABEL, ESTE CAMPO PODERÁ
+                                    ESTAR DISPONÍVEL<br>
+                                    PARA SELECIONAR ALGUMA EMPRESA, NESTE CASO, ELE DEVE SEGUIR O PADRÃO DE CONSULTA,
+                                    PESQUISANDO SOBRE O<br>
                                     NOME MULTBAN<br>
                                     <br>
-                                    AO SELECIONAR UM CLIENTE, O SISTEMA DEVE ARMAZENAR O CLIENTE_ID E O CLIENT_DOC DA TABELA TBDM_CLIENTES_GERAL<br>
+                                    AO SELECIONAR UM CLIENTE, O SISTEMA DEVE ARMAZENAR O CLIENTE_ID E O CLIENT_DOC DA
+                                    TABELA TBDM_CLIENTES_GERAL<br>
                                     <br>
-                                    AO CLICAR EM PESQUISAR, O SISTEMA DEVE UTILIZAR OS CAMPOS DO FILTRO PARA ACESSAR AS TABELAS DE VENDA<br>
+                                    AO CLICAR EM PESQUISAR, O SISTEMA DEVE UTILIZAR OS CAMPOS DO FILTRO PARA ACESSAR AS
+                                    TABELAS DE VENDA<br>
                                     E TRAZER PARA A LISTA TODOS OS LANÇAMENTOS QUE CONDIZEM COM OS FILTROS<br>
                                     <br>
                                     <br>
                                     Botão de Ação - Imprimir<br>
-                                        1. Imprimi o comprovante de pagamento referente ao título selecionado<br>
+                                    1. Imprimi o comprovante de pagamento referente ao título selecionado<br>
                                     <br>
                                     Botão de Ação - Manutenção de Título<br>
-                                        1. Abre uma nova tela, esta tela deverá ser criara no edit.blade pois terá todas as informações do título<br>
-                                        2. Nesta tela poderemos editar os dampos:<br>
-                                        Data de Vencimento (TABELA tbtr_p_titulos_ab / CAMPO data_venc)<br>
-                                        Desconto Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_desc_mn)<br>
-                                        Acréscimo Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_acr_mn)<br>
+                                    1. Abre uma nova tela, esta tela deverá ser criara no edit.blade pois terá todas as
+                                    informações do título<br>
+                                    2. Nesta tela poderemos editar os dampos:<br>
+                                    Data de Vencimento (TABELA tbtr_p_titulos_ab / CAMPO data_venc)<br>
+                                    Desconto Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_desc_mn)<br>
+                                    Acréscimo Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_acr_mn)<br>
                                     <br>
                                     Botão de Ação - Pagar<br>
-                                        1. Deve abrir o link de pagamento do Título, neste link deve conter as informações para pagamento<br>
-                                        permitindo que o usuário possa escolhar PIX ou BOLETO<br>
-                                        Precisamos criar uma tela para este link, customizada e com a identidade visual da Multban<br>
+                                    1. Deve abrir o link de pagamento do Título, neste link deve conter as informações
+                                    para pagamento<br>
+                                    permitindo que o usuário possa escolhar PIX ou BOLETO<br>
+                                    Precisamos criar uma tela para este link, customizada e com a identidade visual da
+                                    Multban<br>
                                     <br>
                                     Botão de Ação - Cancelar<br>
-                                        1. Para Cancelar, é obrigatório dar um motivo.
-                                        2. Se o cancelamento for de uma parcela de cartão de crédito e que não seja a última, o sistema deve informar ao usuário<br>
-                                        que todas as outras parcelas serão canceladas, pois não podemos cancelar uma única parcela de uma venda<br>
-                                        Se o cancelamento for de um boleto parcelado, o sistema deve perguntar se o usuário quer cancelar as demais parcelas<br>
-                                        se o usuário selecionar que SIM, todas as demais parcelas deverão ser canceladas<br>
+                                    1. Para Cancelar, é obrigatório dar um motivo.
+                                    2. Se o cancelamento for de uma parcela de cartão de crédito e que não seja a
+                                    última, o sistema deve informar ao usuário<br>
+                                    que todas as outras parcelas serão canceladas, pois não podemos cancelar uma única
+                                    parcela de uma venda<br>
+                                    Se o cancelamento for de um boleto parcelado, o sistema deve perguntar se o usuário
+                                    quer cancelar as demais parcelas<br>
+                                    se o usuário selecionar que SIM, todas as demais parcelas deverão ser canceladas<br>
                                     <br>
                                     Botão de Ação - Baixa Manual<br>
-                                        1. Abre um rela para Baixa Manual do Título, se for um lançamento de Cartão de Crédito, o sistema deve gerar<br>
-                                        um débito no valor do MDR do título e uma msg deve aparecer na tela informando que o MDR será cobrando<br>
-                                        se o cliente for optante de uma Wallet, o sistema deverá lançar um débito na Wallet, se o cliente for optante<br>
-                                        de uma Conta Digital, o sistema deverá criar um título em nome do cliente para que ele efetue o pagamento<br>
-                                        2. Se for um lançamento de um Boleto e este boleto já foi gerado pelo cliente final, o sistema deve gerar um débito<br>
-                                        na wallet com o valor do Boleto+PIX registrado no sistema, ou cria um título para pagamento com este valor,<br>
-                                        se for um lançamento de um Boleto ainda não gerado, o sistema apenas cancela o lançamento<br>
+                                    1. Abre um rela para Baixa Manual do Título, se for um lançamento de Cartão de
+                                    Crédito, o sistema deve gerar<br>
+                                    um débito no valor do MDR do título e uma msg deve aparecer na tela informando que o
+                                    MDR será cobrando<br>
+                                    se o cliente for optante de uma Wallet, o sistema deverá lançar um débito na Wallet,
+                                    se o cliente for optante<br>
+                                    de uma Conta Digital, o sistema deverá criar um título em nome do cliente para que
+                                    ele efetue o pagamento<br>
+                                    2. Se for um lançamento de um Boleto e este boleto já foi gerado pelo cliente final,
+                                    o sistema deve gerar um débito<br>
+                                    na wallet com o valor do Boleto+PIX registrado no sistema, ou cria um título para
+                                    pagamento com este valor,<br>
+                                    se for um lançamento de um Boleto ainda não gerado, o sistema apenas cancela o
+                                    lançamento<br>
                                     <br>
                                     Botão de Ação - Cobrança<br>
-                                        1. Direciona para a tela de cobrança já com os filtros do título selecionado
+                                    1. Direciona para a tela de cobrança já com os filtros do título selecionado
                                 </div>
                             </div>
 
@@ -828,8 +867,8 @@
                         </div>
 
                         <!--ABA PROTUÁRIO-->
-                        <div class="tab-pane fade {{request()->has('pront') ? 'active show' : ''}}" id="tabs-prontuario" role="tabpanel"
-                            aria-labelledby="tabs-prontuario-tab">
+                        <div class="tab-pane fade {{request()->has('pront') ? 'active show' : ''}}" id="tabs-prontuario"
+                            role="tabpanel" aria-labelledby="tabs-prontuario-tab">
 
                             <!-- Seção Inicial: Linha do tempo -->
                             <div class="row">
@@ -873,7 +912,7 @@
                                             </div>
                                         </div>
                                     </form>
-                                    <table class="table table-sm table-hover">
+                                    <table id="gridprotocolo" class="table table-striped table-bordered nowrap">
                                         <thead>
                                             <tr>
                                                 <th>Protocolo</th>
@@ -882,38 +921,6 @@
                                                 <th>Anexo</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr class="linha-protocolo" data-protocolo="548965">
-                                                <td>548965</td>
-                                                <td>Consulta</td>
-                                                <td>Dr. Pedro</td>
-                                                <td><i class="far fa-paperclip"></i></td>
-                                            </tr>
-                                            <tr class="linha-protocolo" data-protocolo="983647">
-                                                <td>983647</td>
-                                                <td>Retorno</td>
-                                                <td>Dra. Ana</td>
-                                                <td></td>
-                                            </tr>
-                                            <tr class="linha-protocolo" data-protocolo="964872">
-                                                <td>964872</td>
-                                                <td>Exame</td>
-                                                <td>Dr. Fernando</td>
-                                                <td><i class="far fa-paperclip"></i></td>
-                                            </tr>
-                                            <tr class="linha-protocolo" data-protocolo="369872">
-                                                <td>369872</td>
-                                                <td>Consulta</td>
-                                                <td>Dra. Patrícia</td>
-                                                <td></td>
-                                            </tr>
-                                            <tr class="linha-protocolo" data-protocolo="329618">
-                                                <td>329618</td>
-                                                <td>Emergência</td>
-                                                <td>Dr. Flávio</td>
-                                                <td></td>
-                                            </tr>
-                                        </tbody>
                                     </table>
                                 </div>
 
@@ -995,8 +1002,9 @@
                                                 aria-labelledby="tabs-anamnese-tab">
 
                                                 <div class="card-body">
-                                                    <textarea id="texto_prt" class="form-control summernote"
-                                                        rows="8">Digite aqui suas anotações...</textarea>
+                                                    <textarea id="texto_anm" name="texto_anm"
+                                                        class="form-control summernote"
+                                                        rows="8">{{$cliente->prontuario->texto_anm ?? ''}}</textarea>
                                                 </div>
 
                                             </div>
@@ -1006,8 +1014,9 @@
                                                 aria-labelledby="tabs-anotacao-tab">
 
                                                 <div class="card-body">
-                                                    <textarea id="texto_prt" class="form-control summernote"
-                                                        rows="8">Digite aqui suas anotações iniciais ou orientações...</textarea>
+                                                    <textarea id="texto_prt" name="texto_prt"
+                                                        class="form-control summernote"
+                                                        rows="8">{{$cliente->prontuario->texto_prt ?? ''}}</textarea>
                                                 </div>
 
                                             </div>
@@ -1017,8 +1026,9 @@
                                                 aria-labelledby="tabs-anotacao-priv-tab">
 
                                                 <div class="card-body">
-                                                    <textarea id="texto_prv" class="form-control summernote"
-                                                        rows="8">Digite aqui suas anotações privadas...</textarea>
+                                                    <textarea id="texto_prv" name="texto_prv"
+                                                        class="form-control summernote"
+                                                        rows="8">{{$cliente->prontuario->texto_prv ?? ''}}</textarea>
                                                 </div>
 
                                             </div>
@@ -1073,7 +1083,7 @@
                                                             <label for="detalhes_posologia">Detalhes da
                                                                 Posologia:</label>
                                                             <input autocomplete="off" maxlength="255"
-                                                                class="form-control  form-control-sm"
+                                                                class="form-control form-control-sm"
                                                                 placeholder="Digite os detalhes da posologia"
                                                                 name="detalhes_posologia" type="text"
                                                                 id="detalhes_posologia">
@@ -1089,9 +1099,10 @@
                                                     <!-- Linha 4: Campo texto tipo anotações -->
                                                     <div class="row mb-3">
                                                         <div class="col">
-                                                            <label for="texto_rec">Receituário:</label>
-                                                            <textarea id="texto_rec" class="form-control summernote"
-                                                                rows="8">Adicione os medicamentos ou digite manualmente...</textarea>
+                                                            <textarea id="texto_rec" name="texto_rec"
+                                                                class="form-control summernote"
+                                                                placeholder="Adicione os medicamentos ou digite manualmente..."
+                                                                rows="8">{{ $cliente->prontuario->texto_rec ?? '' }}</textarea>
                                                         </div>
                                                     </div>
 
@@ -1165,7 +1176,8 @@
                                                         <div class="col">
                                                             <label for="texto_exm">Exames:</label>
                                                             <textarea id="texto_exm" class="form-control summernote"
-                                                                rows="8">Adicione os exames ou digite manualmente...</textarea>
+                                                                placeholder="Adicione os exames ou digite manualmente..."
+                                                                rows="8">{{ $cliente->prontuario->texto_exm ?? ''}}</textarea>
                                                         </div>
                                                     </div>
 
@@ -1214,7 +1226,7 @@
                                                         <div class="col">
                                                             <label for="texto_atd">Atestado:</label>
                                                             <textarea id="texto_atd" class="form-control summernote"
-                                                                rows="8">Digite aqui as informações do Atestado...</textarea>
+                                                                rows="8">{{ $cliente->prontuario->texto_atd ?? 'Digite aqui as informações do Atestado...' }}</textarea>
                                                         </div>
                                                     </div>
 
@@ -1557,7 +1569,8 @@
 <!-- /.modal cep-->
 
 <!-- Modal de Alteração em Massa -->
-<div class="modal fade" id="modalAlteracaoMassa" tabindex="-1" role="dialog" aria-labelledby="modalAlteracaoMassaLabel" aria-hidden="true">
+<div class="modal fade" id="modalAlteracaoMassa" tabindex="-1" role="dialog" aria-labelledby="modalAlteracaoMassaLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -1572,63 +1585,77 @@
                 <form id="formAlteracaoMassa">
                     <div class="form-group">
                         <label for="nova_data_venc">Data de Vencimento:</label>
-                        <input type="date" id="nova_data_venc" name="nova_data_venc" class="form-control form-control-sm" placeholder="Selecione a nova data de vencimento">
-                        <small class="form-text text-muted">Deixe em branco para não alterar a data de vencimento</small>
+                        <input type="date" id="nova_data_venc" name="nova_data_venc"
+                            class="form-control form-control-sm" placeholder="Selecione a nova data de vencimento">
+                        <small class="form-text text-muted">Deixe em branco para não alterar a data de
+                            vencimento</small>
                     </div>
 
-		    <div class="form-group" id="tipoDataVencimentoGroup" style="display: none;">
+                    <div class="form-group" id="tipoDataVencimentoGroup" style="display: none;">
                         <label>Tipo de Aplicação da Data de Vencimento:</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipo_data_vencimento" id="data_mesma" value="mesma_data" checked>
+                            <input class="form-check-input" type="radio" name="tipo_data_vencimento" id="data_mesma"
+                                value="mesma_data" checked>
                             <label class="form-check-label" for="data_mesma">
                                 Utilizar a mesma data de vencimento para todos os títulos
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipo_data_vencimento" id="data_base" value="data_base">
+                            <input class="form-check-input" type="radio" name="tipo_data_vencimento" id="data_base"
+                                value="data_base">
                             <label class="form-check-label" for="data_base">
                                 Utilizar a data selecionada como base para a primeira parcela e calcular as demais
                             </label>
                         </div>
-                        <small class="form-text text-muted">Selecione como a data de vencimento será aplicada nos títulos selecionados</small>
+                        <small class="form-text text-muted">Selecione como a data de vencimento será aplicada nos
+                            títulos selecionados</small>
                     </div>
 
                     <div class="form-group">
                         <label for="vlr_desc">Desconto:</label>
-                        <input type="text" id="vlr_desc" name="vlr_desc" class="form-control form-control-sm money" placeholder="R$ 0,00">
+                        <input type="text" id="vlr_desc" name="vlr_desc" class="form-control form-control-sm money"
+                            placeholder="R$ 0,00">
                         <small class="form-text text-muted">Deixe em branco para não aplicar desconto</small>
                     </div>
 
-	            <div class="form-group" id="tipoDescontoGroup" style="display: none;">
+                    <div class="form-group" id="tipoDescontoGroup" style="display: none;">
                         <label>Tipo de Aplicação do Desconto:</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipo_desconto" id="desconto_mesmo_valor" value="mesmo_valor" checked>
+                            <input class="form-check-input" type="radio" name="tipo_desconto" id="desconto_mesmo_valor"
+                                value="mesmo_valor" checked>
                             <label class="form-check-label" for="desconto_mesmo_valor">
                                 Aplicar o mesmo valor de desconto em todos os títulos
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="tipo_desconto" id="desconto_dividir" value="dividir">
+                            <input class="form-check-input" type="radio" name="tipo_desconto" id="desconto_dividir"
+                                value="dividir">
                             <label class="form-check-label" for="desconto_dividir">
                                 Dividir o valor igualmente para todos os títulos
                             </label>
                         </div>
-                        <small class="form-text text-muted">Selecione como o desconto será aplicado nos títulos selecionados</small>
+                        <small class="form-text text-muted">Selecione como o desconto será aplicado nos títulos
+                            selecionados</small>
                     </div>
 
                     <div class="form-group">
                         <label for="negociacao_obs">Detalhes da Negociação:</label>
-                        <textarea id="negociacao_obs" name="negociacao_obs" class="form-control form-control-sm" rows="8" placeholder="Descreva os detalhes das negociações e atendimento..."></textarea>
-                        <small class="form-text text-muted">Informe todos os detalhes sobre as negociações realizadas</small>
+                        <textarea id="negociacao_obs" name="negociacao_obs" class="form-control form-control-sm"
+                            rows="8" placeholder="Descreva os detalhes das negociações e atendimento..."></textarea>
+                        <small class="form-text text-muted">Informe todos os detalhes sobre as negociações
+                            realizadas</small>
                     </div>
-                    <div class="alert alert-info" style="background-color: #ecba41; border-color: #ecba41; color: #000;">
+                    <div class="alert alert-info"
+                        style="background-color: #ecba41; border-color: #ecba41; color: #000;">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Atenção:</strong> As alterações serão aplicadas apenas aos títulos selecionados na tabela.
+                        <strong>Atenção:</strong> As alterações serão aplicadas apenas aos títulos selecionados na
+                        tabela.
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm" data-dismiss="modal" style="background-color: #a702d8; color: white; border-color: #a702d8;">
+                <button type="button" class="btn btn-sm" data-dismiss="modal"
+                    style="background-color: #a702d8; color: white; border-color: #a702d8;">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
                 <button type="button" class="btn btn-primary btn-sm" id="btnExecutarMudancas">
@@ -1643,6 +1670,32 @@
 @endsection
 
 @push('scripts')
+
+
+
+<script src="{{ asset('assets/plugins/jquery-validation/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/jquery-validation/localization/messages_pt_BR.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/jquery-validation/additional-methods.js') }}"></script>
+<script src="{{ asset('assets/plugins/select2/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/select2/js/i18n/pt-BR.js') }}"></script>
+
+<script src="{{ asset('assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
+
+<script src="{{ asset('assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js')}}"></script>
+<script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
+<!-- Moment -->
+<script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
+<script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
+
+<!-- Summernote -->
+<script src="{{ asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
+<link rel="stylesheet" href="{{asset('assets/dist/css/app.css') }}" />
+<script src="{{asset('assets/dist/js/app.js') }}"></script>
+<script src="{{asset('assets/dist/js/pages/cliente/cliente.js') }}"></script>
 
 <script type="text/javascript">
     $(document).ready(function () {
@@ -2012,30 +2065,12 @@
         };
     }
 
+     @if(!empty($clienteProntuarios))
+        var dataSet = {{Js::from($clienteProntuarios)}};
+        console.log(dataSet.original.data);
+        clientejs.loadDatatablePrt(dataSet.original.data);
+        @endif
+
 </script>
-
-<script src="{{ asset('assets/plugins/jquery-validation/jquery.validate.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/jquery-validation/localization/messages_pt_BR.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/jquery-validation/additional-methods.js') }}"></script>
-<script src="{{ asset('assets/plugins/select2/js/select2.full.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/select2/js/i18n/pt-BR.js') }}"></script>
-
-<script src="{{ asset('assets/plugins/sweetalert2/sweetalert2.all.min.js') }}"></script>
-
-<script src="{{ asset('assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
-   <!-- Moment -->
-    <script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
-<script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
-
-<!-- Summernote -->
-<script src="{{ asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
-<link rel="stylesheet" href="{{asset('assets/dist/css/app.css') }}" />
-<script src="{{asset('assets/dist/js/app.js') }}"></script>
-<script src="{{asset('assets/dist/js/pages/cliente/cliente.js') }}"></script>
 
 @endpush

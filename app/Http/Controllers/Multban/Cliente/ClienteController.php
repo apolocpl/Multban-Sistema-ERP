@@ -12,6 +12,7 @@ use App\Models\Multban\Cliente\CardMod;
 use App\Models\Multban\Cliente\CardStatus;
 use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
+use App\Models\Multban\Cliente\ClienteProntuario;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
 use App\Models\Multban\Cliente\Endereco\Cadasest;
@@ -43,7 +44,9 @@ class ClienteController extends Controller
     {
         $status = ClienteStatus::all();
         $tipos = ClienteTipo::all();
-        return response()->view('Multban.cliente.index', compact('status', 'tipos'));
+        $filters = session('cliente_filters', []);
+
+        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters'));
     }
 
     /**
@@ -252,6 +255,36 @@ class ClienteController extends Controller
         $cardCateg = CardCateg::all();
         $cliente = Cliente::findOrFail($id);
         $convenios = TbDmConvenios::all();
+        $prontuarios = ClienteProntuario::where('cliente_id', $id)->get();
+
+        $clienteProntuarios = DataTables::of($prontuarios)
+            ->addIndexColumn()
+            ->addColumn('anexo', function ($row) {
+                return '<button class="btn btn-sm btn-primary" onclick="editCliente(' . $row->id . ')">Editar</button>';
+            })
+            ->addColumn('medico', function ($row) {
+                return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
+            })
+            ->editColumn('protocolo_tp', function ($row) {
+                $badge = '';
+                if (!empty($row->tipo)) {
+
+                    switch ($row->tipo->protocolo_tp) {
+                        case 1:
+                            $badge = '<span class="badge badge-info">' . $row->tipo->prt_tp_desc . '</span>';
+                            break;
+                        case 2:
+                        case 3:
+                        case 4:
+                            $badge = '<span class="badge badge-success">' . $row->tipo->prt_tp_desc . '</span>';
+                            break;
+                    }
+                }
+
+                return $badge;
+            })
+            ->rawColumns(['anexo', 'medico'])
+            ->make(true);
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -269,7 +302,8 @@ class ClienteController extends Controller
             'cardMod',
             'cardCateg',
             'canChangeStatus',
-            'convenios'
+            'convenios',
+            'clienteProntuarios',
         ));
     }
 
@@ -450,6 +484,9 @@ class ClienteController extends Controller
         if (!Auth::check()) {
             abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
         }
+
+
+         $this->applyFilters(request(), ['empresa_id' => $request->empresa_id, 'cliente_sts' => $request->cliente_sts, 'cliente_tipo' => $request->cliente_tipo, 'cliente_id' => $request->cliente_id, 'cliente_doc' => $request->cliente_doc], 'cliente_filters');
 
         $data = new Collection();
 
