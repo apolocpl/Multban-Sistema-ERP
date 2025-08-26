@@ -2,6 +2,7 @@
 
 namespace App\Models\Multban\Cliente;
 
+use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Endereco\Cidade;
 use App\Models\Multban\Endereco\Estados;
 use App\Models\Multban\Endereco\Pais;
@@ -65,9 +66,13 @@ class Cliente extends Model
 
     public function prontuario()
     {
-        return $this->hasOne(ClienteProntuario::class, 'cliente_id', 'cliente_id');
+        return $this->belongsTo(ClienteProntuario::class, 'cliente_id', 'cliente_id');
     }
 
+    public function empresa()
+    {
+        return $this->belongsToMany(Empresa::class, 'tbdm_clientes_emp', 'cliente_id', 'emp_id');
+    }
 
     public function rules($id = '')
     {

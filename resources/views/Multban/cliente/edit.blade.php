@@ -29,8 +29,8 @@
             @include('Multban.template.updatetemplate')
 
             <input type="hidden" id="cliente_id" name="cliente_id" value="{{$cliente->cliente_id}}" />
+            <input type="hidden" id="empresa_id" name="empresa_id" value="{{$empresa->emp_id}}" />
             <input type="hidden" id="is_edit" value="1" />
-            <input type="hidden" id="is_edit_prt" value="0" />
 
             <div class="card card-primary card-outline card-outline-tabs">
                 <!-- MENU ABAS/TABS -->
@@ -878,7 +878,7 @@
                             <div class="row">
 
                                 <!-- Seção Esquerda: Filtro e Lista -->
-                                <div class="col-md-3 border-right">
+                                <div class="col-md-3 border-right" id="filtro-prontuario">
                                     <form class="mb-4">
                                         <div class="form-row">
                                             <div class="form-group col-md-6">
@@ -901,14 +901,20 @@
                                             <div class="form-group col-md-6">
                                                 <label for="user_id">Médico:</label>
                                                 <select id="user_id" name="user_id"
-                                                    class="form-control select2 select2-hidden-accessible"
-                                                    data-placeholder="Pesquise o Médico" style="width: 100%;"
-                                                    aria-hidden="true">
+                                                    class="form-control select2"
+                            data-placeholder="Selecione" data-allow-clear="true" style="width: 100%;">
+                                                    <option></option>
+                                                    @foreach ($users as $user)
+                                                    <option value="{{$user->user_id}}">{{$user->user_name}} @if ($user->cargo) -
+                                                        {{$user->cargo->user_func_desc}}
+                                                        @endif </option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                             <div class="form-group col-md-6 align-self-end">
-                                                <button type="button" id="btnPesquisar" class="btn btn-primary btn-sm"
-                                                    style=""><i class="fa fa-search"></i> Pesquisar</button>
+                                                <button type="button" id="btnPesquisarProtocolo"
+                                                    class="btn btn-primary btn-sm" style=""><i class="fa fa-search"></i>
+                                                    Pesquisar</button>
                                             </div>
                                         </div>
                                     </form>
@@ -926,7 +932,7 @@
 
                                 <!-- Seção Direita: Abas de Atendimento -->
 
-                                <div class="card card-primary card-outline card-outline-tabs d-flex flex-column flex-grow-1"
+                                <div class="card card-primary card-outline card-outline-tabs d-flex flex-column flex-grow-1" id="formProntuario"
                                     style="min-height: 0; margin-left: 1rem; height: 100%;">
 
                                     <!-- CABEÇALHO DAS ABAS DE PRONTUÁRIO-->
@@ -1004,7 +1010,7 @@
                                                 <div class="card-body">
                                                     <textarea id="texto_anm" name="texto_anm"
                                                         class="form-control summernote"
-                                                        rows="8">{{$cliente->prontuario->texto_anm ?? ''}}</textarea>
+                                                        rows="8"></textarea>
                                                 </div>
 
                                             </div>
@@ -1016,7 +1022,7 @@
                                                 <div class="card-body">
                                                     <textarea id="texto_prt" name="texto_prt"
                                                         class="form-control summernote"
-                                                        rows="8">{{$cliente->prontuario->texto_prt ?? ''}}</textarea>
+                                                        rows="8"></textarea>
                                                 </div>
 
                                             </div>
@@ -1028,7 +1034,7 @@
                                                 <div class="card-body">
                                                     <textarea id="texto_prv" name="texto_prv"
                                                         class="form-control summernote"
-                                                        rows="8">{{$cliente->prontuario->texto_prv ?? ''}}</textarea>
+                                                        rows="8"></textarea>
                                                 </div>
 
                                             </div>
@@ -1041,15 +1047,15 @@
                                                     <!-- Linha 1: Logo + Dados Empresa/Médico -->
                                                     <div class="row align-items-center mb-3">
                                                         <div class="col-md-2 text-center">
-                                                            <img src="{{ asset('assets/dist/img/logo.png') }}"
+                                                            <img src="{{ asset('storage/logos/empresa_' . $empresa->emp_id . '/logo.jpg') }}"
                                                                 alt="Logo" style="max-width: 80px;">
                                                         </div>
                                                         <div class="col-md-10">
                                                             <div>
                                                                 <span class="font-weight-bold"
-                                                                    style="font-size: 1.1rem;">{{ $empresa->nome ??
+                                                                    style="font-size: 1.1rem;">{{ $empresa->emp_nmult ??
                                                                     'Nome da Empresa' }}</span>
-                                                                <span class="ml-3">CNPJ: {{ $empresa->cnpj ??
+                                                                <span class="ml-3">CNPJ: {{ formatarCNPJ($empresa->emp_cnpj) ??
                                                                     '00.000.000/0000-00' }}</span>
                                                             </div>
                                                             <div>
@@ -1064,32 +1070,32 @@
                                                     <div class="row mb-3">
                                                         <div class="col">
                                                             <label class="font-weight-bold">Paciente:</label>
-                                                            <span>{{ $paciente->nome ?? 'Nome do Paciente' }}</span>
-                                                            <span class="ml-3">CPF: {{ $paciente->cpf ??
+                                                            <span>{{ $cliente->cliente_nome ?? 'Nome do Paciente' }}</span>
+                                                            <span class="ml-3">CPF: {{ formatarCPF($cliente->cliente_doc) ??
                                                                 '000.000.000-00' }}</span>
                                                         </div>
                                                     </div>
                                                     <!-- Linha 3: Produto + Posologia -->
                                                     <div class="form-row mb-3">
                                                         <div class="form-group col-md-4">
-                                                            <label for="produto_id">Medicamento:</label>
-                                                            <select id="produto_id" name="produto_id"
-                                                                class="form-control form-control-sm select2"
+                                                            <label for="rec_produto_id">Medicamento:</label>
+                                                            <select id="rec_produto_id" name="rec_produto_id"
+                                                                class="form-control select2"
                                                                 data-placeholder="Pesquise o Medicamento"
                                                                 style="width: 100%;">
                                                             </select>
                                                         </div>
                                                         <div class="form-group col-md-4">
-                                                            <label for="detalhes_posologia">Detalhes da
+                                                            <label for="rec_detalhes_posologia">Detalhes da
                                                                 Posologia:</label>
                                                             <input autocomplete="off" maxlength="255"
                                                                 class="form-control form-control-sm"
                                                                 placeholder="Digite os detalhes da posologia"
-                                                                name="detalhes_posologia" type="text"
-                                                                id="detalhes_posologia">
+                                                                name="rec_detalhes_posologia" type="text"
+                                                                id="rec_detalhes_posologia">
                                                         </div>
                                                         <div class="form-group col-md-3 d-flex align-items-end">
-                                                            <button id="btnAdicionar" type="button"
+                                                            <button id="btnAdicionarMed" type="button"
                                                                 class="btn btn-primary btn-sm w-100">
                                                                 <i class="icon fas fa-plus-square"></i> Adicionar
                                                                 Medicamento
@@ -1102,7 +1108,7 @@
                                                             <textarea id="texto_rec" name="texto_rec"
                                                                 class="form-control summernote"
                                                                 placeholder="Adicione os medicamentos ou digite manualmente..."
-                                                                rows="8">{{ $cliente->prontuario->texto_rec ?? '' }}</textarea>
+                                                                rows="8"></textarea>
                                                         </div>
                                                     </div>
 
@@ -1118,15 +1124,15 @@
                                                     <!-- Linha 1: Logo + Dados Empresa/Médico -->
                                                     <div class="row align-items-center mb-3">
                                                         <div class="col-md-2 text-center">
-                                                            <img src="{{ asset('assets/dist/img/logo.png') }}"
+                                                            <img src="{{ asset('storage/logos/empresa_'. $empresa->emp_id . '/logo.jpg') }}"
                                                                 alt="Logo" style="max-width: 80px;">
                                                         </div>
                                                         <div class="col-md-10">
                                                             <div>
                                                                 <span class="font-weight-bold"
-                                                                    style="font-size: 1.1rem;">{{ $empresa->nome ??
+                                                                    style="font-size: 1.1rem;">{{ $empresa->emp_nmult ??
                                                                     'Nome da Empresa' }}</span>
-                                                                <span class="ml-3">CNPJ: {{ $empresa->cnpj ??
+                                                                <span class="ml-3">CNPJ: {{ formatarCNPJ($empresa->emp_cnpj) ??
                                                                     '00.000.000/0000-00' }}</span>
                                                             </div>
                                                             <div>
@@ -1141,9 +1147,8 @@
                                                     <div class="row mb-3">
                                                         <div class="col">
                                                             <label class="font-weight-bold">Paciente:</label>
-                                                            <span>{{ $paciente->nome ?? 'Nome do Paciente' }}</span>
-                                                            <span class="ml-3">CPF: {{ $paciente->cpf ??
-                                                                '000.000.000-00' }}</span>
+                                                            <span>{{ $cliente->cliente_nome ?? 'Nome do Paciente' }}</span>
+                                                            <span class="ml-3">CPF: {{ formatarCPF($cliente->cliente_doc) ?? '000.000.000-00' }}</span>
                                                         </div>
                                                     </div>
                                                     <!-- Linha 3: Produto + Posologia -->
@@ -1151,7 +1156,7 @@
                                                         <div class="form-group col-md-4">
                                                             <label for="produto_id">Exame:</label>
                                                             <select id="produto_id" name="produto_id"
-                                                                class="form-control form-control-sm select2"
+                                                                class="form-control select2"
                                                                 data-placeholder="Pesquise o Medicamento"
                                                                 style="width: 100%;">
                                                             </select>
@@ -1177,7 +1182,7 @@
                                                             <label for="texto_exm">Exames:</label>
                                                             <textarea id="texto_exm" class="form-control summernote"
                                                                 placeholder="Adicione os exames ou digite manualmente..."
-                                                                rows="8">{{ $cliente->prontuario->texto_exm ?? ''}}</textarea>
+                                                                rows="8"></textarea>
                                                         </div>
                                                     </div>
 
@@ -1226,7 +1231,7 @@
                                                         <div class="col">
                                                             <label for="texto_atd">Atestado:</label>
                                                             <textarea id="texto_atd" class="form-control summernote"
-                                                                rows="8">{{ $cliente->prontuario->texto_atd ?? 'Digite aqui as informações do Atestado...' }}</textarea>
+                                                                rows="8"></textarea>
                                                         </div>
                                                     </div>
 
@@ -1328,7 +1333,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="mt-auto mb-2" id="container-botoes-prt" style="margin-left: 0.5rem;">
+                                    <div class="card-footer">
                                         <button id="btnSalvarPrt" type="button" class="btn btn-primary btn-sm">
                                             <i class="icon fas fa-save"></i> Salvar
                                         </button>
@@ -1485,8 +1490,8 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="emp_id">Empresa:</label>
-                        <select id="emp_id" name="emp_id" class="form-control select2 select2-hidden-accessible"
-                            data-placeholder="Pesquise a Empresa" style="width: 100%;" aria-hidden="true">
+                        <select id="emp_id" name="emp_id" class="form-control select2" style="width: 100%;" disabled>
+                            <option selected value="{{$empresa->emp_id}}">{{$empresa->emp_nmult}}</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2065,11 +2070,15 @@
         };
     }
 
-     @if(!empty($clienteProntuarios))
-        var dataSet = {{Js::from($clienteProntuarios)}};
-        console.log(dataSet.original.data);
-        clientejs.loadDatatablePrt(dataSet.original.data);
+    $(function () {
+        "use strict";
+
+        @if(!empty($clienteProntuarios))
+            var dataSet = {{Js::from($clienteProntuarios)}};
+            console.log(dataSet.original.data);
+            clientejs.loadDatatablePrt(dataSet.original.data);
         @endif
+    });
 
 </script>
 

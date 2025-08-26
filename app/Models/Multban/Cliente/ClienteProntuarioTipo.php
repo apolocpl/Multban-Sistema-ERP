@@ -12,4 +12,10 @@ class ClienteProntuarioTipo extends Model
     protected $table = "tbdm_prt_tp";
 
     public $timestamps = false;
+
+    protected $fillable = [
+        'protocolo_tp',
+        'langu',
+        'prt_tp_desc',
+    ];
 }

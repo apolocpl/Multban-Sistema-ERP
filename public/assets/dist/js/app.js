@@ -1417,14 +1417,14 @@ function notify(type, message) {
         //}, 100);
     };
 
-    jQuery.callbackAjaxGridWithID = function (e, callback, id) {
+    jQuery.callbackAjaxGridWithID = function (e, callback, id, message) {
         e.preventDefault();
         var grid = $("#" + id);
         var linha = grid.obterLinhaGridItemWithID(id);
         //console.log('linha', linha);
 
         if (linha == null) {
-            Swal.fire("Alerta!", "Selecione um registro", "error");
+            Swal.fire("Alerta!", message, "error");
         } else {
             Pace.restart();
             Pace.track(function () {
