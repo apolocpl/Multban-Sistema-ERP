@@ -1,18 +1,42 @@
-$(function () {
 
-    "use strict";
-    ns.comboBoxSelect("cliente_endpais", "/empresa/obter-pais", "pais");
-    ns.comboBoxSelect("cliente_endest", "/empresa/obter-estado", "estado");
-    ns.comboBoxSelect("cliente_endcid", "/empresa/obter-cidade", "cidade_ibge");
-    ns.comboBoxSelect("emp_id", "/empresa/obter-empresas", "emp_id", "", "", "modalCriarCartao");
+ns.comboBoxSelect("cliente_endpais", "/empresa/obter-pais", "pais");
+ns.comboBoxSelect("cliente_endest", "/empresa/obter-estado", "estado");
+ns.comboBoxSelect("cliente_endcid", "/empresa/obter-cidade", "cidade_ibge");
+ns.comboBoxSelect("emp_id", "/empresa/obter-empresas", "emp_id", "", "", "modalCriarCartao");
+var gridprotocolo;
 
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
 
-    function isNumeric(n) {
-        return !isNaN(parseFloat(n)) && isFinite(n);
+var colunas = [
+
+    {
+        data: 'protocolo',
+        name: 'protocolo'
+    },
+    {
+        data: 'protocolo_tp',
+        name: 'protocolo_tp',
+    },
+    {
+        data: 'medico',
+        name: 'medico',
+    },
+    {
+        data: 'anexo',
+        name: 'anexo',
     }
+];
+
+var colunasConfiguracao = [
+
+];
+$(function () {
+    "use strict";
 
     window.clientejs = ({
-        submitForm: function (formId, btnSubmit, btnPesquisar, url, modal) {
+        submitFormPrt: function (formId, btnSubmit, btnPesquisar, url, modal) {
             $(btnSubmit).text("Salvando...");
             $(btnSubmit).desabilitar();
             try {
@@ -28,10 +52,353 @@ $(function () {
                 var formData = new FormData();
                 var isEdit = $('#is_edit').val();
                 if (isEdit === "0") {
-                    formData.append("emp_id", $("#empresa_id option:selected").val());
+                    formData.append("emp_id", $("#empresa_id").val());
                 } else {
                     formData.append("emp_id", $(btnSubmit).data('emp-id'));
                 }
+
+                formData.append("cliente_id", $("#cliente_id").val());
+                inputElements.forEach(input => {
+
+                    if (input.type === 'checkbox') {
+                        formData.append(input.name, input.checked ? 'x' : '');
+                    } else if (input.type === 'file') {
+                        const file = input.files[0];
+                        if (input.value.length > 0) {
+                            // Append the file to the FormData object
+                            formData.append(input.name, file, file.name);
+
+                        }
+                    }
+
+                    else {
+                        formData.append(input.name, !isNumeric(input.value.replace("%", "").replace(".", "").replace(",", ".")) ? input.value : $.tratarValor(input.value));
+                    }
+
+                });
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: formData,
+                    cache: false,
+                    dataType: "json",
+                    contentType: false,
+                    processData: false,
+                    success: function (data) {
+                        Swal.fire(data.title, data.text, data.type);
+                        $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                        $(btnSubmit).habilitar();
+                        $(btnSubmit).attr('data-emp-id', '');
+                        $("#" + btnPesquisar).trigger('click');
+                        $("#" + modal).modal('hide');
+                    },
+                    error: function (xhr, status, error) {
+
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.message;
+                            Object.keys(errors).forEach(async function (key, value) {
+
+                                $("#" + key).addClass("is-invalid");
+
+                                $("#" + key)
+                                    .closest(".form-group")
+                                    .find(".select2-selection")
+                                    .css("border-color", "#dc3545")
+                                    .addClass("text-danger");
+                            });
+
+                            if (xhr.responseJSON.message_type) {
+                                Swal.fire("Erro", xhr.responseJSON.message_type, "error");
+                            } else {
+                                Swal.fire("Erro", "Existem um ou mais campos obrigatórios não preenchidos.", "error");
+                            }
+
+                        }
+
+                        else if (XMLHttpRequest.status == 401) {
+                            Swal.fire({
+                                title: "Erro",
+                                text:
+                                    "Sua sessão expirou, é preciso fazer o login novamente.",
+                                icon: "error",
+                                showCancelButton: false,
+                                allowOutsideClick: false,
+                            }).then(function (result) {
+                                $.limparBloqueioSairDaTela();
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(xhr.responseJSON.title, xhr.responseJSON.text, xhr.responseJSON.type);
+                        }
+
+                        $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                        $(btnSubmit).habilitar();
+
+                    },
+                });
+            } catch (error) {
+                $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                $(btnSubmit).habilitar();
+                toastr.error(error);
+                console.error(error);
+            }
+
+        },
+
+        loadDatatablePrt: function (dados) {
+            gridprotocolo = $('#gridprotocolo').DataTable();
+            gridprotocolo.clear().destroy();
+
+            gridprotocolo = $('#gridprotocolo').DataTable({
+                data: dados,
+                columns: colunas,
+                rowId: "protocolo",
+                columnDefs: colunasConfiguracao,
+                fixedColumns: false,
+                info: false,
+                searching: false,
+                select: {
+                    style: 'single'
+                },
+                lengthChange: false,
+                "pageLength": 100,
+                lengthMenu: [
+                    [10, 50, 100, -1],
+                    [10, 50, 100, 'Todos']
+                ],
+                language: {
+                    select: {
+                        rows: {
+                            _: "%d selecionados",
+                            0: "",
+                            1: "1 selecionado",
+                        },
+                    },
+                    sEmptyTable: "Nenhum registro encontrado",
+                    sInfo:
+                        "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                    sInfoEmpty: "Mostrando 0 até 0 de 0 registros",
+                    sInfoFiltered: "(Filtrados de _MAX_ registros)",
+                    sInfoPostFix: "",
+                    sInfoThousands: ".",
+                    sLengthMenu: "_MENU_",
+                    sLoadingRecords: "Carregando...",
+                    sProcessing: "Processando...",
+                    sZeroRecords: "Nenhum registro encontrado",
+                    sSearch: "",
+                    sSearchPlaceholder: "Pesquisar...",
+                    oPaginate: {
+                        sNext: "Próximo",
+                        sPrevious: "Anterior",
+                        sFirst: "Primeiro",
+                        sLast: "Último",
+                    },
+                    oAria: {
+                        sSortAscending:
+                            ": Ordenar colunas de forma ascendente",
+                        sSortDescending:
+                            ": Ordenar colunas de forma descendente",
+                    },
+                },
+                order: [[2, "asc"]],
+            });
+
+            gridprotocolo.on('select.dt', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                    var data = gridprotocolo.rows(indexes).data().toArray();
+                    console.log('Selected rows:', data);
+
+                    $('#texto_anm').text(data[0].texto_anm);
+                    $('#texto_anm').summernote('code', data[0].texto_anm);
+                    $('#texto_prt').text(data[0].texto_prt);
+                    $('#texto_prt').summernote('code', data[0].texto_prt);
+                    $('#texto_prv').text(data[0].texto_prv);
+                    $('#texto_prv').summernote('code', data[0].texto_prv);
+                    $('#texto_rec').text(data[0].texto_rec);
+                    $('#texto_rec').summernote('code', data[0].texto_rec);
+                    $('#texto_exm').text(data[0].texto_exm);
+                    $('#texto_exm').summernote('code', data[0].texto_exm);
+                    $('#texto_atd').text(data[0].texto_atd);
+                    $('#texto_atd').summernote('code', data[0].texto_atd);
+                }
+            });
+
+            gridprotocolo.on('deselect.dt', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                    $('#texto_anm').text('');
+                    $('#texto_anm').summernote('code', '');
+                    $('#texto_prt').text('');
+                    $('#texto_prt').summernote('code', '');
+                    $('#texto_prv').text('');
+                    $('#texto_prv').summernote('code', '');
+                    $('#texto_rec').text('');
+                    $('#texto_rec').summernote('code', '');
+                    $('#texto_exm').text('');
+                    $('#texto_exm').summernote('code', '');
+                    $('#texto_atd').text('');
+                    $('#texto_atd').summernote('code', '');
+                }
+            });
+
+        },
+        loadDatatablePrtAjax: function () {
+
+            gridprotocolo = $('#gridprotocolo').DataTable();
+            gridprotocolo.clear().destroy();
+            var url = "/cliente/obtergridpesquisa-protocolo";
+
+            gridprotocolo = $("#gridprotocolo")
+                .on("processing.dt", function (e, settings, processing) {
+                    if (processing) {
+                        Pace.stop();
+                        Pace.start();
+                    } else {
+                        Pace.stop();
+                    }
+                })
+                .DataTable({
+                    // dom: 'rt<"bottom"iflp>',
+
+                    columns: colunas,
+                    rowId: "protocolo",
+                    columnDefs: colunasConfiguracao,
+                    fixedColumns: false,
+                    info: false,
+                    searching: false,
+                    select: true,
+                    lengthChange: false,
+                    "pageLength": 100,
+                    lengthMenu: [
+                        [10, 50, 100, -1],
+                        [10, 50, 100, 'Todos']
+                    ],
+                    language: {
+                        select: {
+                            rows: {
+                                _: "%d selecionados",
+                                0: "",
+                                1: "1 selecionado",
+                            },
+                        },
+                        sEmptyTable: "Nenhum registro encontrado",
+                        sInfo:
+                            "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                        sInfoEmpty: "Mostrando 0 até 0 de 0 registros",
+                        sInfoFiltered: "(Filtrados de _MAX_ registros)",
+                        sInfoPostFix: "",
+                        sInfoThousands: ".",
+                        sLengthMenu: "_MENU_",
+                        sLoadingRecords: "Carregando...",
+                        sProcessing: "Processando...",
+                        sZeroRecords: "Nenhum registro encontrado",
+                        sSearch: "",
+                        sSearchPlaceholder: "Pesquisar...",
+                        oPaginate: {
+                            sNext: "Próximo",
+                            sPrevious: "Anterior",
+                            sFirst: "Primeiro",
+                            sLast: "Último",
+                        },
+                        oAria: {
+                            sSortAscending:
+                                ": Ordenar colunas de forma ascendente",
+                            sSortDescending:
+                                ": Ordenar colunas de forma descendente",
+                        },
+                    },
+                    order: [[2, "asc"]],
+                    ajax: {
+                        url: url,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: function (d) {
+                            console.log(d);
+                            const myDiv = document.getElementById('filtro-prontuario');
+                            const inputElements = myDiv.querySelectorAll('input, select, textarea,file');
+                            var token = $('meta[name="csrf-token"]').attr("content");
+                            var formData = new FormData();
+                            formData.append("emp_id", $("#empresa_id").val());
+                            formData.append("cliente_id", $("#cliente_id").val());
+                            formData.append("_token", token);
+                            inputElements.forEach(input => {
+                                formData.append(input.name, input.value);
+                            });
+
+                            // Append DataTables' parameters to your custom FormData
+                            // for (var key in d) {
+                            //     if (d.hasOwnProperty(key)) {
+                            //         formData.append(key, d[key]);
+                            //     }
+                            // }
+                            return formData;
+                        },
+                        error: function (xhr, status, error) {
+                            Swal.fire(xhr.responseJSON.title, xhr.responseJSON.message, xhr.responseJSON.type);
+                            $('.dataTables_empty').text('Nenhum registro encontrado');
+                        },
+                        processData: false, // Essential for FormData
+                        contentType: false,  // Essential for FormData
+                        serverSide: true,
+                        responsive: false,
+                    },
+                });
+
+            gridprotocolo.on('select.dt', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                    var data = gridprotocolo.rows({ selected: true }).data().toArray();
+                    console.log('Selected rows:', data);
+
+                    $('#texto_anm').text(data[0].texto_anm);
+                    $('#texto_anm').summernote('code', data[0].texto_anm);
+                    $('#texto_prt').text(data[0].texto_prt);
+                    $('#texto_prt').summernote('code', data[0].texto_prt);
+                    $('#texto_prv').text(data[0].texto_prv);
+                    $('#texto_prv').summernote('code', data[0].texto_prv);
+                    $('#texto_rec').text(data[0].texto_rec);
+                    $('#texto_rec').summernote('code', data[0].texto_rec);
+                    $('#texto_exm').text(data[0].texto_exm);
+                    $('#texto_exm').summernote('code', data[0].texto_exm);
+                    $('#texto_atd').text(data[0].texto_atd);
+                    $('#texto_atd').summernote('code', data[0].texto_atd);
+                }
+            });
+
+            gridprotocolo.on('deselect.dt', function (e, dt, type, indexes) {
+                if (type === 'row') {
+                    $('#texto_anm').text('');
+                    $('#texto_anm').summernote('code', '');
+                    $('#texto_prt').text('');
+                    $('#texto_prt').summernote('code', '');
+                    $('#texto_prv').text('');
+                    $('#texto_prv').summernote('code', '');
+                    $('#texto_rec').text('');
+                    $('#texto_rec').summernote('code', '');
+                    $('#texto_exm').text('');
+                    $('#texto_exm').summernote('code', '');
+                    $('#texto_atd').text('');
+                    $('#texto_atd').summernote('code', '');
+                }
+            });
+
+        },
+        submitForm: function (formId, btnSubmit, btnPesquisar, url, modal) {
+            $(btnSubmit).html("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Salvando...");
+            $(btnSubmit).desabilitar();
+            try {
+                $.ajaxSetup({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    },
+                });
+
+                const myDiv = document.getElementById(formId);
+                const inputElements = myDiv.querySelectorAll('input, select, textarea, file');
+
+                var formData = new FormData();
+                formData.append("emp_id", $("#empresa_id").val());
 
                 formData.append("cliente_id", $("#cliente_id").val());
                 inputElements.forEach(input => {
@@ -132,6 +499,8 @@ $(function () {
             formId
         ) {
 
+            console.log('gridDataTable', url, id, formId);
+
             var dataTable = $("#" + id)
                 .on("processing.dt", function (e, settings, processing) {
                     if (processing) {
@@ -155,9 +524,9 @@ $(function () {
                     ],
                     searching: true,
                     ordering: true,
-                    info: true, autoWidth: true,
+                    info: true,
+                    autoWidth: true,
                     scrollX: true,
-
                     rowId: "id",
                     language: {
                         select: {
@@ -201,11 +570,11 @@ $(function () {
                             const inputElements = myDiv.querySelectorAll('input, select, textarea,file');
                             var token = $('meta[name="csrf-token"]').attr("content");
                             var formData = new FormData();
-                            formData.append("emp_id", $("#empresa_id option:selected").val());
+                            formData.append("emp_id", $("#empresa_id").val());
                             formData.append("cliente_id", $("#cliente_id").val());
                             formData.append("_token", token);
                             inputElements.forEach(input => {
-                                // formData.append(input.name, input.value);
+                                //formData.append(input.name, input.value);
                             });
 
                             // Append DataTables' parameters to your custom FormData
@@ -256,17 +625,19 @@ $(function () {
         const inputElements = myDiv.querySelectorAll('input, select, textarea, file');
 
         inputElements.forEach(input => {
-            $('#' + input.name).val("");
-            $('#' + input.name).prop("checked", false);
-            $('#' + input.name).trigger("change");
-            $('#' + input.name).habilitar();
-            $('#' + input.name).removeClass('is-invalid');
+            if (input.name !== 'emp_id') {
+                $('#' + input.name).val("");
+                $('#' + input.name).prop("checked", false);
+                $('#' + input.name).trigger("change");
+                $('#' + input.name).habilitar();
+                $('#' + input.name).removeClass('is-invalid');
+            }
         });
     });
 
-    $('body').on('click', '#btnPesquisarWf', function () {
-        $('#gridtemplate-wf').DataTable().clear().destroy();
-        clientejs.gridDataTable(colunasWf, [], true, false, "obtergridpesquisa-work-flow", "gridtemplate-wf", "tabs-work-flow");
+    $('body').on('click', '#btnPesquisarProtocolo', function () {
+        $('#gridprotocolo').DataTable().clear().destroy();
+        clientejs.loadDatatablePrtAjax();
     });
 
     $('body').on('click', '#btnSalvarCartao', function (e) {
@@ -279,6 +650,28 @@ $(function () {
         }
         //formId, btnSubmit, btnPesquisar, URL, Modal
         clientejs.submitForm('formCriarCartao', this, 'btnPesquisarPdMsg', url, "modalCriarCartao");
+        $('#gridtemplate-cards').DataTable().clear().destroy();
+        clientejs.gridDataTable(colunasWf, [], true, false, "obtergridpesquisa-work-flow", "gridtemplate-cards", "tabs-work-flow");
+    });
+
+
+
+    $('body').on('click', '#btnSalvarPrt', function (e) {
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        var grid = $("#gridprotocolo");
+        var linha = grid.obterLinhaGridItemWithID('gridprotocolo');
+        console.log('linha', linha);
+        var url = "/cliente/update-prontuario";
+        if (linha == null) {
+            url = "/cliente/store-prontuario";
+        }
+
+        //formId, btnSubmit, btnPesquisar, URL, Modal
+        clientejs.submitForm('formProntuario', this, 'btnPesquisarProtocolo', url, "");
+
     });
 
     $('body').on('click', '.btn-edit', function () {

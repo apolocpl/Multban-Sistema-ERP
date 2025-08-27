@@ -22,6 +22,7 @@ class ClienteRoute
         Route::get('cliente/get-client', [ClienteController::class, 'getClient']);
 
         Route::post('cliente/obtergridpesquisa', [ClienteController::class, 'postObterGridPesquisa']);
+        Route::post('cliente/obtergridpesquisa-protocolo', [ClienteController::class, 'postObterGridPesquisaProtocolo']);
 
         //cartão
         Route::post('cliente/store-card', [ClienteController::class, 'storeCard']);
@@ -31,6 +32,10 @@ class ClienteRoute
         Route::delete('cliente/{emp_id}/destroy-card', [ClienteController::class, 'destroyCard']);
 
         Route::post('cliente/get-obter-grid-pesquisa-card', [ClienteController::class, 'getObterGridPesquisaCard']);
+
+
+        Route::post('cliente/store-prontuario', [ClienteController::class, 'storeProntuario']);
+        Route::patch('cliente/update-prontuario', [ClienteController::class, 'updateProntuario']);
 
     }
 }

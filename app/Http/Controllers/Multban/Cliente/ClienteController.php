@@ -12,6 +12,7 @@ use App\Models\Multban\Cliente\CardMod;
 use App\Models\Multban\Cliente\CardStatus;
 use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
+use App\Models\Multban\Cliente\ClienteProntuario;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
 use App\Models\Multban\Cliente\Endereco\Cadasest;
@@ -19,6 +20,7 @@ use App\Models\Multban\Cliente\Endereco\Cadasmun;
 use App\Models\Multban\Cliente\Endereco\CadasPais;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\Multban\Empresa\Empresa;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
@@ -43,7 +45,9 @@ class ClienteController extends Controller
     {
         $status = ClienteStatus::all();
         $tipos = ClienteTipo::all();
-        return response()->view('Multban.cliente.index', compact('status', 'tipos'));
+        $filters = session('cliente_filters', []);
+
+        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters'));
     }
 
     /**
@@ -53,7 +57,7 @@ class ClienteController extends Controller
      */
     public function create()
     {
-       $emp_id = Auth::user()->emp_id;
+        $emp_id = Auth::user()->emp_id;
         $userRole = Auth::user()->roles->pluck('name', 'name')->all();
 
         $status = ClienteStatus::all();
@@ -179,7 +183,7 @@ class ClienteController extends Controller
             $tbdm_clientes_emp = DB::connection('dbsysclient')->table('tbdm_clientes_emp')->insert([
                 'emp_id' => $emp_id,
                 'cliente_id' => $cliente->cliente_id,
-                'cliente_uuid' =>$cliente->cliente_uuid,
+                'cliente_uuid' => $cliente->cliente_uuid,
                 'cliente_doc' => removerCNPJ($cliente->cliente_doc),
                 'cliente_pasprt' => $cliente->cliente_pasprt,
                 'cad_liberado' => '',
@@ -251,7 +255,50 @@ class ClienteController extends Controller
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
         $cliente = Cliente::findOrFail($id);
+
         $convenios = TbDmConvenios::all();
+        $prontuarios = ClienteProntuario::where('cliente_id', $id)->get();
+        $dbsysclient = DB::connection('dbsysclient');
+        $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
+            ->where('user_func_grp', '=', 'consulta')->get();
+
+        $clienteProntuarios = DataTables::of($prontuarios)
+            ->addIndexColumn()
+            ->editColumn('anexo', function ($row) {
+                if ($row->anexo == 'x') {
+                    return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
+                }
+                return '<span class="badge badge-secondary">Sem Anexo</span>';
+            })
+            ->addColumn('medico', function ($row) {
+                if (!empty($row->user)) {
+                    return $row->user->user_name;
+                }
+                return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
+            })
+            ->editColumn('protocolo', function ($row) {
+                return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
+            })
+            ->editColumn('protocolo_tp', function ($row) {
+                $badge = '';
+                if (!empty($row->tipo)) {
+
+                    switch ($row->tipo->protocolo_tp) {
+                        case 1:
+                            $badge = '<span class="badge badge-info">' . $row->tipo->prt_tp_desc . '</span>';
+                            break;
+                        case 2:
+                        case 3:
+                        case 4:
+                            $badge = '<span class="badge badge-success">' . $row->tipo->prt_tp_desc . '</span>';
+                            break;
+                    }
+                }
+
+                return $badge;
+            })
+            ->rawColumns(['anexo', 'medico', 'action', 'protocolo_tp'])
+            ->make(true);
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -269,7 +316,9 @@ class ClienteController extends Controller
             'cardMod',
             'cardCateg',
             'canChangeStatus',
-            'convenios'
+            'convenios',
+            'clienteProntuarios',
+            'users',
         ));
     }
 
@@ -445,11 +494,122 @@ class ClienteController extends Controller
             ->toArray();
     }
 
+    public function storeProntuario(Request $request)
+    {
+        dd($request->all());
+    }
+
+    public function updateProntuario(Request $request, $id)
+    {
+        // Lógica para atualizar um prontuário
+    }
+
+    public function postObterGridPesquisaProtocolo(Request $request)
+    {
+        try {
+
+            $query = '';
+
+            $hasQuery = false;
+            if (!empty($request->data_de) && !empty($request->data_ate)) {
+                if (Carbon::createFromFormat('Y-m-d', $request->data_de) > Carbon::createFromFormat('Y-m-d', $request->data_ate)) {
+                    return response()->json([
+                        "title" => "Erro",
+                        "type" => "error",
+                        "message" => "Data 'De:' não pode ser maior que a data 'Até:'."
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                $query .= " protocolo_dt >= '" . Carbon::createFromFormat('Y-m-d', $request->data_de)->toDateString() . "' AND";
+                $query .= " protocolo_dt <= '" . Carbon::createFromFormat('Y-m-d', $request->data_ate)->toDateString() . "' AND";
+                $hasQuery = true;
+            }
+
+
+
+            if (!empty($request->protocolo)) {
+                $query .= "protocolo = " . quotedstr($request->protocolo) . " AND";
+                $hasQuery = true;
+            }
+
+            if (!empty($request->user_id)) {
+                $query .= " user_id = " . quotedstr($request->user_id) . "";
+                $hasQuery = true;
+            }
+
+            if (!empty($request->protocolo_dt)) {
+
+                $query .= " protocolo_dt >= '" . Carbon::createFromFormat('Y-m-d', $request->data_de)->toDateString() . "' AND";
+                $hasQuery = true;
+            }
+
+            if (!empty($request->protocolo_dt)) {
+
+                $query .= " protocolo_dt <= '" . Carbon::createFromFormat('Y-m-d', $request->data_ate)->toDateString() . "' AND";
+                $hasQuery = true;
+            }
+
+            $query = rtrim($query, "AND");
+
+            if($hasQuery){
+                 $prontuarios = ClienteProntuario::whereRaw(DB::raw($query))->get();
+            }else{
+                $prontuarios = ClienteProntuario::where('cliente_id', $request->cliente_id)->get();
+            }
+
+            return DataTables::of($prontuarios)
+                ->addIndexColumn()
+                ->editColumn('anexo', function ($row) {
+                    if ($row->anexo == 'x') {
+                        return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
+                    }
+                    return '<span class="badge badge-secondary">Sem Anexo</span>';
+                })
+                ->addColumn('medico', function ($row) {
+                    if (!empty($row->user)) {
+                        return $row->user->user_name;
+                    }
+                    return 'Sem Médico';
+                })
+                ->editColumn('protocolo', function ($row) {
+                    return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
+                })
+                ->editColumn('protocolo_tp', function ($row) {
+                    $badge = '';
+                    if (!empty($row->tipo)) {
+
+                        switch ($row->tipo->protocolo_tp) {
+                            case 1:
+                                $badge = '<span class="badge badge-info">' . $row->tipo->prt_tp_desc . '</span>';
+                                break;
+                            case 2:
+                            case 3:
+                            case 4:
+                                $badge = '<span class="badge badge-success">' . $row->tipo->prt_tp_desc . '</span>';
+                                break;
+                        }
+                    }
+
+                    return $badge;
+                })
+                ->rawColumns(['anexo', 'medico', 'action', 'protocolo_tp'])
+                ->make(true);
+        } catch (\Throwable $th) {
+            return response()->json([
+                "title" => "Erro",
+                "type" => "error",
+                "message" => $th->getMessage() . ' ' . $th->getLine() . ' ' . $th->getFile()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     public function postObterGridPesquisa(Request $request)
     {
         if (!Auth::check()) {
             abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
         }
+
+        //$this->applyFilters(request(), ['empresa_id' => $request->empresa_id, 'cliente_sts' => $request->cliente_sts, 'cliente_tipo' => $request->cliente_tipo, 'cliente_id' => $request->cliente_id, 'cliente_doc' => $request->cliente_doc], 'cliente_filters');
 
         $data = new Collection();
 
@@ -587,8 +747,8 @@ class ClienteController extends Controller
     {
         try {
 
-            if(empty($request->cliente_id)){
-              return response()->json([
+            if (empty($request->cliente_id)) {
+                return response()->json([
                     'message_type' => 'Cliente ainda não cadatrado, favor cadastrar o cliente antes de criar o cartão.',
                     'message' => []
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -888,10 +1048,10 @@ class ClienteController extends Controller
                     $btn .= ' title="Resetar Senha"><i class="fas fa-key"></i></button>';
                 }
 
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
+                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
+                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
+                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
 
                 return $btn;
@@ -924,7 +1084,7 @@ class ClienteController extends Controller
             })->editColumn('card_mod', function ($row) {
                 return $row->card_mod == 'CRDT' ? 'Crédito' : ($row->card_mod == 'DEBT' ? 'Débito' : ($row->card_mod == 'GIFT' ? 'Gift Card' : 'Fidelidade'));
             })->editColumn('cliente_cardn', function ($row) {
-                return formatarCartaoCredito(Str::mask($row->cliente_cardn,'*', 0, -4));
+                return formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
             })->addColumn('empresa', function ($row) {
                 $empresa = Empresa::find($row->emp_id);
                 return $empresa ? $empresa->emp_nmult : 'Empresa não encontrada';

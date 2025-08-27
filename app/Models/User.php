@@ -18,6 +18,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
+    protected $connection = 'mysql';
 
     protected $table = 'tbsy_user';
 
@@ -36,6 +37,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
         'user_email',
         'user_pass',
         'emp_id',

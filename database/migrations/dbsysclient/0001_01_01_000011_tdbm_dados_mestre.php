@@ -277,7 +277,7 @@ return new class extends Migration
         });
 
         Schema::create('tbdm_prt_tp', function (Blueprint $table) {
-            $table->string('protocolo_tp', 2);
+            $table->integer('protocolo_tp');
             $table->string('langu', 4);
             $table->string('prt_tp_desc', 50);
             //KEYS
@@ -285,7 +285,7 @@ return new class extends Migration
         });
 
         Schema::create('tbdm_cnd_pag', function (Blueprint $table) {
-            $table->integer('cnd_pag', 2);
+            $table->integer('cnd_pag');
             $table->string('langu', 4);
             $table->string('cnd_pag_desc', 50);
             //KEYS
