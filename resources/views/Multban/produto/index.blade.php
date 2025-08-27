@@ -139,35 +139,43 @@
 
     <script type="text/javascript">
 
-    $(document).ready(function () {
+        $(document).ready(function () {
 
-        $('#inputPesquisa').on('keyup', function (e) {
-            if (e.key === 'Enter') {
-                $('#btnPesquisar').trigger('click');
+            $('#inputPesquisa').on('keyup', function (e) {
+                if (e.key === 'Enter') {
+                    $('#btnPesquisar').trigger('click');
+                }
+            });
+
+            $(".alert-dismissible")
+                .fadeTo(2000, 500)
+                .slideUp(500, function () {
+                $(".alert-dismissible").alert("close");
+            });
+
+            @if ($message = Session::get('success'))
+                $("#empresa_id").val({{ Session::get('idModeloInserido') }})
+                toastr.success("{{ $message }}", "Sucesso");
+            @endif
+
+            @if ($message = Session::get('error'))
+                toastr.error("{{ $message }}", "Erro");
+            @endif
+
+            @if (count($errors) > 0)
+                @foreach ($errors->all() as $error)
+                    toastr.error("{{ $error }}", "Erro");
+                @endforeach
+            @endif
+
+        });
+
+        // Limpa o campo hidden quando o select2 é limpo
+        $('#produto_dmf').on('change', function () {
+            var val = $(this).val();
+            if (!val || val === '' || val.length === 0) {
+                $('#produto_dmf_id').val('');
             }
         });
-
-        $(".alert-dismissible")
-            .fadeTo(2000, 500)
-            .slideUp(500, function () {
-            $(".alert-dismissible").alert("close");
-        });
-
-        @if ($message = Session::get('success'))
-            $("#empresa_id").val({{ Session::get('idModeloInserido') }})
-            toastr.success("{{ $message }}", "Sucesso");
-        @endif
-
-        @if ($message = Session::get('error'))
-            toastr.error("{{ $message }}", "Erro");
-        @endif
-
-        @if (count($errors) > 0)
-            @foreach ($errors->all() as $error)
-                toastr.error("{{ $error }}", "Erro");
-            @endforeach
-        @endif
-
-    });
     </script>
 @endpush

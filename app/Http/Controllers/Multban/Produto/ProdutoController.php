@@ -315,7 +315,7 @@ class ProdutoController extends Controller
             return [];
         }
 
-        $query = Produto::select(DB::raw('produto_id as id, produto_id, produto_dm, UPPER(' . $campo . ') text'))
+        $query = Produto::select(DB::raw('produto_id as id, produto_id, produto_dm, produto_vlr, UPPER(' . $campo . ') text'))
             ->where(function($q) use ($campo, $parametro) {
                 $q->where($campo, 'like', "%$parametro%")
                   ->orWhere('produto_id', 'like', "%$parametro%");

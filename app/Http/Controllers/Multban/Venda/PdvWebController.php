@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\Multban\Venda;
 
+use App\Http\Controllers\Multban\Produto\ProdutoController;
 use App\Http\Controllers\Controller;
 use App\Models\Multban\DadosMestre\MeioDePagamento;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Multban\Venda\RegrasParc;
+use App\Models\Multban\Produto\Produto;
+use App\Models\Multban\Produto\ProdutoStatus;
+use App\Models\Multban\Produto\ProdutoTipo;
 
 class PdvWebController extends Controller
 {
@@ -16,7 +21,14 @@ class PdvWebController extends Controller
     {
         $RegrasParc = RegrasParc::all();
         $meioDePagamento = MeioDePagamento::orderBy('meio_order')->get();
-        return view('Multban.venda.pdv.index', compact('meioDePagamento', 'RegrasParc'));
+        // Filtra produtos pelo emp_id do usuário logado
+        $empId = Auth::user()->emp_id;
+        $produtos = Produto::where('emp_id', $empId)->get();
+        // Indexa o array pelo código do status para facilitar busca no Blade
+        $produtosStatus = ProdutoStatus::all()->keyBy('produto_sts');
+        // Monta array de código => descrição
+        $produtosTipo = ProdutoTipo::all()->pluck('produto_tipo_desc', 'produto_tipo');
+        return view('Multban.venda.pdv.index', compact('meioDePagamento', 'RegrasParc', 'produtos', 'produtosStatus', 'produtosTipo'));
     }
 
     /**
@@ -76,4 +88,5 @@ class PdvWebController extends Controller
 
         return view('Multban.venda.pdv.index', compact('RegrasParc', /* outros dados */));
     }
+
 }
