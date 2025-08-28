@@ -207,7 +207,6 @@ $(function () {
             gridprotocolo.on('select.dt', function (e, dt, type, indexes) {
                 if (type === 'row') {
                     var data = gridprotocolo.rows(indexes).data().toArray();
-                    console.log('Selected rows:', data);
 
                     $('#texto_anm').text(data[0].texto_anm);
                     $('#texto_anm').summernote('code', data[0].texto_anm);
@@ -221,6 +220,33 @@ $(function () {
                     $('#texto_exm').summernote('code', data[0].texto_exm);
                     $('#texto_atd').text(data[0].texto_atd);
                     $('#texto_atd').summernote('code', data[0].texto_atd);
+                    //Receituário
+                    $('#rec_medico_nome').html(data[0].medico);
+                    $('#rec_crm_medico').html(data[0].crm_medico);
+                    //Exames
+                    $('#exa_medico_nome').html(data[0].medico);
+                    $('#exa_crm_medico').html(data[0].crm_medico);
+                    //Atestado
+                    $('#atd_medico_nome').html(data[0].medico);
+                    $('#atd_crm_medico').html(data[0].crm_medico);
+
+                    $('#listaFotosAnexadas').empty();
+
+                    var html = '<div class="row">';
+                    $.each(data[0].images, function (index, file) {
+                        html += `
+                            <div class="col-md-1">
+                                <a href="/storage/${file.replace('thumbnails', 'images')}" data-toggle="lightbox" data-title="Foto ${index + 1}" data-gallery="gallery">
+                                    <img src="/storage/${file}" class="img-fluid mb-2" alt="Foto ${index + 1}"/>
+                                </a>
+                            </div>
+                        `;
+
+                        if ((index + 1) % 10 === 0 && index + 1 !== data[0].images.length) {
+                            html += '</div><div class="row">';
+                        }
+                    });
+                    $('#listaFotosAnexadas').html(html);
                 }
             });
 
@@ -238,6 +264,19 @@ $(function () {
                     $('#texto_exm').summernote('code', '');
                     $('#texto_atd').text('');
                     $('#texto_atd').summernote('code', '');
+
+                    //Receituário
+                    $('#rec_medico_nome').html('');
+                    $('#rec_crm_medico').html('');
+                    //Exames
+                    $('#exa_medico_nome').html('');
+                    $('#exa_crm_medico').html('');
+                    //Atestado
+                    $('#atd_medico_nome').html('');
+                    $('#atd_crm_medico').html('');
+
+
+                    $('#listaFotosAnexadas').empty();
                 }
             });
 
@@ -363,6 +402,32 @@ $(function () {
                     $('#texto_exm').summernote('code', data[0].texto_exm);
                     $('#texto_atd').text(data[0].texto_atd);
                     $('#texto_atd').summernote('code', data[0].texto_atd);
+
+                    //Receituário
+                    $('#rec_medico_nome').html(data[0].medico);
+                    $('#rec_crm_medico').html(data[0].crm_medico);
+                    //Exames
+                    $('#exa_medico_nome').html(data[0].medico);
+                    $('#exa_crm_medico').html(data[0].crm_medico);
+                    //Atestado
+                    $('#atd_medico_nome').html(data[0].medico);
+                    $('#atd_crm_medico').html(data[0].crm_medico);
+                    $('#listaFotosAnexadas').empty();
+                    var html = '<div class="row">';
+                    $.each(data[0].images, function (index, file) {
+                        html += `
+                            <div class="col-md-1">
+                                <a href="/storage/${file.replace('thumbnails', 'images')}" data-toggle="lightbox" data-title="Foto ${index + 1}" data-gallery="gallery">
+                                    <img src="/storage/${file}" class="img-fluid mb-2" alt="Foto ${index + 1}"/>
+                                </a>
+                            </div>
+                        `;
+
+                        if ((index + 1) % 10 === 0 && index + 1 !== data[0].images.length) {
+                            html += '</div><div class="row">';
+                        }
+                    });
+                    $('#listaFotosAnexadas').html(html);
                 }
             });
 
@@ -380,6 +445,18 @@ $(function () {
                     $('#texto_exm').summernote('code', '');
                     $('#texto_atd').text('');
                     $('#texto_atd').summernote('code', '');
+
+                    //Receituário
+                    $('#rec_medico_nome').html('');
+                    $('#rec_crm_medico').html('');
+                    //Exames
+                    $('#exa_medico_nome').html('');
+                    $('#exa_crm_medico').html('');
+                    //Atestado
+                    $('#atd_medico_nome').html('');
+                    $('#atd_crm_medico').html('');
+
+                    $('#listaFotosAnexadas').empty();
                 }
             });
 
@@ -387,7 +464,10 @@ $(function () {
         submitForm: function (formId, btnSubmit, btnPesquisar, url, modal) {
             $(btnSubmit).html("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Salvando...");
             $(btnSubmit).desabilitar();
+            $.loading();
             try {
+
+
                 $.ajaxSetup({
                     headers: {
                         "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
@@ -420,6 +500,14 @@ $(function () {
 
                 });
 
+                // Append files from Dropzone queue manually
+                myDropzoneDocs.getFilesWithStatus(Dropzone.ADDED).forEach(function (file) {
+                    formData.append("fileDoc[]", file); // Or a specific field name
+                });
+                myDropzone.getFilesWithStatus(Dropzone.ADDED).forEach(function (file) {
+                    formData.append("fotoUpload[]", file); // Or a specific field name
+                });
+
                 $.ajax({
                     type: "POST",
                     url: url,
@@ -429,14 +517,47 @@ $(function () {
                     contentType: false,
                     processData: false,
                     success: function (data) {
-                        Swal.fire(data.title, data.text, data.type);
+                        $.removeLoading();
+                        $('#listaFotos').empty();
                         $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
                         $(btnSubmit).habilitar();
                         $(btnSubmit).attr('data-emp-id', '');
                         $("#" + btnPesquisar).trigger('click');
-                        $("#" + modal).modal('hide');
+                        if (modal) {
+
+                            $("#" + modal).modal('hide');
+                        }
+                        $('#listaFotos').append(`
+                            <div class="form-row">
+                                                    <div class="form-group col-md-4">
+                                                        <label for="fotoUpload">Selecionar Foto:</label>
+                                                        <input type="file" name="fotoUpload[]"
+                                                            accept="image/*" class="form-control-file">
+                                                    </div>
+                                                    <div class="form-group col-md-3 d-flex align-items-end">
+                                                        <button type="button"
+                                                            class="btn btn-primary btn-sm btnAddFoto">
+                                                            <i class="icon fas fa-plus-square"></i> Adicionar Foto
+                                                        </button>
+                                                    </div>
+                                                </div>`);
+
+                        myDropzone.removeAllFiles(true);
+                        myDropzoneDocs.removeAllFiles(true);
+
+                        Swal.fire({
+                            title: data.title,
+                            text: data.text,
+                            icon: data.type,
+                            showCancelButton: false,
+                            allowOutsideClick: false,
+                        }).then(function (result) {
+                            $.limparBloqueioSairDaTela();
+                            location.reload();
+                        });
                     },
                     error: function (xhr, status, error) {
+                        $.removeLoading();
 
                         if (xhr.status === 422) {
                             let errors = xhr.responseJSON.message;
@@ -640,6 +761,19 @@ $(function () {
         clientejs.loadDatatablePrtAjax();
     });
 
+
+
+    $('body').on('click', '#btnAdicionarMed', function () {
+        var currentContent = $('#texto_rec').summernote('code');
+        var textoToAdd = $('#rec_detalhes_posologia').val();
+        if (textoToAdd.trim() === "") {
+            return;
+        }
+        $('#texto_rec').summernote('code', currentContent + textoToAdd + '<br>');
+
+        $('#rec_detalhes_posologia').val("");
+    });
+
     $('body').on('click', '#btnSalvarCartao', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -663,10 +797,10 @@ $(function () {
 
         var grid = $("#gridprotocolo");
         var linha = grid.obterLinhaGridItemWithID('gridprotocolo');
-        console.log('linha', linha);
-        var url = "/cliente/update-prontuario";
-        if (linha == null) {
-            url = "/cliente/store-prontuario";
+
+        var url = "/cliente/store-prontuario";
+        if (linha != null) {
+            url = "/cliente/update-prontuario/" + linha.protocolo;
         }
 
         //formId, btnSubmit, btnPesquisar, URL, Modal
@@ -1017,4 +1151,131 @@ $(function () {
     $("body").on("keyup change", "input[type='text']", function (e) {
         $(this).removeClass('is-invalid');
     });
+
+    // DropzoneJS Demo Code Start
+    Dropzone.autoDiscover = false
+
+    // Get the template HTML and remove it from the doumenthe template HTML and remove it from the doument
+    var previewNode = document.querySelector("#template")
+    previewNode.id = ""
+    var previewTemplate = previewNode.parentNode.innerHTML
+    previewNode.parentNode.removeChild(previewNode)
+
+    var myDropzone = new Dropzone("#dropzone-fotos", { // Make the whole body a dropzone
+        url: "#", // Set the url
+        //paramName: "fotoUpload",
+        thumbnailWidth: 80,
+        thumbnailHeight: 80,
+        parallelUploads: 10,
+        maxFilesize: 5, // MB
+        maxFiles: 20,
+        previewTemplate: previewTemplate,
+        autoQueue: false, // Make sure the files aren't queued until manually added
+        autoProcessQueue: false,
+        previewsContainer: "#previews", // Define the container to display the previews
+        clickable: ".fileinput-button-fotos", // Define the element that should be used as click trigger to select files.
+        acceptedFiles: "image/*",
+        autoDiscover: false
+    })
+
+    myDropzone.on("addedfile", function (file) {
+        // Hookup the start button
+        //file.previewElement.querySelector(".start").onclick = function () { myDropzone.enqueueFile(file) }
+    })
+
+    // Update the total progress bar
+    myDropzone.on("totaluploadprogress", function (progress) {
+        document.querySelector("#total-progress .progress-bar").style.width = progress + "%"
+    })
+
+    myDropzone.on("sending", function (file) {
+        // Show the total progress bar when upload starts
+        document.querySelector("#total-progress").style.opacity = "1"
+        // And disable the start button
+        file.previewElement.querySelector(".start").setAttribute("disabled", "disabled")
+    })
+
+    // Hide the total progress bar when nothing's uploading anymore
+    myDropzone.on("queuecomplete", function (progress) {
+        document.querySelector("#total-progress").style.opacity = "0"
+    })
+
+    // Setup the buttons for all transfers
+    // The "add files" button doesn't need to be setup because the config
+    // `clickable` has already been specified.
+    // document.querySelector("#actions .start").onclick = function () {
+    //     myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED))
+    // }
+    document.querySelector("#actions .cancel").onclick = function () {
+        myDropzone.removeAllFiles(true)
+    }
+    // DropzoneJS Fotos Code End
+
+    /////////////////// start DropzoneJS Documentos //////////////////
+
+
+    // DropzoneJS Demo Code Start
+    Dropzone.autoDiscover = false
+    // Get the template HTML and remove it from the doumenthe template HTML and remove it from the doument
+    var previewNode = document.querySelector("#template-documentos")
+    previewNode.id = ""
+    var previewTemplate = previewNode.parentNode.innerHTML
+    previewNode.parentNode.removeChild(previewNode)
+
+    var myDropzoneDocs = new Dropzone("#dropzone-documentos", { // Make the whole body a dropzone
+        url: "#", // Set the url
+        thumbnailWidth: 80,
+        thumbnailHeight: 80,
+        parallelUploads: 20,
+        maxFilesize: 5, // MB
+        maxFiles: 20,
+        previewTemplate: previewTemplate,
+        autoQueue: false, // Make sure the files aren't queued until manually added
+        autoProcessQueue: false,
+        previewsContainer: "#previews-documentos", // Define the container to display the previews
+        clickable: ".fileinput-button-documentos", // Define the element that should be used as click trigger to select files.
+        acceptedFiles: ".pdf,.xls,.xlsx,.doc,.docx,.ppt,.pptx,.txt",
+        autoDiscover: false
+    });
+
+    myDropzoneDocs.on("maxfilesexceeded", function (file) {
+        Swal.fire({
+            title: 'Erro',
+            text: "Só é permitido selecinar até 10 arquivos.",
+            icon: 'error'
+        });
+    });
+
+    myDropzoneDocs.on("addedfile", function (file) {
+        // Hookup the start button
+        //file.previewElement.querySelector(".start").onclick = function () { myDropzoneDocs.enqueueFile(file) }
+    })
+
+    // Update the total progress bar
+    myDropzoneDocs.on("totaluploadprogress", function (progress) {
+        document.querySelector("#total-progress-documentos .progress-bar").style.width = progress + "%"
+    })
+
+    myDropzoneDocs.on("sending", function (file) {
+        // Show the total progress bar when upload starts
+        document.querySelector("#total-progress-documentos").style.opacity = "1"
+        // And disable the start button
+        file.previewElement.querySelector(".start").setAttribute("disabled", "disabled")
+    })
+
+    // Hide the total progress bar when nothing's uploading anymore
+    myDropzoneDocs.on("queuecomplete", function (progress) {
+        document.querySelector("#total-progress-documentos").style.opacity = "0"
+    })
+
+    // Setup the buttons for all transfers
+    // The "add files" button doesn't need to be setup because the config
+    // `clickable` has already been specified.
+    // document.querySelector("#actions .start").onclick = function () {
+    //     myDropzoneDocs.enqueueFiles(myDropzoneDocs.getFilesWithStatus(Dropzone.ADDED))
+    // }
+    document.querySelector("#actions-documentos .cancel").onclick = function () {
+        myDropzoneDocs.removeAllFiles(true)
+    }
+    // DropzoneJS Demo Code End
 });
