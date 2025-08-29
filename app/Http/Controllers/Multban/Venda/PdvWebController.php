@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Multban\Venda\RegrasParc;
 use App\Models\Multban\Empresa\EmpresaParam;
+use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Produto\Produto;
 use App\Models\Multban\Produto\ProdutoStatus;
 use App\Models\Multban\Produto\ProdutoTipo;
@@ -28,6 +29,9 @@ class PdvWebController extends Controller
 
         // Filtra produtos pelo emp_id do usuário logado
         $produtos = Produto::where('emp_id', $empId)->get();
+
+        // Carrega parâmetros da empresa para este emp_id
+        $empresa = Empresa::find($empId);
 
         // Carrega parâmetros da empresa para este emp_id
         $empresaParam = EmpresaParam::find($empId);
