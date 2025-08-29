@@ -231,6 +231,7 @@ $(function () {
                     $('#atd_crm_medico').html(data[0].crm_medico);
 
                     $('#listaFotosAnexadas').empty();
+                    $('#listaDocsAnexados').empty();
 
                     var html = '<div class="row">';
                     $.each(data[0].images, function (index, file) {
@@ -246,12 +247,12 @@ $(function () {
                             html += '</div><div class="row">';
                         }
                     });
-                    $('#listaDocsAnexados').html(html);
+                    $('#listaFotosAnexadas').html(html);
 
-                    var html = '<div class="row">';
+                    html = '<div class="row">';
                     $.each(data[0].docs, function (index, file) {
                         html += `<div class="col-md-1 p-2">
-                                <a href="/storage/${file}" target="_blank">`;
+                                <a href="/storage/${file}" target="_blank" rel="noopener noreferrer">`;
 
                                 if(file.includes('pdf')) {
                                     html += `<i class="fas fa-file-pdf text-secondary" style="font-size: 90px;"></i>`;
@@ -276,6 +277,8 @@ $(function () {
                         }
                     });
                     $('#listaDocsAnexados').html(html);
+
+                    $('#tabs-anamnese-tab').trigger('click');
                 }
             });
 
@@ -306,6 +309,10 @@ $(function () {
 
 
                     $('#listaFotosAnexadas').empty();
+                    $('#listaDocsAnexados').empty();
+
+                    $('#tabs-anamnese-tab').trigger('click');
+
                 }
             });
 
@@ -442,6 +449,9 @@ $(function () {
                     $('#atd_medico_nome').html(data[0].medico);
                     $('#atd_crm_medico').html(data[0].crm_medico);
                     $('#listaFotosAnexadas').empty();
+                    $('#listaDocsAnexados').empty();
+                    $('#tabs-anamnese-tab').trigger('click');
+
                     var html = '<div class="row">';
                     $.each(data[0].images, function (index, file) {
                         html += `
@@ -457,6 +467,37 @@ $(function () {
                         }
                     });
                     $('#listaFotosAnexadas').html(html);
+
+                    html = '<div class="row">';
+                    $.each(data[0].docs, function (index, file) {
+                        html += `<div class="col-md-1 p-2">
+                                <a href="/storage/${file}" target="_blank" rel="noopener noreferrer">`;
+
+                                if(file.includes('pdf')) {
+                                    html += `<i class="fas fa-file-pdf text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('doc')) {
+                                    html += `<i class="fas fa-file-word text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('xls')) {
+                                    html += `<i class="fas fa-file-excel text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('ppt')) {
+                                    html += `<i class="fas fa-file-powerpoint text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('jpg') || file.includes('jpeg') || file.includes('png')) {
+                                    html += `<i class="fas fa-file-image text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('txt')) {
+                                    html += `<i class="fas fa-file-alt text-secondary" style="font-size: 90px;"></i>`;
+                                }else {
+                                    html += `<i class="fas fa-file text-secondary" style="font-size: 90px;"></i>`;
+                                }
+
+                               html += `</a></div>`;
+
+                        if ((index + 1) % 10 === 0 && index + 1 !== data[0].docs.length) {
+                            html += '</div><div class="row">';
+                        }
+                    });
+                    $('#listaDocsAnexados').html(html);
+
+                    $('#tabs-anamnese-tab').trigger('click');
                 }
             });
 
@@ -486,6 +527,8 @@ $(function () {
                     $('#atd_crm_medico').html('');
 
                     $('#listaFotosAnexadas').empty();
+                    $('#listaDocsAnexados').empty();
+                    $('#tabs-anamnese-tab').trigger('click');
                 }
             });
 
