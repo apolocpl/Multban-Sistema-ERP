@@ -35,7 +35,7 @@ class ClienteRoute
 
 
         Route::post('cliente/store-prontuario', [ClienteController::class, 'storeProntuario']);
-        Route::patch('cliente/update-prontuario', [ClienteController::class, 'updateProntuario']);
+        Route::post('cliente/update-prontuario/{id}', [ClienteController::class, 'updateProntuario']);
 
     }
 }
