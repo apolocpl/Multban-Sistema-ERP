@@ -9,11 +9,13 @@
     <link rel="stylesheet" href="{{ asset('assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}" />
 
     <style>
+
         .text-multban-bold-secundary {
             font-weight: 700 !important;
             font-size: 19px;
             color: #a702d8;
         }
+
         .money-multban-bold-secundary {
             font-weight: 700 !important;
             font-size: 26px;
@@ -88,6 +90,14 @@
             color: #ffffff;
             cursor: pointer;
         }
+
+        /* Limita a altura do dropdown do Select2 para aproximadamente 10 itens (com scrollbar) */
+        .select2-dropdown.parc-limit .select2-results__options {
+            max-height: 360px; /* ajuste fino: ~10 itens dependente do line-height */
+            overflow-y: auto;
+        }
+
+
     </style>
 
 @endpush
@@ -199,8 +209,8 @@
                             <div class="form-row p-2">
                                 <div class="form-group col">
                                     <label>Quantidade: (F2)</label>
-                                    <input autocomplete="off" type="text" class="form-control form-control-sm money"
-                                        id="item-quantity" value="1,00" placeholder="1">
+                                    <input autocomplete="off" type="number" class="form-control form-control-sm"
+                                        id="item-quantity" value="1" placeholder="1">
                                 </div>
                                 <div class="form-group col">
                                     <label>Desconto: (F3)</label>
@@ -491,7 +501,8 @@
                             <div class="row mt-3">
                                 <div class="col-md-6">
                                     <label for="parcelasBoleto">Selecione o número de parcelas:*</label>
-                                    <select id="parcelasBoleto" class="form-control" required>
+                                    <select id="parcelasBoleto" class="form-control" required data-size="10">
+                                        <option value="">Selecione...</option>
                                         <!-- As opções serão preenchidas dinamicamente via JavaScript -->
                                     </select>
                                 </div>
@@ -525,6 +536,7 @@
                                 <div class="col-md-6">
                                     <label for="parcelasCartao">Selecione o número de parcelas:*</label>
                                     <select id="parcelasCartao" class="form-control" required>
+                                        <option value="">Selecione...</option>
                                         <!-- As opções serão preenchidas dinamicamente via JavaScript -->
                                     </select>
                                 </div>
@@ -566,7 +578,7 @@
 
                                 <div class="col-md-3">
                                     <label for="valortotalacobrar" class="text-bold m-0" style="font-size:16px;">Valor à Cobrar</label>
-                                    <input autocomplete="off" type="text" class="form-control money form-control-sm" id="valortotalacobrar"
+                                    <input autocomplete="off" type="text" class="form-control form-control-sm money" id="valortotalacobrar"
                                         name="valortotalacobrar" value="0,00">
                                     <span id="valortotalacobrarError" class="text-danger text-sm"></span>
                                 </div>
@@ -661,34 +673,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($produtos as $prod)
-                                    @php
-                                        $sts = isset($produtosStatus[$prod->produto_sts]) ? $produtosStatus[$prod->produto_sts] : null;
-                                        $statusDesc = $sts ? $sts->produto_sts_desc: 'Desconhecido';
-                                    @endphp
-                                    <tr class="produto-item-modal" style="cursor:pointer" data-id="{{ $prod->produto_id }}" data-tipo="{{ $prod->produto_tipo }}" data-dm="{{ $prod->produto_dm }}" data-sts="{{ $prod->produto_sts }}" data-desc="{{ $prod->produto_dm }}" data-price="{{ $prod->produto_vlr }}">
-                                        <td>{{ $prod->produto_id }}</td>
-                                        <td>{{ $produtosTipo[$prod->produto_tipo] ?? $prod->produto_tipo }}</td>
-                                        <td>{{ $prod->produto_dm }}</td>
-                                        <td>{{ $prod->produto_vlr }}</td>
-                                        <td>
-                                            @switch($prod->produto_sts)
-                                                @case('AT')
-                                                    <span class="badge badge-success">{{ $statusDesc }}</span>
-                                                    @break
-                                                @case('IN')
-                                                    <span class="badge badge-warning">{{ $statusDesc }}</span>
-                                                    @break
-                                                @case('BL')
-                                                @case('EX')
-                                                    <span class="badge badge-danger">{{ $statusDesc }}</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge badge-secondary">{{ $statusDesc }}</span>
-                                            @endswitch
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                <!-- Tabela será preenchida via JS -->
+                                <tr class="produto-item-modal" style="cursor:pointer" data-id="" data-tipo="" data-dm="" data-sts="" data-desc="" data-price="">
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -744,7 +736,7 @@
                     </div>
                     <hr>
                     <div class="form-row">
-                        <div class="form-goup col-md-3">
+                        <div class="form-goup col-md-3>
                             <label for='cep'>CEP</label>
                             <div class="input-group mb-3 input-group-sm">
                                 <input type="text" autofocus="autofocus" class="form-control cep form-control-sm" id="cep" name="cep"
@@ -848,6 +840,7 @@
     <!-- JAVASCRIPT - COMPONENTES / FUNÇÕES -------->
     <!---------------------------------------------->
     <script type="text/javascript">
+
         // Função para resetar campos de pagamento parcelado
         function resetarCamposPagamentoParcelado() {
             $("#div-boleto").hide();
@@ -859,6 +852,17 @@
             $("#dataPrimeiraParcelaBoleto").val("");
             $("#dataPrimeiraParcelaBoleto").prop("readonly", true);
             $("#dataPrimeiraParcelaBoletoHelp").text("");
+            // Limpa opções dos selects de parcelas e destrói Select2 para forçar recálculo na próxima abertura
+            try {
+                var $pb = $("#parcelasBoleto");
+                $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+                if ($pb.hasClass('select2-hidden-accessible')) { try { $pb.select2('destroy'); } catch(e) {} }
+            } catch(e) {}
+            try {
+                var $pc = $("#parcelasCartao");
+                $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+                if ($pc.hasClass('select2-hidden-accessible')) { try { $pc.select2('destroy'); } catch(e) {} }
+            } catch(e) {}
         }
         // Mapeia as opções de regra_parc para uso no JS
         var regrasParcMap = {};
@@ -868,30 +872,65 @@
             @endforeach
         @endif
 
-        $(document).ready(function() {
-        // Carregar todos os produtos ao abrir o modal
+    $(document).ready(function() {
+
+        // Armazena o valor original do produto selecionado
+        var precoOriginalProduto = 0;
+
+        // Ao selecionar um produto, salva o preço original
+        $('body').on('click', '.produto-item-modal', function() {
+            precoOriginalProduto = $(this).data('price');
+        });
+
+        // Regra para limitar subtotal
+        function validarSubtotal() {
+            var quantity = parseInt($('#item-quantity').val()) || 1;
+            var price = $.tratarValor($('#item-price').val());
+            var subtotal = quantity * price;
+            return true;
+        }
+
+        // Valida subtotal ao alterar quantidade, desconto ou preço
+        $('body').on('keyup blur', '#item-quantity, #item-discount, #item-price', function(e) {
+            setTimeout(function() {
+                validarSubtotal();
+            }, 50);
+        });
+
+        // Carregar produtos via API ao abrir o modal
         $('#pesquisar-produto-modal').on('show.bs.modal', function() {
-            // Buscar produtos via AJAX
+            var $tbody = $('#produtos-lista-modal tbody');
+            $tbody.empty();
+            // Adiciona spinner de loading
+            var $spinner = $('<tr id="produtos-loading-spinner"><td colspan="5" class="text-center"><span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Carregando produtos...</td></tr>');
+            $tbody.append($spinner);
             $.get('/api/produtos', function(produtos) {
-                var $tbody = $('#produtos-lista-modal tbody');
                 $tbody.empty();
                 produtos.forEach(function(prod) {
-                    var statusDesc = '';
-                    var statusClass = '';
+                    // Badge do status
+                    var badge = '';
                     switch (prod.produto_sts) {
-                        case 'AT': statusDesc = 'Ativo'; statusClass = 'text-success'; break;
-                        case 'IN': statusDesc = 'Inativo'; statusClass = 'text-danger'; break;
-                        case 'EX': statusDesc = 'Excluído'; statusClass = 'text-danger'; break;
-                        case 'BL': statusDesc = 'Bloqueado'; statusClass = 'text-warning'; break;
-                        default: statusDesc = 'Desconhecido'; statusClass = 'text-secondary'; break;
+                        case 'AT': badge = '<span class="badge badge-success">'+(prod.produto_sts_desc||'Ativo')+'</span>'; break;
+                        case 'IN': badge = '<span class="badge badge-warning">'+(prod.produto_sts_desc||'Inativo')+'</span>'; break;
+                        case 'BL': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Bloqueado')+'</span>'; break;
+                        case 'EX': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Excluído')+'</span>'; break;
+                        default:   badge = '<span class="badge badge-secondary">'+(prod.produto_sts_desc||'Desconhecido')+'</span>'; break;
                     }
-                    $tbody.append('<tr class="produto-item-modal" style="cursor:pointer" data-id="'+prod.produto_id+'" data-tipo="'+prod.produto_tipo+'" data-dm="'+prod.produto_dm+'" data-sts="'+prod.produto_sts+'" data-desc="'+prod.produto_dm+'" data-price="'+prod.produto_vlr+'">'
+                    $tbody.append(
+                        '<tr class="produto-item-modal" style="cursor:pointer"'
+                        +' data-id="'+prod.produto_id+'"'
+                        +' data-tipo="'+(prod.produto_tipo_desc||prod.produto_tipo)+'"'
+                        +' data-dm="'+prod.produto_dm+'"'
+                        +' data-sts="'+prod.produto_sts+'"'
+                        +' data-desc="'+prod.produto_dm+'"'
+                        +' data-price="'+prod.produto_vlr+'">'
                         +'<td>'+prod.produto_id+'</td>'
-                        +'<td>'+prod.produto_tipo+'</td>'
+                        +'<td>'+(prod.produto_tipo_desc||prod.produto_tipo)+'</td>'
                         +'<td>'+prod.produto_dm+'</td>'
                         +'<td>'+prod.produto_vlr+'</td>'
-                        +'<td class="'+statusClass+'">'+statusDesc+'</td>'
-                    +'</tr>');
+                        +'<td>'+badge+'</td>'
+                        +'</tr>'
+                    );
                 });
             });
         });
@@ -904,7 +943,12 @@
                 filtro = selected[0].text.toLowerCase();
             }
             $('#produtos-lista-modal tbody tr').each(function() {
-                var desc = $(this).data('desc').toLowerCase();
+                var desc = $(this).data('desc');
+                if (typeof desc === 'string') {
+                    desc = desc.toLowerCase();
+                } else {
+                    desc = '';
+                }
                 if (!filtro || desc.includes(filtro)) {
                     $(this).show();
                 } else {
@@ -923,6 +967,10 @@
             $('#desProd').html(prodDesc);
             $('#item-price').val(prodPrice);
             $('#item-price').trigger('keyup');
+            // Atualizar campo oculto com o id do produto selecionado
+            $('#produto_dmf_id').val(prodId);
+            // Atualizar o atributo data-id do botão inserir
+            $('#btn-adicionar-item').data('id', prodId);
             // Fechar modal
             $('#pesquisar-produto-modal').modal('hide');
         });
@@ -964,6 +1012,7 @@
                 $('#valortotalacobrar').val(formatBRL(totalCarrinho));
                 $('#valorsaldo').val(formatBRL(0));
                 $('#valortroco').val(formatBRL(0));
+                // Atualiza variável global CobrarValor com o total atual do carrinho
             });
 
             // Máscara tipo calculadora de dinheiro: transforma dígitos em centavos
@@ -998,21 +1047,77 @@
                 $(this).val(formatBRL(valor));
             });
 
+            // Atualiza os valores visíveis do checkout imediatamente
             atualizarCheckoutValores();
-            atualizarParcelasBoleto();
-            atualizarParcelasCartao();
 
+            // Controla o comportamento do DropDown para Parcelas de Boleto
+            $("body").on('mousedown', '#parcelasBoleto', function(e){
+                var $sel = $(this);
+                if (!$sel.hasClass('select2-hidden-accessible')) {
+                    e.preventDefault(); // avoid native dropdown
+                    atualizarCheckoutValores();
+                    atualizarParcelasBoleto();
+                }
+            });
+
+            $("body").on('focus', '#parcelasBoleto', function(){
+                var $sel = $(this);
+                if (!$sel.hasClass('select2-hidden-accessible')) {
+                    atualizarCheckoutValores();
+                    atualizarParcelasBoleto();
+                }
+            });
+
+            // Ao fechar o select2 ou perder foco, limpa as opções para forçar recálculo na próxima abertura
+            $("body").on('select2:close', '#parcelasBoleto', function(e){
+                try {
+                    var $el = $(this);
+                    $el.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+                    try { $el.select2('destroy'); } catch(ex) {}
+                } catch(err) {}
+            });
+            $("body").on('blur', '#parcelasBoleto', function(e){
+                try { $(this).empty().append('<option value="">Selecione...</option>').val("").trigger('change'); } catch(err) {}
+            });
+
+            // Controla o comportamento do DropDown para Parcelas de Cartão
+            $("body").on('mousedown', '#parcelasCartao', function(e){
+                var $sel = $(this);
+                if (!$sel.hasClass('select2-hidden-accessible')) {
+                    e.preventDefault(); // avoid native dropdown
+                    atualizarCheckoutValores();
+                    atualizarParcelasCartao();
+                }
+            });
+            $("body").on('focus', '#parcelasCartao', function(){
+                var $sel = $(this);
+                if (!$sel.hasClass('select2-hidden-accessible')) {
+                    atualizarCheckoutValores();
+                    atualizarParcelasCartao();
+                }
+            });
+            $("body").on('select2:close', '#parcelasCartao', function(e){
+                try {
+                    var $el = $(this);
+                    $el.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+                    try { $el.select2('destroy'); } catch(ex) {}
+                } catch(err) {}
+            });
+            $("body").on('blur', '#parcelasCartao', function(e){
+                try { $(this).empty().append('<option value="">Selecione...</option>').val("").trigger('change'); } catch(err) {}
+            });
+
+            // Mantém atualização dos valores do checkout quando o DOM mudar, mas evita recalcular parcelas automaticamente
             $("body").on("DOMSubtreeModified", "#p_subtotal, #p_discount, .valorTotal", function() {
                 atualizarCheckoutValores();
-                atualizarParcelasBoleto();
-                atualizarParcelasCartao();
             });
 
             // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de produto
             $('#pesquisar-produto-modal').on('show.bs.modal', function() {
                 $('#produto_dmf').empty().trigger('change');
                 $('#produto_dmf').val(null).trigger('change');
-                $('#produto_dmf_id').val('');
+                $('#produto_dmf_id').empty().trigger('change');
+                $('#produto_dmf_id').val(null).trigger('change');
                 $('#produto_dmf').select2('data', null);
                 $('#produto_dmf').attr('data-placeholder', 'Pesquise o Nome do Produto');
             });
@@ -1156,37 +1261,102 @@
             $("#checkout_total").text(total);
         }
 
+        // ATUALIZA AS PARCELAS QUE APARECEM COMO OPÇÕES NA VENDA POR BOLETO
         function atualizarParcelasBoleto() {
-            var totalVenda = $(".valorTotal").text().replace("R$", "").replace(".", "").replace(",", ".").trim();
-            var parclib = parseInt($("#blt_parclib").val()) || 1;
+
+            // Prioriza o valor informado manualmente em #valortotalacobrar, depois #checkout_total e por fim .valorTotal
+            var totalVenda = 0;
+            var valorCobrarText = $("#valortotalacobrar").val() || "";
+
+            // #valortotalacobrar contém texto no formato '123,45' (sem R$)
+            if (typeof parseBRL === 'function') {
+                totalVenda = parseBRL(valorCobrarText);
+            } else {
+                var totalStr0 = valorCobrarText.replace(/R\$|\s/g, '').trim();
+                totalStr0 = totalStr0.replace(/\./g, '').replace(',', '.');
+                totalVenda = parseFloat(totalStr0) || 0;
+            }
+
+            // Pega limite de parcelas da empresa (blt_parclib). Se não existir, cai para #card_posparc
+            var parclib = 1;
+            if (empresaParam && empresaParam.blt_parclib) {
+                parclib = parseInt(empresaParam.blt_parclib) || 1;
+            } else {
+                parclib = parseInt($("#card_posparc").val()) || 1;
+            }
+
+            // O requisito pede: criar exatamente blt_parclib entradas com o resultado da divisão total/blt_parclib
             var select = $("#parcelasBoleto");
             select.empty();
             select.append('<option value="">Selecione...</option>');
-            totalVenda = parseFloat(totalVenda);
+
+            if (parclib <= 0) parclib = 1;
+
             for (var i = 1; i <= parclib; i++) {
-                var valorParcela = parclib > 0 ? totalVenda / i : totalVenda;
-                var valorParcelaFormatado = valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                var parcelaValor = i > 0 ? (totalVenda / i) : totalVenda;
+                var parcelaValorFormatado = (typeof formatBRL === 'function') ? formatBRL(parcelaValor) : parcelaValor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 var numParcela = i.toString().padStart(2, '0');
-                select.append(`<option value="${i}">${numParcela} X R$ ${valorParcelaFormatado}</option>`);
+                select.append(`<option value="${i}">${numParcela} X R$ ${parcelaValorFormatado}</option>`);
             }
+            // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
+            try {
+                initParcelSelect2IfAvailable('#parcelasBoleto');
+                // Abre o dropdown logo em seguida para que o primeiro clique já mostre o Select2 corretamente
+                setTimeout(function(){
+                    try { $('#parcelasBoleto').select2('open'); } catch(err) { /* noop */ }
+                }, 60);
+            } catch(e) { console.warn('initParcelSelect2IfAvailable erro:', e); }
         }
 
+        // ATUALIZA AS PARCELAS QUE APARECEM COMO OPÇÕES NA VENDA POR CARTÃO
         function atualizarParcelasCartao() {
-            var totalVenda = $(".valorTotal").text().replace("R$", "").replace(".", "").replace(",", ".").trim();
-            var parclib = parseInt($("#card_posparc").val()) || 1;
+
+            // Prioriza o valor informado manualmente em #valortotalacobrar, depois #checkout_total e por fim .valorTotal
+            var totalVenda = 0;
+            var valorCobrarTextC = $("#valortotalacobrar").val() || "";
+
+            console.log('Chegou Aqui');
+            console.log('parcelas (cartao): valortotalacobrar=', valorCobrarTextC);
+            console.log('Chegou Aqui');
+
+            if (typeof parseBRL === 'function') {
+                totalVenda = parseBRL(valorCobrarTextC);
+            } else {
+                var totalStr0c = valorCobrarTextC.replace(/R\$|\s/g, '').trim();
+                totalStr0c = totalStr0c.replace(/\./g, '').replace(',', '.');
+                totalVenda = parseFloat(totalStr0c) || 0;
+            }
+
+            // Pega limite de parcelas da empresa (card_posparc). Se não existir, cai para #card_posparc
+            var parclib = 1;
+            if (empresaParam && empresaParam.card_posparc) {
+                parclib = parseInt(empresaParam.card_posparc) || 1;
+            } else {
+                parclib = parseInt($("#card_posparc").val()) || 1;
+            }
+
+            // O requisito pede: criar exatamente card_posparc entradas com o resultado da divisão total/card_poscarc
             var select = $("#parcelasCartao");
             select.empty();
             select.append('<option value="">Selecione...</option>');
-            totalVenda = parseFloat(totalVenda);
+
+            if (parclib <= 0) parclib = 1;
+
             for (var i = 1; i <= parclib; i++) {
-                var valorParcela = parclib > 0 ? totalVenda / i : totalVenda;
-                var valorParcelaFormatado = valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                var parcelaValor = i > 0 ? (totalVenda / i) : totalVenda;
+                var parcelaValorFormatado = (typeof formatBRL === 'function') ? formatBRL(parcelaValor) : parcelaValor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 var numParcela = i.toString().padStart(2, '0');
-                select.append(`<option value="${i}">${numParcela} X R$ ${valorParcelaFormatado}</option>`);
+                select.append(`<option value="${i}">${numParcela} X R$ ${parcelaValorFormatado}</option>`);
             }
+            // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
+            try {
+                initParcelSelect2IfAvailable('#parcelasCartao');
+                // Abre o dropdown logo em seguida para que o primeiro clique já mostre o Select2 corretamente
+                setTimeout(function(){
+                    try { $('#parcelasCartao').select2('open'); } catch(err) { /* noop */ }
+                }, 60);
+            } catch(e) { console.warn('initParcelSelect2IfAvailable erro:', e); }
         }
-
-
 
         //variaveis
         var products = new Array();
@@ -1196,9 +1366,46 @@
         var finalizarClick = false;
         var searchProduct = false;
         var discountType = '%';
+        // Empresa params disponibilizados pelo controller
+        var empresaParam = @json($empresaParam ?? null);
+        // Guarda timestamps de mensagens para evitar duplicação
+        var lastToastr = {};
+
+        function showToastrOnce(type, message, key, cooldownMs) {
+            cooldownMs = cooldownMs || 1000; // 1s default
+            var now = Date.now();
+            key = key || message;
+            if (!lastToastr[key] || (now - lastToastr[key]) > cooldownMs) {
+                lastToastr[key] = now;
+                if (type === 'error') toastr.error(message);
+                else if (type === 'success') toastr.success(message);
+                else if (type === 'info') toastr.info(message);
+                else toastr.warning(message);
+            }
+        }
         var venda_subtotal = $("#p_subtotal").text().replace("R$", "").trim();
         var venda_desconto = $("#p_discount").text().replace("R$", "").trim();
         var venda_total = $("#valorTotal").text().replace("R$", "").trim();
+
+        // Inicializa Select2 em uma select (se a biblioteca estiver carregada) sem alterar a largura/estilo original.
+        function initParcelSelect2IfAvailable(selector) {
+            if (typeof $ === 'undefined' || typeof $.fn === 'undefined' || !$.fn.select2) return;
+            var $el = $(selector);
+            if ($el.length === 0) return;
+            // se já inicializado, destroy antes para re-inicializar com as opções corretas
+            try {
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    $el.select2('destroy');
+                }
+            } catch (e) {
+                // ignore
+            }
+            $el.select2({
+                width: 'resolve',
+                dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
+                dropdownCssClass: 'parc-limit'
+            });
+        }
 
         //status das mesas
         var mesaStatus = {}
@@ -1236,28 +1443,31 @@
 
                 $('#pesquisar-produto-modal').modal('hide');
 
-                $("#item-quantity").val("1,00");
+                $("#item-quantity").val(1);
             }
         });
 
         $("body").on("keyup blur", "#item-quantity, #item-discount, #item-price", function(e) {
-
-            var quantity = $.tratarValor($('#item-quantity').val());
+            // Sempre trata o preço para float, removendo todos os pontos e trocando vírgula por ponto
+            var rawPrice = $('#item-price').val();
+            var price = 0;
+            if (typeof rawPrice === 'string') {
+                price = parseFloat(rawPrice.replace(/\./g, '').replace(',', '.')) || 0;
+            } else {
+                price = Number(rawPrice) || 0;
+            }
+            var quantity = parseInt($('#item-quantity').val()) || 1;
             var discount = $.tratarValor($('#item-discount').val());
             var discountTotal = 0;
-
             if(quantity > 0){
-                var price = $.tratarValor($("#item-price").val());
-
                 if(discountType === "%"){
                     discountTotal = quantity * ((discount * price) / 100);
                 }else{
                     discountTotal = quantity * discount;
                 }
-
-                $("#item-subtotal").val( $.toMoneySimples(Number((price * quantity) - discountTotal).toFixed(2)));
+                var subtotal = Number((price * quantity) - discountTotal);
+                $("#item-subtotal").val( $.toMoneySimples(subtotal.toFixed(2)) );
             }
-
         });
 
         $("body").on("keyup", "#item-quantity", function(e) {
@@ -1284,7 +1494,14 @@
         $("body").on("click", "#btn-adicionar-item", async function(){
 
             var quantity = $.tratarValor($('#item-quantity').val());
-            var price = $.tratarValor($('#item-price').val());
+            // Corrige o tratamento do preço para aceitar valores grandes
+            var rawPrice = $('#item-price').val();
+            var price = 0;
+            if (typeof rawPrice === 'string') {
+                price = parseFloat(rawPrice.replace(/\./g, '').replace(',', '.')) || 0;
+            } else {
+                price = Number(rawPrice) || 0;
+            }
             var discount = $.tratarValor($('#item-discount').val());
             var discountValue = 0;
 
@@ -1298,13 +1515,13 @@
             if(discountType === "%"){
                 discountValue = ((discount * price) / 100) * quantity;
                 if(((discount * price) / 100) * quantity > price){
-                    toastr.error('O Desconto não pode ser maior que o Preço.');
+                    Swal.fire('', 'O desconto não pode ser maior que o valor do item!', 'error');
                     return;
                 }
             }else{
                 discountValue = discount;
                 if(discount > price){
-                    toastr.error('O Desconto não pode ser maior que o Preço.');
+                    Swal.fire('', 'O desconto não pode ser maior que o valor do item!', 'error');
                     return;
                 }
             }
@@ -1324,8 +1541,10 @@
                 return;
             }
 
+            // Gera um id único para o item
+            var item_uid = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
             var item = {
-                id: parseInt(id),
+                id: item_uid,
                 product_id: parseInt(id),
                 price: price,
                 name: descricao,
@@ -1338,7 +1557,7 @@
             adicionarAoCarrinho(item);
             show_cart();
 
-            $('#item-quantity').val('1,00');
+            $('#item-quantity').val('1');
             $('#item-discount').val('0,00');
             $('#item-price').val('0,00');
             $('#item-subtotal').val('0,00');
@@ -1377,7 +1596,7 @@
         });
 
         $("body").on("click", ".btn-change-discount", function(){
-                var id = parseInt($(this).data('id'));
+                var id = $(this).data('id');
                 var index = _.findIndex(cart, { id : id});
                 if($(this).html() === "%"){
                     $(this).html("R$");
@@ -1914,7 +2133,7 @@
 
                             $('#getProduto').val("");
                             $('#getProduto').focus();
-                            $("#item-quantity").val("1,00");
+                            $("#item-quantity").val("1");
                             $('#item-discount').val('0,00');
                             $('#item-price').val('0,00');
                             $('#item-subtotal').val('0,00');
@@ -1927,7 +2146,7 @@
                         .fail(function (xhr, status, error) {
                             $('#getProduto').val("");
                             $('#getProduto').focus();
-                            $("#item-quantity").val("1,00");
+                            $("#item-quantity").val("1");
                             $('#item-discount').val('0,00');
                             $('#item-price').val('0,00');
                             $('#item-subtotal').val('0,00');
@@ -2024,7 +2243,7 @@
 
                             $('#getProduto').val("");
                             $('#getProduto').focus();
-                            $("#item-quantity").val("1,00");
+                            $("#item-quantity").val("1");
                             $('#item-discount').val('0,00');
                             $('#item-price').val('0,00');
                             $('#item-subtotal').val('0,00');
@@ -2037,7 +2256,7 @@
                         .fail(function (xhr, status, error) {
                             $('#getProduto').val("");
                             $('#getProduto').focus();
-                            $("#item-quantity").val("1,00");
+                            $("#item-quantity").val("1");
                             $('#item-discount').val('0,00');
                             $('#item-price').val('0,00');
                             $('#item-subtotal').val('0,00');
@@ -2083,15 +2302,31 @@
         });
 
         function adicionarAoCarrinho(item){
-            // Busca item igual apenas pelo id do produto
-            var index = _.findIndex(cart, { id: item.id });
+            // Busca item igual por product_id, price, discount e discountType
+            var index = _.findIndex(cart, function(carrinhoItem) {
+                return carrinhoItem.product_id === item.product_id && carrinhoItem.price === item.price && carrinhoItem.discount === item.discount && carrinhoItem.discountType === item.discountType;
+            });
             if (index === -1) {
                 cart.push(item);
+                // Atualiza contador de itens distintos
+                $('#totalItens').text(cart.length);
             } else {
                 cart[index].quantity += item.quantity;
-                cart[index].discountValue += item.discountValue;
+                // Recalcula desconto e subtotal do item existente
+                var quantity = cart[index].quantity;
+                var price = cart[index].price;
+                var discount = cart[index].discount;
+                var discountTypeItem = cart[index].discountType;
+                var discountTotal = 0;
+                if(discountTypeItem === "%"){
+                    discountTotal = quantity * ((discount * price) / 100);
+                }else{
+                    discountTotal = quantity * discount;
+                }
+                cart[index].discountValue = discountTotal;
+                cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
+                // Não atualiza o contador de itens distintos
             }
-
             console.log('adicionarAoCarrinho', item)
         }
 
@@ -2133,14 +2368,6 @@
                 }
         });
 
-        // $("body").on("keyup", "#item-quantity", function(e) {
-
-        //     if(e.keyCode == 13){
-        //        $('#getProduto').focus();
-        //        $('#getProduto').val('');
-        //     }
-        // });
-
         var calcDiscount = function(id, index) {
             var quantity = $.tratarValor($('#item-quantity-'+id).val());
             var discount = $.tratarValor($('#item-discount-'+id).val());
@@ -2160,18 +2387,28 @@
         $("body").on("blur change", ".IncOrDecToCart", function(e) {
             //debugger;
 
-            var item = {
-                id: parseInt($(this).attr("data-id"))
-            };
-            var index = _.findIndex(cart, item);
-            if ($.toMoneyVendaSimples($(this).val()) <= 0) {
-                deleteItemFromCart(item);
+            var item_id = $(this).attr("data-id");
+            var index = _.findIndex(cart, { id: item_id });
+            // Força a quantidade a ser inteiro
+            var rawQuantity = String($(this).val()).replace(/\D/g, '');
+            var quantity = parseInt(rawQuantity) || 1;
+            $(this).val(quantity); // Atualiza o campo na tabela para inteiro
+            if (quantity <= 0) {
+                deleteItemFromCart({ id: item_id });
             } else {
-                cart[index].discountType = discountType;
-                cart[index].discountValue = calcDiscount($(this).attr("data-id"),index);
-                cart[index].quantity = $.toMoneyVendaSimples($(this).val());
+                cart[index].quantity = quantity;
+                var price = cart[index].price;
+                var discount = cart[index].discount;
+                var discountTypeItem = cart[index].discountType;
+                var discountTotal = 0;
+                if(discountTypeItem === "%"){
+                    discountTotal = quantity * ((discount * price) / 100);
+                }else{
+                    discountTotal = quantity * discount;
+                }
+                cart[index].discountValue = discountTotal;
+                cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
             }
-
             show_cart();
         });
 
@@ -2186,14 +2423,24 @@
         $("body").on("blur change", ".priceToCart", function(e) {
             //debugger;
 
-            var item = {
-                id: parseInt($(this).attr("data-id"))
-            };
-            var index = _.findIndex(cart, item);
-            cart[index].discountType = discountType;
-            cart[index].discountValue = calcDiscount($(this).attr("data-id"),index);
-            cart[index].price = $.toMoneyVendaSimples($(this).val());
-            show_cart()
+            var item_id = $(this).attr("data-id");
+            var index = _.findIndex(cart, { id: item_id });
+            // Trata o valor para float correto
+            var rawPrice = String($(this).val());
+            var price = parseFloat(rawPrice.replace(/\./g, '').replace(',', '.')) || 0;
+            cart[index].price = price;
+            var quantity = cart[index].quantity;
+            var discount = cart[index].discount;
+            var discountTypeItem = cart[index].discountType;
+            var discountTotal = 0;
+            if(discountTypeItem === "%"){
+                discountTotal = quantity * ((discount * price) / 100);
+            }else{
+                discountTotal = quantity * discount;
+            }
+            cart[index].discountValue = discountTotal;
+            cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
+            show_cart();
         });
 
         $("body").on("keyup", ".priceToCart", function(e) {
@@ -2207,15 +2454,21 @@
         $("body").on("blur change", ".discountToCart", function(e) {
             //debugger;
 
-            var item = {
-                id: parseInt($(this).attr("data-id"))
-            };
-            var index = _.findIndex(cart, item);
-
-            cart[index].discountType = discountType;
-            cart[index].discountValue = calcDiscount($(this).attr("data-id"),index);
+            var item_id = $(this).attr("data-id");
+            var index = _.findIndex(cart, { id: item_id });
             cart[index].discount = $.tratarValor($(this).val());
-
+            var quantity = cart[index].quantity;
+            var price = cart[index].price;
+            var discount = cart[index].discount;
+            var discountTypeItem = cart[index].discountType;
+            var discountTotal = 0;
+            if(discountTypeItem === "%"){
+                discountTotal = quantity * ((discount * price) / 100);
+            }else{
+                discountTotal = quantity * discount;
+            }
+            cart[index].discountValue = discountTotal;
+            cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
             show_cart();
         });
 
@@ -2230,9 +2483,8 @@
 
         $("body").on("click", ".DeleteItem", function() {
             var item = {
-                id: parseInt($(this).attr("data-id"))
+                id: $(this).attr("data-id")
             };
-
             deleteItemFromCart(item);
 
         });
@@ -2431,9 +2683,39 @@
                 var obj = cart;
                 $.each(obj, function(key, value) {
                     console.log('show_cart', value)
+                    qty = Number(value.quantity);
+                    var itemTotal = Number(value.price * qty);
+
+                    // Regra: desconto não pode ser maior que o total do item
+                    if (value.discountValue > itemTotal) {
+                        Swal.fire('', 'O desconto não pode ser maior que o valor do item!', 'error');
+                        // Zera o desconto do item no carrinho (estado) para não afetar os totais
+                        var idx = _.findIndex(cart, { id: value.id });
+                        if (idx !== -1) {
+                            cart[idx].discount = 0;
+                            cart[idx].discountValue = 0;
+                            cart[idx].subtotal = Number((cart[idx].price * cart[idx].quantity) - 0).toFixed(2);
+                            // atualiza o objeto corrente também
+                            value.discount = 0;
+                            value.discountValue = 0;
+                            value.subtotal = cart[idx].subtotal;
+                        }
+                        // Restaura o tipo de desconto do botão do item para '%'
+                        var $btn = $("button[data-id='" + value.id + "'].btn-change-discount");
+                        if($btn.length){
+                            $btn.html('%');
+                            cart[idx] && (cart[idx].discountType = '%');
+                        }
+                        // Não adiciona desconto inválido aos acumuladores
+                        discount += 0;
+                    } else {
+                        discount += value.discountValue;
+                    }
+
+                    // Agora gera o HTML do item usando o valor (possivelmente) ajustado acima
                     cart_html += '<tr>';
                     cart_html += '<td><h5 style="margin:0px;">' + value.name + '</h5></td>';
-                    cart_html += '<td width="15%"><input type="text" value="' + $.toMoneySimples(value.quantity) + '" id="item-quantity-'+value.id+'" class="form-control form-control-sm money IncOrDecToCart" data-id=' + value.id + '></td>';
+                    cart_html += '<td width="15%"><input type="number" value="' + parseInt(value.quantity) + '" id="item-quantity-'+value.id+'" class="form-control form-control-sm IncOrDecToCart" data-id=' + value.id + ' min="1" step="1" pattern="[0-9]*" inputmode="numeric"></td>';
                     cart_html += '<td width="15%"><input type="text" value="' + $.toMoneySimples(value.price) + '" id="item-price-'+value.id+'" class="form-control form-control-sm money priceToCart" data-id=' + value.id + '></td>';
                     cart_html += '<td width="15%"><div class="input-group input-group-sm">';
                     cart_html += '<input type="text" value="' + $.toMoneySimples(value.discount) + '" id="item-discount-'+value.id+'" class="form-control form-control-sm money discountToCart" data-id=' + value.id + '>';
@@ -2444,9 +2726,8 @@
                     cart_html += 'class="btn btn-sm btn-danger DeleteItem" data-id=' + value.id + '><i class="fa fa-trash"></i></a></td>';
                     cart_html += '</tr>';
 
-                    qty = Number(value.quantity);
-                    discount += value.discountValue;
-                    total = Number(total) + Number(value.price * qty);
+                    total = Number(total) + itemTotal;
+
                 });
 
                 var taxa = 0;
@@ -2454,20 +2735,20 @@
                 $("#p_subtotal").html($.toMoney(total));
                 $("#p_discount").html($.toMoney(discount));
                 console.log($.toMoney(discount))
-                $("#valorDesconto").val($.toMoneyVendaSimples(discount, false));
+                $("#valorDesconto").val($.toMoneyVendaSimples(String(discount), false));
 
                 var total_amount = Number(total) - discount;
                 $("#total_amount").val(total_amount);
                 $("#total_amount_modal").html($.toMoney(total));
                 $("#taxa").val(taxa);
-                $("#valorAPagar").val($.toMoneyVendaSimples(total_amount, false))
+                $("#valorAPagar").val($.toMoneyVendaSimples(String(total_amount), false))
 
                 $(".valorTotal").html($.toMoney(total_amount));
                 $("#CartHTML").html("");
                 $("#CartHTML").html(cart_html);
                 count_items = 0;
                 cart.forEach(function(conta){
-                    count_items = parseInt(count_items) + parseInt(conta.quantity);
+                    count_items++;
                 });
                 $("#totalItens").html(count_items);
                 $(".countcart").html(count_items);
@@ -2477,9 +2758,13 @@
                 $(".countcart").html(count_items);
                 $(".valorTotal").html("R$0,00");
                 $("#p_subtotal").html("R$0,00");
+                $("#p_discount").html("R$0,00");
+                $("#valorDesconto").val("0,00");
                 $("#total_amount_modal").html("R$0,00");
                 $("#CartHTML").html("");
             }
+
+
         }
 
         $('#pesquisar-produto-modal').on('hidden.bs.modal', function() {
@@ -2607,5 +2892,6 @@
         .IncOrDecToCart[type=number] {
             -moz-appearance: textfield;
         }
+
     </style>
 @endpush

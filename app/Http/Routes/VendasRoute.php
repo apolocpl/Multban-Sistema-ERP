@@ -3,6 +3,7 @@
 namespace App\Http\Routes;
 
 use App\Http\Controllers\Multban\Venda\PdvWebController;
+use App\Http\Controllers\Multban\Produto\ProdutoController;
 use Illuminate\Support\Facades\Route;
 
 class VendasRoute
@@ -11,5 +12,8 @@ class VendasRoute
     {
         //Pedido de venda
         Route::get('pdv-web', [PdvWebController::class, 'index'])->middleware('permission:pdv-web.index')->name('pdv-web.index');
+
+        // Rota para API de produtos
+        Route::get('api/produtos', [ProdutoController::class, 'apiProdutos']);
     }
 }

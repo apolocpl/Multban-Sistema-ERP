@@ -23,13 +23,47 @@ class ProdutoController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+
+    public function apiProdutos()
+    {
+        // BUSCA SOMENTE PRODUTOS ATIVOS DA EMPRESA DO USUÁRIO LOGADO
+        $empresaId = Auth::user()->emp_id;
+        $produtos = Produto::where('produto_sts', 'AT')
+            ->where('emp_id', $empresaId)
+            ->get();
+
+        $result = $produtos->map(function($prod) {
+            // Busca descrição do tipo de produto
+            $tipoRow = ProdutoTipo::where('produto_tipo', $prod->produto_tipo)->first();
+            $tipoDesc = $tipoRow ? $tipoRow->produto_tipo_desc : 'Desconhecido';
+
+            // Busca descrição do status, se não vier pelo relacionamento, busca direto
+            $statusRow = ProdutoStatus::where('produto_sts', $prod->produto_sts)->first();
+            $stsDesc = $statusRow ? $statusRow->produto_sts_desc : 'Desconhecido';
+
+            return [
+                'produto_id' => $prod->produto_id,
+                'produto_tipo' => $prod->tipo,
+                'produto_tipo_desc' => $tipoDesc,
+                'produto_dm' => $prod->produto_dm,
+                'produto_vlr' => $prod->produto_vlr,
+                'produto_sts' => $prod->produto_sts,
+                'produto_sts_desc' => $stsDesc
+            ];
+        });
+
+        return response()->json($result);
+    }
+
+
     public function index()
     {
-    $tipos = ProdutoTipo::all();
-    $status = ProdutoStatus::all();
-    $empresas = Empresa::all();
-    $bancos = TbDmBncCode::all();
-    return view('Multban.produto.index', compact('tipos', 'status', 'empresas', 'bancos'));
+        $tipos = ProdutoTipo::all();
+        $status = ProdutoStatus::all();
+        $empresas = Empresa::all();
+        $bancos = TbDmBncCode::all();
+        return view('Multban.produto.index', compact('tipos', 'status', 'empresas', 'bancos'));
     }
 
     /**
