@@ -246,7 +246,36 @@ $(function () {
                             html += '</div><div class="row">';
                         }
                     });
-                    $('#listaFotosAnexadas').html(html);
+                    $('#listaDocsAnexados').html(html);
+
+                    var html = '<div class="row">';
+                    $.each(data[0].docs, function (index, file) {
+                        html += `<div class="col-md-1 p-2">
+                                <a href="/storage/${file}" target="_blank">`;
+
+                                if(file.includes('pdf')) {
+                                    html += `<i class="fas fa-file-pdf text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('doc')) {
+                                    html += `<i class="fas fa-file-word text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('xls')) {
+                                    html += `<i class="fas fa-file-excel text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('ppt')) {
+                                    html += `<i class="fas fa-file-powerpoint text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('jpg') || file.includes('jpeg') || file.includes('png')) {
+                                    html += `<i class="fas fa-file-image text-secondary" style="font-size: 90px;"></i>`;
+                                }else if(file.includes('txt')) {
+                                    html += `<i class="fas fa-file-alt text-secondary" style="font-size: 90px;"></i>`;
+                                }else {
+                                    html += `<i class="fas fa-file text-secondary" style="font-size: 90px;"></i>`;
+                                }
+
+                               html += `</a></div>`;
+
+                        if ((index + 1) % 10 === 0 && index + 1 !== data[0].docs.length) {
+                            html += '</div><div class="row">';
+                        }
+                    });
+                    $('#listaDocsAnexados').html(html);
                 }
             });
 
@@ -518,7 +547,6 @@ $(function () {
                     processData: false,
                     success: function (data) {
                         $.removeLoading();
-                        $('#listaFotos').empty();
                         $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
                         $(btnSubmit).habilitar();
                         $(btnSubmit).attr('data-emp-id', '');
@@ -527,20 +555,6 @@ $(function () {
 
                             $("#" + modal).modal('hide');
                         }
-                        $('#listaFotos').append(`
-                            <div class="form-row">
-                                                    <div class="form-group col-md-4">
-                                                        <label for="fotoUpload">Selecionar Foto:</label>
-                                                        <input type="file" name="fotoUpload[]"
-                                                            accept="image/*" class="form-control-file">
-                                                    </div>
-                                                    <div class="form-group col-md-3 d-flex align-items-end">
-                                                        <button type="button"
-                                                            class="btn btn-primary btn-sm btnAddFoto">
-                                                            <i class="icon fas fa-plus-square"></i> Adicionar Foto
-                                                        </button>
-                                                    </div>
-                                                </div>`);
 
                         myDropzone.removeAllFiles(true);
                         myDropzoneDocs.removeAllFiles(true);

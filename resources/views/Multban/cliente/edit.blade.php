@@ -1396,19 +1396,12 @@
 
 
                                                 <!-- Exemplo de exibição de documentos anexados -->
-                                                <div class="mt-4">
-                                                    <label>Documentos Anexados:</label>
-                                                    <div>
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
+
+                                                    <h6>Documentos Anexados:</h6>
+
+                                                    <div id="listaDocsAnexados"  class="mt-4">
                                                     </div>
-                                                </div>
+
 
                                             </div>
 
