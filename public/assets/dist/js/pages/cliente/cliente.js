@@ -413,6 +413,18 @@ $(function () {
                         error: function (xhr, status, error) {
                             Swal.fire(xhr.responseJSON.title, xhr.responseJSON.message, xhr.responseJSON.type);
                             $('.dataTables_empty').text('Nenhum registro encontrado');
+
+                            Swal.fire({
+                                title: "Erro",
+                                text:
+                                    "Sua sessão expirou, é preciso fazer o login novamente.",
+                                icon: "error",
+                                showCancelButton: false,
+                                allowOutsideClick: false,
+                            }).then(function (result) {
+                                $.limparBloqueioSairDaTela();
+                                location.reload();
+                            });
                         },
                         processData: false, // Essential for FormData
                         contentType: false,  // Essential for FormData
