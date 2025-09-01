@@ -98,5 +98,4 @@ class PdvWebController extends Controller
         // $RegrasParc = RegrasParc::all();
         // return view('Multban.venda.pdv.index', compact('RegrasParc'));
     }
-
 }
