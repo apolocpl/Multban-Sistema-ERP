@@ -162,6 +162,7 @@
                                                     <span class="text-bold">Cliente:</span> <span id="desCli"></span>
                                                 </div>
                                             </div>
+                                            @if(isset($empresa) && !empty($empresa->emp_reemb))
                                             <div class="row">
                                                 <div class="col-md-12">
                                                     <div class="custom-control custom-checkbox">
@@ -170,7 +171,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -540,12 +541,14 @@
                                         <!-- As opções serão preenchidas dinamicamente via JavaScript -->
                                     </select>
                                 </div>
+                                @if(isset($empresaParam) && !empty($empresaParam->parc_cjuros))
                                 <div class="col-md-6 d-flex align-items-end mb-2">
                                     <div class="form-check w-100">
                                         <input class="form-check-input" type="checkbox" id="vendaSemJurosCartao">
                                         <label class="form-check-label" for="vendaSemJurosCartao">Venda sem juros</label>
                                     </div>
                                 </div>
+                                @endif
                             </div>
                             <div class="row mt-3">
                                 <div class="col-md-6">
@@ -979,11 +982,11 @@
             $('body').on('click', '.payment-box', function() {
                 var totalCarrinho = parseBRL($('.valorTotal').text());
                 var tipoPagamento = $(this).data('identificacao');
-                var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(',', '.')) || 0;
+                var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(/\./g, '').replace(',', '.')) || 0;
+
                 if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
-                    $('#valortotalacobrar').val(totalCarrinho.toFixed(2).replace('.', ','));
-                    // dispara evento para recalcular saldo/troco
-                    $('#valortotalacobrar').trigger('input');
+                    // atualiza via helper para evitar disparar o handler 'input' que pode reformatar indevidamente
+                    atualizarCampoValortotalacobrar(totalCarrinho);
                 }
             });
 
@@ -1004,6 +1007,29 @@
                 // Se tem vírgula, trata milhar e decimal
                 str = str.replace(/\./g, '').replace(',', '.');
                 return parseFloat(str) || 0;
+            }
+
+            // Atualiza o campo #valortotalacobrar a partir de um número (evita disparar o handler de input
+            // que aplica a máscara calculadora e pode converter vírgula para ponto). Também recalcula saldo e troco.
+            function atualizarCampoValortotalacobrar(valorNumero) {
+                var totalCarrinho = parseBRL($('.valorTotal').text());
+                var tipoPagamento = $('.payment-box-active').data('identificacao') || $('#id_forma_pagto').val();
+                var valorCobrar = Number(valorNumero) || 0;
+                // Para tipos diferentes de Dinheiro, não permitir cobrar mais que o total
+                if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
+                    valorCobrar = totalCarrinho;
+                }
+                // Atualiza campo com formatação brasileira
+                $('#valortotalacobrar').val((typeof formatBRL === 'function') ? formatBRL(valorCobrar) : valorCobrar.toFixed(2).replace('.', ','));
+                // Recalcula saldo e troco
+                var saldo = totalCarrinho - valorCobrar;
+                if (valorCobrar > totalCarrinho) saldo = 0;
+                $('#valorsaldo').val(formatBRL(saldo));
+                var troco = 0;
+                if (tipoPagamento === 'DN' && valorCobrar > totalCarrinho) {
+                    troco = valorCobrar - totalCarrinho;
+                }
+                $('#valortroco').val(formatBRL(troco));
             }
 
             // Sempre que abrir o modal, o campo valortotalacobrar recebe o valor total do carrinho
@@ -1043,7 +1069,22 @@
 
             // Ao sair do campo, formata o valor para padrão brasileiro
             $('#valortotalacobrar').on('blur', function() {
-                var valor = parseFloat($(this).val().replace(',', '.')) || 0;
+                var raw = $(this).val();
+                var valor = 0;
+                if (typeof parseBRL === 'function') {
+                    valor = parseBRL(raw);
+                } else {
+                    // fallback: remove currency and spaces, handle thousands and decimal separators
+                    var s = (raw || '').replace(/R\$|\s/g, '').trim();
+                    if (s.indexOf(',') === -1) {
+                        // no comma => remove dots (thousands)
+                        s = s.replace(/\./g, '');
+                    } else {
+                        // has comma => remove dots (thousands) and convert comma to dot for decimal
+                        s = s.replace(/\./g, '').replace(',', '.');
+                    }
+                    valor = parseFloat(s) || 0;
+                }
                 $(this).val(formatBRL(valor));
             });
 
@@ -1315,10 +1356,6 @@
             var totalVenda = 0;
             var valorCobrarTextC = $("#valortotalacobrar").val() || "";
 
-            console.log('Chegou Aqui');
-            console.log('parcelas (cartao): valortotalacobrar=', valorCobrarTextC);
-            console.log('Chegou Aqui');
-
             if (typeof parseBRL === 'function') {
                 totalVenda = parseBRL(valorCobrarTextC);
             } else {
@@ -1335,6 +1372,23 @@
                 parclib = parseInt($("#card_posparc").val()) || 1;
             }
 
+            // Leitura das configurações de juros (se existirem) na empresa
+            var parc_cjuros_flag = false; // indica se a empresa permite vendas com juros
+            var parc_jr_deprc_val = 0; // número mínimo de parcelas para começar a cobrar juros
+            var tax_jrsparc_val = 0; // taxa de juros (porcentagem) por parcela
+            if (empresaParam) {
+                // parc_cjuros pode vir como string/boolean/numero
+                parc_cjuros_flag = !!empresaParam.parc_cjuros;
+                // parc_jr_deprc deve ser inteiro (ex: a partir de qual parcela começa juros)
+                parc_jr_deprc_val = parseInt(String(empresaParam.parc_jr_deprc || '').replace(/\D/g, ''), 10) || 0;
+                // tax_jrsparc pode conter vírgula como decimal -> normaliza para ponto
+                var _tax = empresaParam.tax_jrsparc;
+                if (typeof _tax === 'string') {
+                    _tax = _tax.replace(',', '.');
+                }
+                tax_jrsparc_val = parseFloat(_tax) || 0;
+            }
+
             // O requisito pede: criar exatamente card_posparc entradas com o resultado da divisão total/card_poscarc
             var select = $("#parcelasCartao");
             select.empty();
@@ -1343,10 +1397,26 @@
             if (parclib <= 0) parclib = 1;
 
             for (var i = 1; i <= parclib; i++) {
-                var parcelaValor = i > 0 ? (totalVenda / i) : totalVenda;
+                var parcelaValor = 0;
+                var descricaoJuros = '';
+
+                // Se a empresa permite juros e a parcela atual está na faixa que cobra juros (>= parc_jr_deprc_val)
+                if (parc_cjuros_flag && parc_jr_deprc_val > 0 && i >= parc_jr_deprc_val && !$('#vendaSemJurosCartao').is(':checked')) {
+                    // calcula percentual total de juros: i * tax_jrsparc_val (em %)
+                    var jurosPercentTotal = (i * tax_jrsparc_val) / 100; // ex: 4 parcelas * 2% = 8% => 0.08
+                    // valor absoluto de juros sobre o total da venda
+                    var jurosAmount = totalVenda * jurosPercentTotal;
+                    // soma os juros ao total e divide pela quantidade de parcelas
+                    var adjustedTotal = totalVenda + jurosAmount;
+                    parcelaValor = adjustedTotal / i;
+                    descricaoJuros = ' - com juros';
+                } else {
+                    parcelaValor = i > 0 ? (totalVenda / i) : totalVenda;
+                }
+
                 var parcelaValorFormatado = (typeof formatBRL === 'function') ? formatBRL(parcelaValor) : parcelaValor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 var numParcela = i.toString().padStart(2, '0');
-                select.append(`<option value="${i}">${numParcela} X R$ ${parcelaValorFormatado}</option>`);
+                select.append(`<option value="${i}">${numParcela} X R$ ${parcelaValorFormatado}${descricaoJuros}</option>`);
             }
             // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
             try {
@@ -1504,10 +1574,6 @@
             }
             var discount = $.tratarValor($('#item-discount').val());
             var discountValue = 0;
-
-            console.log('quantity', quantity)
-            console.log('price', price)
-            console.log('discount', quantity)
 
             var id = $(this).data('id');
             var descricao = $("#desProd").html();
