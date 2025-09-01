@@ -586,6 +586,22 @@ class EmpresaController extends Controller
 
         $empresaGeral->dtvenc_imp = $empresaGeral->dtvenc_imp ? Carbon::createFromFormat('Y-m-d', $empresaGeral->dtvenc_imp)->format('d/m/Y') : Carbon::now()->format('d/m/Y');
         $empresaGeral->dtvenc_mens = $empresaGeral->dtvenc_mens ? Carbon::createFromFormat('Y-m-d', $empresaGeral->dtvenc_mens)->format('d/m/Y') : Carbon::now()->format('d/m/Y');
+        $empresaParam->tax_blt = number_format($empresaParam->tax_blt, 2, ',', '');
+        $empresaParam->perc_mlt_atr = number_format($empresaParam->perc_mlt_atr, 2, ',', '');
+        $empresaParam->perc_jrs_atr = number_format($empresaParam->perc_jrs_atr, 2, ',', '');
+        $empresaParam->perc_com_mltjr = number_format($empresaParam->perc_com_mltjr, 2, ',', '');
+        $empresaParam->tax_jrsparc = number_format($empresaParam->tax_jrsparc, 2, ',', '');
+        $empresaParam->parc_com_jrs = number_format($empresaParam->parc_com_jrs, 2, ',', '');
+        $empresaParam->tax_antmult = number_format($empresaParam->tax_antmult, 2, ',', '');
+        $empresaParam->tax_antfundo = number_format($empresaParam->tax_antfundo, 2, ',', '');
+        $empresaParam->perc_rec_ant = number_format($empresaParam->perc_rec_ant, 2, ',', '');
+        $empresaParam->cobsrv_multa = number_format($empresaParam->cobsrv_multa, 2, ',', '');
+        $empresaParam->cobsrv_juros = number_format($empresaParam->cobsrv_juros, 2, ',', '');
+        $empresaParam->tax_cobsrv_adm = number_format($empresaParam->tax_cobsrv_adm, 2, ',', '');
+        $empresaParam->tax_cobsrv_juss = number_format($empresaParam->tax_cobsrv_juss, 2, ',', '');
+        $empresaParam->tax_rebate = number_format($empresaParam->tax_rebate, 2, ',', '');
+        $empresaParam->tax_royalties = number_format($empresaParam->tax_royalties, 2, ',', '');
+        $empresaParam->tax_comiss = number_format($empresaParam->tax_comiss, 2, ',', '');
 
         return response(
             view(

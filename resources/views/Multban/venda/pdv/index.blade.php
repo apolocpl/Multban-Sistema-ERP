@@ -732,7 +732,6 @@
     <script src="{{ asset('assets/plugins/select2/js/i18n/pt-BR.js') }}"></script>
 
     <script src="{{ asset('assets/dist/js/app.js') }}"></script>
-    <script src="{{ asset('assets/dist/js/pages/venda/pdv/updatevenda.js') }}"></script>
 
     <script src="{{ asset('assets/plugins/lodash/lodash.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
