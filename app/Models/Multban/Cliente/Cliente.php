@@ -159,4 +159,10 @@ class Cliente extends Model
         ];
     }
 
+    // RELACIONAMENTO ENTRE AS TABELAS TBDM_CLIENTES_GERAL e TBDM_CLIENTES_EMP
+    public function clienteEmp()
+    {
+        return $this->hasOne(ClienteEmp::class, 'cliente_id', 'cliente_id');
+    }
+
 }

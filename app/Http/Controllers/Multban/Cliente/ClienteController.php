@@ -12,6 +12,7 @@ use App\Models\Multban\Cliente\CardMod;
 use App\Models\Multban\Cliente\CardStatus;
 use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
+use App\Models\Multban\Cliente\ClienteEmp;
 use App\Models\Multban\Cliente\ClienteProntuario;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
@@ -36,6 +37,8 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
 use Intervention\Image\Laravel\Facades\Image;
+use Laravel\Pail\ValueObjects\Origin\Console;
+use Illuminate\Support\Facades\Log;
 
 class ClienteController extends Controller
 {
@@ -496,19 +499,44 @@ class ClienteController extends Controller
         }
     }
 
+    // BUSCA DOS CLIENTES TANTO PELO NOME COMO PELO DOCUMENTO, SEMPRE RESPEITANDO A EMPRESA LOAGADA
     public function getClient(Request $request)
     {
-        $parametro = $request != null ? $request->all()['parametro'] : '';
+        $parametro = $request->query('parametro', '');
+        $emp_id = Auth::user()->emp_id;
 
         if (empty($parametro)) {
             return [];
         }
 
-        return Cliente::select(DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) text'))
-            ->whereRaw(DB::raw("cliente_nome LIKE '%" . $parametro . "%' OR cliente_id = '%" . $parametro . "%'"))
-            ->get()
-            ->toArray();
+        $query = Cliente::whereHas('clienteEmp', function($q) use ($emp_id) {
+            $q->where('emp_id', $emp_id);
+        });
+
+        if (is_numeric($parametro)) {
+            $query->where('cliente_doc', 'LIKE', '%' . $parametro . '%');
+        } else {
+            $query->where('cliente_nome', 'LIKE', '%' . $parametro . '%');
+        }
+
+        return $query->select(
+            DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) as text')
+        )->get()->toArray();
     }
+
+    // public function getClient(Request $request)
+    // {
+    //     $parametro = $request != null ? $request->all()['parametro'] : '';
+
+    //     if (empty($parametro)) {
+    //         return [];
+    //     }
+
+    //     return Cliente::select(DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) text'))
+    //         ->whereRaw(DB::raw("cliente_nome LIKE '%" . $parametro . "%' OR cliente_id = '%" . $parametro . "%'"))
+    //         ->get()
+    //         ->toArray();
+    // }
 
     public function storeProntuario(Request $request)
     {
@@ -520,10 +548,10 @@ class ClienteController extends Controller
             $prontuario->protocolo_dt = Carbon::now();
             $prontuario->cliente_doc = 1;
             $prontuario->emp_id = $request->input('emp_id');
-            $prontuario->user_id = auth()->user()->user_id;
-            $prontuario->criador = auth()->user()->user_id;
+            $prontuario->user_id = Auth::user()->user_id;
+            $prontuario->criador = Auth::user()->user_id;
             $prontuario->dthr_cr = Carbon::now();
-            $prontuario->modificador = auth()->user()->user_id;
+            $prontuario->modificador = Auth::user()->user_id;
             $prontuario->dthr_ch = Carbon::now();
             $prontuario->texto_prt = rtrim($request->input('texto_prt'));
             $prontuario->texto_rec = rtrim($request->input('texto_rec'));
@@ -617,7 +645,7 @@ class ClienteController extends Controller
 
             $prontuario = ClienteProntuario::find($id);
             $prontuario->cliente_id = $request->input('cliente_id');
-            $prontuario->modificador = auth()->user()->user_id;
+            $prontuario->modificador = Auth::user()->user_id;
             $prontuario->dthr_ch = Carbon::now();
             $prontuario->texto_prt = rtrim($request->input('texto_prt'));
             $prontuario->texto_rec = rtrim($request->input('texto_rec'));
