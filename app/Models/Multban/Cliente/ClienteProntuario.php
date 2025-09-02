@@ -13,6 +13,8 @@ class ClienteProntuario extends Model
 
     protected $table = "tbdm_clientes_prt";
 
+    protected $primaryKey = "protocolo";
+
     public $timestamps = false;
 
     public function cliente()

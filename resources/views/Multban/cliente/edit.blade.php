@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="{{ asset('assets/plugins/datatables-fixedheader/css/fixedHeader.bootstrap4.min.css') }}" />
 <link rel="stylesheet" href="{{ asset('assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}" />
 <link href="{{ asset('assets/plugins/summernote/summernote-bs4.min.css') }}" rel="stylesheet">
+  <!-- Ekko Lightbox -->
+  <link rel="stylesheet" href="{{ asset('assets/plugins/ekko-lightbox/ekko-lightbox.css') }}">
 
 @endpush
 
@@ -1059,10 +1061,8 @@
                                                                     '00.000.000/0000-00' }}</span>
                                                             </div>
                                                             <div>
-                                                                <span>Médico: {{ $medico->nome ?? 'Nome do Médico'
-                                                                    }}</span>
-                                                                <span class="ml-3">CRM: {{ $medico->crm ?? '000000'
-                                                                    }}</span>
+                                                                <span>Médico: <span id="rec_medico_nome"></span></span>
+                                                                <span class="ml-3">CRM: <span id="rec_crm_medico"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1136,10 +1136,8 @@
                                                                     '00.000.000/0000-00' }}</span>
                                                             </div>
                                                             <div>
-                                                                <span>Médico: {{ $medico->nome ?? 'Nome do Médico'
-                                                                    }}</span>
-                                                                <span class="ml-3">CRM: {{ $medico->crm ?? '000000'
-                                                                    }}</span>
+                                                                <span>Médico: <span id="exa_medico_nome"></span></span>
+                                                                <span class="ml-3">CRM: <span id="exa_crm_medico"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1198,22 +1196,20 @@
                                                     <!-- Linha 1: Logo + Dados Empresa/Médico -->
                                                     <div class="row align-items-center mb-3">
                                                         <div class="col-md-2 text-center">
-                                                            <img src="{{ asset('assets/dist/img/logo.png') }}"
+                                                            <img src="{{ asset('storage/logos/empresa_' . $empresa->emp_id . '/logo.jpg') }}"
                                                                 alt="Logo" style="max-width: 80px;">
                                                         </div>
                                                         <div class="col-md-10">
                                                             <div>
                                                                 <span class="font-weight-bold"
-                                                                    style="font-size: 1.1rem;">{{ $empresa->nome ??
+                                                                    style="font-size: 1.1rem;">{{ $empresa->emp_nmult ??
                                                                     'Nome da Empresa' }}</span>
-                                                                <span class="ml-3">CNPJ: {{ $empresa->cnpj ??
+                                                                <span class="ml-3">CNPJ: {{ formatarCNPJ($empresa->emp_cnpj) ??
                                                                     '00.000.000/0000-00' }}</span>
                                                             </div>
                                                             <div>
-                                                                <span>Médico: {{ $medico->nome ?? 'Nome do Médico'
-                                                                    }}</span>
-                                                                <span class="ml-3">CRM: {{ $medico->crm ?? '000000'
-                                                                    }}</span>
+                                                                <span>Médico: <span id="atd_medico_nome"></span></span>
+                                                                <span class="ml-3">CRM: <span id="atd_crm_medico"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1221,9 +1217,9 @@
                                                     <div class="row mb-3">
                                                         <div class="col">
                                                             <label class="font-weight-bold">Paciente:</label>
-                                                            <span>{{ $paciente->nome ?? 'Nome do Paciente' }}</span>
-                                                            <span class="ml-3">CPF: {{ $paciente->cpf ??
-                                                                '000.000.000-00' }}</span>
+
+                                                            <span>{{ $cliente->cliente_nome ?? 'Nome do Paciente' }}</span>
+                                                            <span class="ml-3">CPF: {{ formatarCPF($cliente->cliente_doc) ?? '000.000.000-00' }}</span>
                                                         </div>
                                                     </div>
                                                     <!-- Linha 3: Campo texto tipo anotações -->
@@ -1242,70 +1238,170 @@
                                             <!--CONTEÚDO DA ABA FOTOS-->
                                             <div class="tab-pane fade" id="tabs-fotos" role="tabpanel"
                                                 aria-labelledby="tabs-fotos-tab">
-
-                                                <div class="form-row mb-3">
-                                                    <div class="form-group col-md-4">
-                                                        <label for="fotoUpload">Selecionar Foto:</label>
-                                                        <input type="file" id="fotoUpload" name="fotoUpload"
-                                                            accept="image/*" class="form-control-file">
-                                                    </div>
-                                                    <div class="form-group col-md-3 d-flex align-items-end">
-                                                        <button id="btnAdFoto" type="button"
-                                                            class="btn btn-primary btn-sm" onclick="anexarFoto()">
-                                                            <i class="icon fas fa-plus-square"></i> Adicionar Foto
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                <div class="row">
+          <div class="col-md-12" id="dropzone-fotos">
+            <div class="card card-default">
+              <div class="card-header">
+                <h3 class="card-title">Adicionar fotos <small><em>Clique para pesquisar</em> ou arraste e solte</small></h3>
+              </div>
+              <div class="card-body">
+                <div id="actions" class="row">
+                  <div class="col-lg-6">
+                    <div class="btn-group w-100">
+                      <span class="btn btn-success col fileinput-button-fotos">
+                        <i class="fas fa-plus"></i>
+                        <span>Adicionar fotos</span>
+                      </span>
+                      <!--button type="submit" class="btn btn-primary col start">
+                        <i class="fas fa-upload"></i>
+                        <span>Start upload</span-->
+                      </button>
+                      <button type="reset" class="btn btn-warning col cancel">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Remover fotos</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-lg-6 d-flex align-items-center">
+                    <div class="fileupload-process w-100">
+                      <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="table table-striped files" id="previews">
+                  <div id="template" class="row mt-2">
+                    <div class="col-auto">
+                        <span class="preview"><img src="data:," alt="" data-dz-thumbnail /></span>
+                    </div>
+                    <div class="col d-flex align-items-center">
+                        <p class="mb-0">
+                          <span class="lead" data-dz-name></span>
+                          (<span data-dz-size></span>)
+                        </p>
+                        <strong class="error text-danger" data-dz-errormessage></strong>
+                    </div>
+                    <div class="col-auto d-flex align-items-center">
+                      <div class="btn-group">
+                        <!--button class="btn btn-primary start">
+                          <i class="fas fa-upload"></i>
+                          <span>Start</span>
+                        </button>
+                        <button data-dz-remove class="btn btn-warning cancel">
+                          <i class="fas fa-times-circle"></i>
+                          <span>Cancelar</span>
+                        </button-->
+                        <button data-dz-remove class="btn btn-danger delete">
+                          <i class="fas fa-trash"></i>
+                          <span>Excluir</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+        <!-- /.row -->
 
                                                 <!-- Exemplo de exibição de fotos anexadas -->
                                                 <div class="mt-4">
                                                     <label>Fotos Anexadas:</label>
-                                                    <div>
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
+                                                    <div id="listaFotosAnexadas">
                                                     </div>
-                                                </div>
 
+                                            </div>
                                             </div>
 
                                             <!--CONTEÚDO DA ABA DOCUMENTOS-->
                                             <div class="tab-pane fade" id="tabs-documentos" role="tabpanel"
                                                 aria-labelledby="tabs-documentos-tab">
 
-                                                <div class="form-row mb-3">
-                                                    <div class="form-group col-md-4">
-                                                        <label for="fotoUpload">Selecionar Documento:</label>
-                                                        <input type="file" id="fotoUpload" name="fotoUpload"
-                                                            accept="image/*" class="form-control-file">
-                                                    </div>
-                                                    <div class="form-group col-md-3 d-flex align-items-end">
-                                                        <button id="btnAdDocumento" type="button"
-                                                            class="btn btn-primary btn-sm" onclick="anexarDocumento()">
-                                                            <i class="icon fas fa-plus-square"></i> Adicionar Documento
-                                                        </button>
-                                                    </div>
-                                                </div>
 
-                                                <!-- Exemplo de exibição de fotos anexadas -->
-                                                <div class="mt-4">
-                                                    <label>Fotos Anexadas:</label>
-                                                    <div>
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
-                                                        <img src="https://via.placeholder.com/80"
-                                                            class="img-thumbnail atendimento-foto"
-                                                            style="cursor:pointer;max-width:80px;"
-                                                            title="Clique duas vezes para ampliar">
+        <div class="row" id="dropzone-documentos">
+          <div class="col-md-12">
+            <div class="card card-default">
+              <div class="card-header">
+                <h3 class="card-title">Adicionar documentos <small><em>Clique para pesquisar</em> ou arraste e solte</small></h3>
+              </div>
+              <div class="card-body">
+                <div id="actions-documentos" class="row">
+                  <div class="col-lg-6">
+                    <div class="btn-group w-100">
+                      <span class="btn btn-success col fileinput-button-documentos">
+                        <i class="fas fa-plus"></i>
+                        <span>Adicionar Documentos</span>
+                      </span>
+                      <!--button type="submit" class="btn btn-primary col start">
+                        <i class="fas fa-upload"></i>
+                        <span>Start upload</span-->
+                      </button>
+                      <button type="reset" class="btn btn-warning col cancel">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Remover documentos</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-lg-6 d-flex align-items-center">
+                    <div class="fileupload-process w-100">
+                      <div id="total-progress-documentos" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="table table-striped files" id="previews-documentos">
+                  <div id="template-documentos" class="row mt-2">
+                    <div class="col-auto">
+                        <span class="preview"><img src="data:," alt="" data-dz-thumbnail /></span>
+                    </div>
+                    <div class="col d-flex align-items-center">
+                        <p class="mb-0">
+                          <span class="lead" data-dz-name></span>
+                          (<span data-dz-size></span>)
+                        </p>
+                        <strong class="error text-danger" data-dz-errormessage></strong>
+                    </div>
+                    <div class="col-auto d-flex align-items-center">
+                      <div class="btn-group">
+                        <!--button class="btn btn-primary start">
+                          <i class="fas fa-upload"></i>
+                          <span>Start</span>
+                        </button>
+                        <button data-dz-remove class="btn btn-warning cancel">
+                          <i class="fas fa-times-circle"></i>
+                          <span>Cancelar</span>
+                        </button-->
+                        <button data-dz-remove class="btn btn-danger delete-documentos">
+                          <i class="fas fa-trash"></i>
+                          <span>Excluir</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+        <!-- /.row -->
+
+
+
+
+                                                <!-- Exemplo de exibição de documentos anexados -->
+
+                                                    <h6>Documentos Anexados:</h6>
+
+                                                    <div id="listaDocsAnexados"  class="mt-4">
                                                     </div>
-                                                </div>
+
 
                                             </div>
 
@@ -1678,6 +1774,8 @@
 
 
 
+<!-- Ekko Lightbox -->
+<script src="{{ asset('assets/plugins/ekko-lightbox/ekko-lightbox.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/jquery-validation/jquery.validate.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/jquery-validation/localization/messages_pt_BR.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/jquery-validation/additional-methods.js') }}"></script>
@@ -1691,7 +1789,9 @@
 <script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js')}}"></script>
 <script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
+
+<!-- dropzonejs -->
+<script src="{{ asset('assets/plugins/dropzone/min/dropzone.min.js') }}"></script>
 <!-- Moment -->
 <script src="{{ asset('assets/plugins/moment/moment-with-locales.js') }}"></script>
 <script src="{{ asset('assets/plugins/inputmask/min/jquery.inputmask.bundle.min.js') }}"></script>
@@ -1703,6 +1803,15 @@
 <script src="{{asset('assets/dist/js/pages/cliente/cliente.js') }}"></script>
 
 <script type="text/javascript">
+ $(function () {
+    $(document).on('click', '[data-toggle="lightbox"]', function(event) {
+      event.preventDefault();
+      $(this).ekkoLightbox({
+        alwaysShowClose: true
+      });
+    });
+  })
+
     $(document).ready(function () {
 
         @if ( request()->has('pront') )

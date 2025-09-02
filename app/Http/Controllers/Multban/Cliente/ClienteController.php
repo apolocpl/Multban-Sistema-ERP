@@ -23,6 +23,7 @@ use App\Models\Multban\Empresa\Empresa;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -30,8 +31,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use Intervention\Image\Laravel\Facades\Image;
 
 class ClienteController extends Controller
 {
@@ -276,6 +280,18 @@ class ClienteController extends Controller
                 }
                 return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
             })
+            ->addColumn('crm_medico', function ($row) {
+                if (!empty($row->user)) {
+                    return $row->user->user_crm;
+                }
+                return 'Sem CRM';
+            })
+            ->addColumn('images', function ($row) {
+                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails');
+            })
+            ->addColumn('docs', function ($row) {
+                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
+            })
             ->editColumn('protocolo', function ($row) {
                 return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
             })
@@ -496,12 +512,205 @@ class ClienteController extends Controller
 
     public function storeProntuario(Request $request)
     {
-        dd($request->all());
+        try {
+
+            $prontuario = new ClienteProntuario();
+            $prontuario->cliente_id = $request->input('cliente_id');
+            $prontuario->protocolo_tp = 1;
+            $prontuario->protocolo_dt = Carbon::now();
+            $prontuario->cliente_doc = 1;
+            $prontuario->emp_id = $request->input('emp_id');
+            $prontuario->user_id = auth()->user()->user_id;
+            $prontuario->criador = auth()->user()->user_id;
+            $prontuario->dthr_cr = Carbon::now();
+            $prontuario->modificador = auth()->user()->user_id;
+            $prontuario->dthr_ch = Carbon::now();
+            $prontuario->texto_prt = rtrim($request->input('texto_prt'));
+            $prontuario->texto_rec = rtrim($request->input('texto_rec'));
+            $prontuario->texto_anm = rtrim($request->input('texto_anm'));
+            $prontuario->texto_prv = rtrim($request->input('texto_prv'));
+            $prontuario->texto_exm = rtrim($request->input('texto_exm'));
+            $prontuario->texto_atd = rtrim($request->input('texto_atd'));
+
+            $prontuario->save();
+
+            if ($request->hasFile('fotoUpload')) {
+                $images = $request->file('fotoUpload');
+
+                foreach ($images as $image) {
+                    $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/images');
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
+
+                    $directoryThumbs = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails');
+                    if (!file_exists($directoryThumbs)) {
+                        mkdir($directoryThumbs, 0777, true);
+                    }
+
+                    $image_name = time() . '_' . uniqid() . '.webp';
+
+                    $resize_image = Image::read($image);
+
+                    $resize_image->toWebp();
+                    $resize_image->scale(height: 500);
+
+                    $resize_image->save(Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo) . '/images/' . $image_name);
+
+                    $thumbnails = Image::read($image);
+                    $thumbnails->toWebp();
+                    $thumbnails->crop(width: 100, height: 100, position: 'center')
+                        ->scale(width: 100, height: 100);
+                    $thumbnails->save(Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo) . '/thumbnails/' . $image_name);
+
+                    // $destinationPath = public_path('/storage/images/logos/');
+
+                    // $image->move($destinationPath, $image_name);
+                }
+                $prontuario = ClienteProntuario::find($prontuario->protocolo);
+                $prontuario->anexo = 'x';
+                $prontuario->foto_anexo_path = 'prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails/';
+                $prontuario->save();
+            }
+
+
+
+            if ($request->hasFile('fileDoc')) {
+                $files = $request->file('fileDoc');
+                foreach ($files as $file) {
+
+                    $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo);
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
+
+                    $filename = time()  . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                    $file->move($directory, $filename);
+                }
+
+
+                $prontuario = ClienteProntuario::find($prontuario->protocolo);
+                $prontuario->anexo = 'x';
+                $prontuario->doc_anexo_path = 'prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo . '/';
+
+                $prontuario->save();
+            }
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'type' => 'success',
+                'text' => 'Prontuário salvo com sucesso.'
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'message' => $th->getMessage(),
+                'type' => 'error',
+            ], 500);
+        }
     }
 
     public function updateProntuario(Request $request, $id)
     {
-        // Lógica para atualizar um prontuário
+        try {
+
+            $prontuario = ClienteProntuario::find($id);
+            $prontuario->cliente_id = $request->input('cliente_id');
+            $prontuario->modificador = auth()->user()->user_id;
+            $prontuario->dthr_ch = Carbon::now();
+            $prontuario->texto_prt = rtrim($request->input('texto_prt'));
+            $prontuario->texto_rec = rtrim($request->input('texto_rec'));
+            $prontuario->texto_anm = rtrim($request->input('texto_anm'));
+            $prontuario->texto_prv = rtrim($request->input('texto_prv'));
+            $prontuario->texto_exm = rtrim($request->input('texto_exm'));
+            $prontuario->texto_atd = rtrim($request->input('texto_atd'));
+
+
+            if ($request->hasFile('fotoUpload')) {
+                $images = $request->file('fotoUpload');
+
+                foreach ($images as $image) {
+                    $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/images');
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
+
+                    $directoryThumbs = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails');
+                    if (!file_exists($directoryThumbs)) {
+                        mkdir($directoryThumbs, 0777, true);
+                    }
+
+                    $image_name = time() . '_' . uniqid() . '.webp';
+
+                    $resize_image = Image::read($image);
+
+                    $resize_image->toWebp();
+                    $resize_image->scale(height: 500);
+
+                    $resize_image->save(Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo) . '/images/' . $image_name);
+
+                    $thumbnails = Image::read($image);
+                    $thumbnails->toWebp();
+                    $thumbnails->crop(width: 100, height: 100, position: 'center')
+                        ->scale(width: 100, height: 100);
+                    $thumbnails->save(Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo) . '/thumbnails/' . $image_name);
+
+                    // $destinationPath = public_path('/storage/images/logos/');
+
+                    // $image->move($destinationPath, $image_name);
+                }
+
+                $prontuario = ClienteProntuario::find($prontuario->protocolo);
+                $prontuario->anexo = 'x';
+                $prontuario->foto_anexo_path = 'prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails/';
+            } else {
+                $prontuario->foto_anexo_path = null;
+            }
+
+
+
+            if ($request->hasFile('fileDoc')) {
+                $files = $request->file('fileDoc');
+                foreach ($files as $file) {
+
+                    $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo);
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
+
+                    $filename = time()  . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                    $file->move($directory, $filename);
+                }
+
+
+                $prontuario = ClienteProntuario::find($prontuario->protocolo);
+                $prontuario->anexo = 'x';
+                $prontuario->doc_anexo_path = 'prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo . '/';
+            } else {
+                $prontuario->doc_anexo_path = null;
+            }
+
+            if (!$request->hasFile('fotoUpload') && !$request->hasFile('fileDoc')) {
+                $prontuario->anexo = null;
+            }
+
+
+            $prontuario->save();
+
+            return response()->json([
+                'title' => 'OK',
+                'type' => 'success',
+                'text' => 'Prontuário atualizado com sucesso.'
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'message' => $th->getMessage(),
+                'type' => 'error',
+            ], 500);
+        }
     }
 
     public function postObterGridPesquisaProtocolo(Request $request)
@@ -551,9 +760,9 @@ class ClienteController extends Controller
 
             $query = rtrim($query, "AND");
 
-            if($hasQuery){
-                 $prontuarios = ClienteProntuario::whereRaw(DB::raw($query))->get();
-            }else{
+            if ($hasQuery) {
+                $prontuarios = ClienteProntuario::whereRaw(DB::raw($query))->get();
+            } else {
                 $prontuarios = ClienteProntuario::where('cliente_id', $request->cliente_id)->get();
             }
 
@@ -570,6 +779,18 @@ class ClienteController extends Controller
                         return $row->user->user_name;
                     }
                     return 'Sem Médico';
+                })
+                ->addColumn('crm_medico', function ($row) {
+                    if (!empty($row->user)) {
+                        return $row->user->user_crm;
+                    }
+                    return 'Sem CRM';
+                })
+                ->addColumn('images', function ($row) {
+                    return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails');
+                })
+                ->addColumn('docs', function ($row) {
+                    return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
                 })
                 ->editColumn('protocolo', function ($row) {
                     return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
