@@ -861,9 +861,30 @@ $("body").on("click", "#btnPesquisarCliente", function(){
 
 $("body").on("click", "#checkout", function() {
     finalizarClick = true;
+
+    // Validação de cliente selecionado
+    var clienteSelecionado = $.isNotNullAndNotEmpty($("#cliente_cadastro_id").val()) || $.isNotNullAndNotEmpty($("#idcliente").val());
+    if (!clienteSelecionado) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Cliente não selecionado',
+            text: 'Selecione um cliente antes de finalizar a venda.',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        });
+        return;
+    }
+
+    // Validação de produtos selecionado
     var total_pedido = $(".valorTotal").html().replace("R$", "");
     if (cart.length == 0) {
-        toastr.error("Adicione ao menos um item no pedido.");
+        Swal.fire({
+            icon: 'error',
+            title: 'Nenhum produto adicionado',
+            text: 'Adicione ao menos um item no pedido.',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        });
         return;
     }
 
@@ -1211,120 +1232,98 @@ $("body").on("keyup", "#valortotalpago", function() {
 
 $("body").on("keyup", "#getCliente", function (e) {
 
-        e.preventDefault();
-        var texto = $(this).val();
-        var url = "/produto/obterproduto?pdv='sim'&parametro=" + texto;
-        var quantity = $.tratarValor($('#item-quantity').val());
-        if (e.key == 'Enter' && texto ) {
-            Pace.restart();
-            Pace.track(function () {
-                $.ajaxSetup({
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    }
-                });
+    e.preventDefault();
+    var texto = $(this).val();
+    // Remove apenas '.', '/', '-' para manter compatibilidade com backend
+    texto = texto.replace(/[\.\/-]/g, '');
+    var url = "/cliente/get-client?parametro=" + texto;
 
-                $.ajax({
-                    url: url,
-                    type: "GET",
-                })
-                .done(function (response) {
-
-                    var item = {
-                        id: parseInt(response.id),
-                        product_id: parseInt(response.id),
-                        price: response.farvre,
-                        name: response.fardes,
-                        quantity: quantity,
-                        discount: 0,
-                        discountType: discountType,
-                        discountValue: 0,
-                    };
-
-                    if(response.farvre == 0){
-                        Swal.fire(
-                            "Oops...",
-                            "Produto sem preço, contate o administrador.",
-                            "error"
-                        );
-
-                        return;
-                    }
-
-                    $("#desProd").html(response.fardes);
-                    $("#item-price").val($.toMoneySimples(response.farvre));
-
-                    //console.log(item)
-                    itens = item;
-                    adicionarAoCarrinho(item);
-                    show_cart();
-
-                    $('#getProduto').val("");
-                    $('#getProduto').focus();
-                    $("#item-quantity").val("1");
-                    $('#item-discount').val('0,00');
-                    $('#item-price').val('0,00');
-                    $('#item-subtotal').val('0,00');
-                    $('#find-product').select2('data', null);
-                    $('#find-product').val(null);
-                    $('#find-product').trigger('change');
-                    $("#desProd").html('');
-
-                })
-                .fail(function (xhr, status, error) {
-                    $('#getProduto').val("");
-                    $('#getProduto').focus();
-                    $("#item-quantity").val("1");
-                    $('#item-discount').val('0,00');
-                    $('#item-price').val('0,00');
-                    $('#item-subtotal').val('0,00');
-                    $('#find-product').select2('data', null);
-                    $('#find-product').val(null);
-                    $('#find-product').trigger('change');
-                    $("#desProd").html('');
-                    discountType = "%";
-
-                    if (xhr.status == 403) {
-                        Swal.fire(
-                            "Oops...",
-                            "Você não tem permissão, contate o administrador!",
-                            "error"
-                        );
-                    } else if (xhr.status == 404){
-                        Swal.fire(
-                            "Oops...",
-                            "Produto não encontrado!",
-                            "error"
-                        );
-                    }else if(xhr.status == 401 || xhr.status == 419){
-                        Swal.fire({
-                            title: "Erro",
-                            text: "Sua sessão expirou, é preciso fazer o login novamente.",
-                            type: "error",
-                            showCancelButton: false,
-                            allowOutsideClick: false,
-                        }).then(function (result) {
-                            $.limparBloqueioSairDaTela();
-                            location.reload();
-                        });
-                    }else {
-                        Swal.fire(
-                            "Oops...",
-                            "Algo deu errado!",
-                            "error"
-                        );
-                    }
-                });
+    if (e.key == 'Enter' && texto ) {
+        Pace.restart();
+        Pace.track(function () {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
             });
-        }
-    });
+
+            $.ajax({
+                url: url,
+                type: "GET",
+            })
+            .done(function (response) {
+                // Espera que o backend retorne: id, nome, documento, etc.
+                if (!response || response.length === 0) {
+                    Swal.fire(
+                        "Oops...",
+                        "Cliente não encontrado!",
+                        "error"
+                    );
+                    return;
+                }
+                var cliente = response[0];
+                // Preenche campos do cliente
+                $('#desCli').text(cliente.text || cliente.nome || cliente.razaosocial || '');
+                $('#cliente_cadastro_id').val(cliente.id);
+                $('#getCliente').val(cliente.cliente_doc);
+                    // Aplica máscara se for CPF/CNPJ
+                    if (cliente.cliente_doc) {
+                        var doc = cliente.cliente_doc.replace(/\D/g, '');
+                        if (doc.length === 11) {
+                            $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+                        } else if (doc.length === 14) {
+                            $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
+                        } else {
+                            $('#getCliente').val(cliente.cliente_doc);
+                        }
+                    }
+            })
+            .fail(function (xhr, status, error) {
+                $('#desCli').text('');
+                $('#cliente_cadastro_id').val('');
+                $('#getCliente').val(texto);
+                if (xhr.status == 403) {
+                    Swal.fire(
+                        "Oops...",
+                        "Você não tem permissão, contate o administrador!",
+                        "error"
+                    );
+                } else if (xhr.status == 404){
+                    Swal.fire(
+                        "Oops...",
+                        "Cliente não encontrado!",
+                        "error"
+                    );
+                }else if(xhr.status == 401 || xhr.status == 419){
+                    Swal.fire({
+                        title: "Erro",
+                        text: "Sua sessão expirou, é preciso fazer o login novamente.",
+                        type: "error",
+                        showCancelButton: false,
+                        allowOutsideClick: false,
+                    }).then(function (result) {
+                        $.limparBloqueioSairDaTela();
+                        location.reload();
+                    });
+                }else {
+                    Swal.fire(
+                        "Oops...",
+                        "Algo deu errado!",
+                        "error"
+                    );
+                }
+            });
+        });
+    }
+});
 
 $("body").on("keyup", "#getProduto", function (e) {
 
         e.preventDefault();
         var texto = $(this).val();
-        var url = "/produto/obterproduto?pdv='sim'&parametro=" + texto;
+        var url = "/produto/obter-descricao-produto?pdv='sim'&parametro=" + texto;
         var quantity = $.tratarValor($('#item-quantity').val());
+
         if (e.key == 'Enter' && texto ) {
             Pace.restart();
             Pace.track(function () {
@@ -1339,59 +1338,67 @@ $("body").on("keyup", "#getProduto", function (e) {
                     type: "GET",
                 })
                 .done(function (response) {
-
-                    var item = {
-                        id: parseInt(response.id),
-                        product_id: parseInt(response.id),
-                        price: response.farvre,
-                        name: response.fardes,
-                        quantity: quantity,
-                        discount: 0,
-                        discountType: discountType,
-                        discountValue: 0,
-                    };
-
-                    if(response.farvre == 0){
+                    // Espera que o backend retorne um array de produtos
+                    var produto = Array.isArray(response) ? response[0] : response;
+                    if (!produto || !produto.produto_id || !produto.produto_dm || !produto.produto_vlr) {
+                        Swal.fire(
+                            "Oops...",
+                            "Produto não encontrado!",
+                            "error"
+                        );
+                        return;
+                    }
+                    if(parseFloat(produto.produto_vlr) == 0){
                         Swal.fire(
                             "Oops...",
                             "Produto sem preço, contate o administrador.",
                             "error"
                         );
-
                         return;
                     }
 
-                    $("#desProd").html(response.fardes);
-                    $("#item-price").val($.toMoneySimples(response.farvre));
+                    // Preenche campos conforme solicitado
+                    $('#getProduto').val(texto); // Mantém o valor digitado
+                    $('#desProd').html(produto.produto_dm); // Descrição do produto
+                    $('#item-price').val($.toMoneySimples(produto.produto_vlr)); // Valor do produto
 
-                    //console.log(item)
-                    itens = item;
-                    adicionarAoCarrinho(item);
-                    show_cart();
+                    // // Adiciona ao carrinho
+                    // var item = {
+                    //     id: parseInt(response.id),
+                    //     product_id: parseInt(response.id),
+                    //     price: response.farvre,
+                    //     name: response.fardes,
+                    //     quantity: quantity,
+                    //     discount: 0,
+                    //     discountType: discountType,
+                    //     discountValue: 0,
+                    // };
+                    // itens = item;
+                    // adicionarAoCarrinho(item);
+                    // show_cart();
 
-                    $('#getProduto').val("");
-                    $('#getProduto').focus();
-                    $("#item-quantity").val("1");
-                    $('#item-discount').val('0,00');
-                    $('#item-price').val('0,00');
-                    $('#item-subtotal').val('0,00');
-                    $('#find-product').select2('data', null);
-                    $('#find-product').val(null);
-                    $('#find-product').trigger('change');
-                    $("#desProd").html('');
+                    // // Limpa campos do produto
+                    // $('#getProduto').val("");
+                    // $('#getProduto').focus();
+                    // $('#item-quantity').val("1");
+                    // $('#item-discount').val('0,00');
+                    // $('#item-price').val('0,00');
+                    // $('#item-subtotal').val('0,00');
+                    // $('#find-product').select2('data', null);
+                    // $('#find-product').val(null);
+                    // $('#find-product').trigger('change');
+                    // $('#desProd').html('');
 
                 })
                 .fail(function (xhr, status, error) {
-                    $('#getProduto').val("");
-                    $('#getProduto').focus();
-                    $("#item-quantity").val("1");
-                    $('#item-discount').val('0,00');
+                    $('#desProd').html('');
                     $('#item-price').val('0,00');
+                    $('#item-quantity').val('1');
+                    $('#item-discount').val('0,00');
                     $('#item-subtotal').val('0,00');
                     $('#find-product').select2('data', null);
                     $('#find-product').val(null);
                     $('#find-product').trigger('change');
-                    $("#desProd").html('');
                     discountType = "%";
 
                     if (xhr.status == 403) {
@@ -1669,6 +1676,25 @@ shortcut.add("ESC", function (e) {
 ////////////////////////////////////////////////////////////////////////
 $(document).ready(function () {
 
+    // Limpa o nome do cliente quando o campo CPF/CNPJ é limpo e aplica máscara dinâmica
+    $('#getCliente').on('input', function() {
+        var valor = $(this).val().replace(/\D/g, '');
+        if (!valor) {
+            $('#desCli').text('');
+            $(this).val('');
+            $(this).unmask();
+            $('#cliente_cadastro_id').empty().trigger('change');
+            $('#cliente_cadastro_id').val(null).trigger('change');
+            return;
+        }
+        // Aplica máscara CPF ou CNPJ
+        if (valor.length <= 11) {
+            $(this).mask('000.000.000-00');
+        } else {
+            $(this).mask('00.000.000/0000-00');
+        }
+    });
+
     $(function () {
         //Initialize Select2 Elements
         $('.select2').select2();
@@ -1935,10 +1961,20 @@ $(document).ready(function () {
     $('#pesquisar-produto-modal').on('show.bs.modal', function() {
         $('#produto_dmf').empty().trigger('change');
         $('#produto_dmf').val(null).trigger('change');
-        $('#produto_dmf_id').empty().trigger('change');
-        $('#produto_dmf_id').val(null).trigger('change');
         $('#produto_dmf').select2('data', null);
         $('#produto_dmf').attr('data-placeholder', 'Pesquise o Nome do Produto');
+        $('#produto_dmf_id').empty().trigger('change');
+        $('#produto_dmf_id').val(null).trigger('change');
+    });
+
+    // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de cliente
+    $('#pesquisar-cliente-modal').on('show.bs.modal', function () {
+        $('#cliente_id').val(null).trigger('change');
+        $('#cliente_id').empty().trigger('change');
+        $('#cliente_id').select2('data', null);
+        $('#cliente_id').attr('data-placeholder', 'Pesquise o Nome ou CPF/CNPJ do Cliente');
+        $('#cliente_cadastro_id').empty().trigger('change');
+        $('#cliente_cadastro_id').val(null).trigger('change');
     });
 
     // Limpa o campo hidden quando o select2 é limpo
@@ -1946,6 +1982,14 @@ $(document).ready(function () {
         var val = $(this).val();
         if (!val || val === '' || val.length === 0) {
             $('#produto_dmf_id').val('');
+        }
+    });
+
+    // Limpa o campo hidden quando o select2 é limpo
+    $('#cliente_id').on('change', function () {
+        var val = $(this).val();
+        if (!val || val === '' || val.length === 0) {
+            $('#cliente_cadastro_id').val('');
         }
     });
 
@@ -1988,29 +2032,62 @@ $(document).ready(function () {
         }
     });
 
-    // Ao clicar em OK no modal de produto, preenche os campos com o produto selecionado
-    $('#btn-find-product').on('click', function() {
+    // Ao clicar em OK no modal de cliente, preenche os campos com o cliente selecionado
+    $('#btn-find-client').on('click', function() {
+        var data = $('#cliente_id').select2('data')[0];
+        if (!data) return;
 
-        var data = $('#produto_dmf').select2('data')[0];
-        console.log('Produto selecionado:', data);
+        var clientId = data.id;
+        var clientName = data.text;
+        var clientDoc = data.cliente_doc;
 
-        if (data) {
-            $('#getProduto').val(data.id || data.produto_id);
-            // Sempre prioriza produto_dm
-            var descricao = data.text || data.produto_dm || '';
-            $('#desProd').html(descricao);
-            var valor = data.produto_vlr || data.valor_venda || data.farvre || '';
-            $('#item-price').val(valor);
-            $('#item-price').trigger('keyup');
-            // Atualiza o data-id do botão 'Inserir' com o id do produto selecionado
-            $('#btn-adicionar-item').data('id', data.id || data.produto_id);
-            // Limpa o modal após transferir os dados
-            $('#produto_dmf').val(null).trigger('change');
-            $('#produto_dmf_id').val('');
-            // Zera a variável data
-            data = null;
+        $('#cliente_cadastro_id').val(clientId);
+        // Aplica máscara ao CPF/CNPJ
+        if (clientDoc) {
+            var doc = clientDoc.replace(/\D/g, '');
+            if (doc.length === 11) {
+                $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+            } else if (doc.length === 14) {
+                $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
+            } else {
+                $('#getCliente').val(clientDoc);
+            }
+        } else {
+            $('#getCliente').val('');
+        }
+        $('#desCli').text(clientName);        // Preenche o nome do cliente
+
+        // Aplica máscara
+        if (clientDoc && clientDoc.length === 11) {
+            $('#getCliente').mask('000.000.000-00');
+        } else if (clientDoc && clientDoc.length === 14) {
+            $('#getCliente').mask('00.000.000/0000-00');
         }
     });
+
+    // // Ao clicar em OK no modal de produto, preenche os campos com o produto selecionado
+    // $('#btn-find-product').on('click', function() {
+
+    //     var data = $('#produto_dmf').select2('data')[0];
+    //     console.log('Produto selecionado:', data);
+
+    //     if (data) {
+    //         $('#getProduto').val(data.id || data.produto_id);
+    //         // Sempre prioriza produto_dm
+    //         var descricao = data.text || data.produto_dm || '';
+    //         $('#desProd').html(descricao);
+    //         var valor = data.produto_vlr || data.valor_venda || data.farvre || '';
+    //         $('#item-price').val(valor);
+    //         $('#item-price').trigger('keyup');
+    //         // Atualiza o data-id do botão 'Inserir' com o id do produto selecionado
+    //         $('#btn-adicionar-item').data('id', data.id || data.produto_id);
+    //         // Limpa o modal após transferir os dados
+    //         $('#produto_dmf').val(null).trigger('change');
+    //         $('#produto_dmf_id').val('');
+    //         // Zera a variável data
+    //         data = null;
+    //     }
+    // });
 
     $("#invoiceShow").css("height", ($(window).height() - 150) + "px");
 

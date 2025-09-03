@@ -503,6 +503,7 @@ class ClienteController extends Controller
     public function getClient(Request $request)
     {
         $parametro = $request->query('parametro', '');
+        $parametro = str_replace(['.', '/', '-'], '', $parametro);
         $emp_id = Auth::user()->emp_id;
 
         if (empty($parametro)) {

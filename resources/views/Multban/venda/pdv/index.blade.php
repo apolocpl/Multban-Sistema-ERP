@@ -239,7 +239,7 @@
                 </div>
             </div>
 
-            <!-- CONTEÚDO DE PESQUISA - NÃO UTILIZADO -->
+            {{-- <!-- CONTEÚDO DE PESQUISA - NÃO UTILIZADO -->
             <div class="row animated bounceInLeft" id="listaDePedidos" style="display:none;">
                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 pull-left">
                     <div class="card p-1">
@@ -291,7 +291,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
     </section>
@@ -321,6 +321,82 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PESQUISAR CLIENTE -->
+    <div class="modal inmodal" id="pesquisar-cliente-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Pesquisa de cliente</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Digite o nome, CPF ou CNPJ do cliente.</p>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label id="cliente">Nome do Cliente:</label>
+                            <select id="cliente_id" name="cliente_id" class="form-control select2 select2-hidden-accessible"
+                                data-placeholder="Pesquise o Cliente" style="width: 100%;" aria-hidden="true">
+                            </select>
+                            <input type="hidden" id="cliente_cadastro_id" name="cliente_cadastro_id" value="">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary pull-right" id="btn-find-client" data-dismiss="modal"><i class="fa fa-check"></i> OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PESQUISAR PRODUTO -->
+    <div class="modal inmodal" id="pesquisar-produto-modal">
+        <div class="modal-dialog" style="max-width:900px; min-width:700px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Pesquisa de produto</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group col-md-12">
+                        <label for="produto_dmf">Descrição do Produto:</label>
+                        <select id="produto_dmf" name="produto_dmf" class="form-control select2 select2-hidden-accessible"
+                            data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
+                        </select>
+                        <input type="hidden" id="produto_dmf_id" name="produto_dmf_id" value="">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="produtos-lista-modal" class="table table-striped table-bordered nowrap">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Tabela será preenchida via JS -->
+                                <tr class="produto-item-modal" style="cursor:pointer" data-id="" data-tipo="" data-dm="" data-sts="" data-desc="" data-price="">
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -515,81 +591,6 @@
 
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PESQUISAR CLIENTE -->
-    <div class="modal inmodal" id="pesquisar-cliente-modal">
-        <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-            <h4 class="modal-title">Pesquisa de cliente</h4>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            </div>
-            <div class="modal-body">
-            <p>Digite o nome, CPF ou CNPJ do cliente.</p>
-                    <div class="form-row">
-                        <div class="form-group col-md-12">
-                            <label id="cliente">Nome do Cliente:</label>
-                            <select id="cliente_id" name="cliente_id" class="form-control select2 select2-hidden-accessible"
-                                data-placeholder="Pesquise o Cliente" style="width: 100%;" aria-hidden="true">
-                            </select>
-                        </div>
-                    </div>
-            </div>
-            <div class="modal-footer">
-            <button type="button" class="btn btn-primary pull-right" id="btn-find-client" data-dismiss="modal"><i class="fa fa-check"></i> OK</button>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <!-- MODAL PESQUISAR PRODUTO -->
-    <div class="modal inmodal" id="pesquisar-produto-modal">
-        <div class="modal-dialog" style="max-width:900px; min-width:700px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Pesquisa de produto</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group col-md-12">
-                        <label for="produto_dmf">Descrição do Produto:</label>
-                        <select id="produto_dmf" name="produto_dmf" class="form-control select2 select2-hidden-accessible"
-                            data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
-                        </select>
-                        <input type="hidden" id="produto_dmf_id" name="produto_dmf_id" value="">
-                    </div>
-
-                    <div class="table-responsive">
-                        <table id="produtos-lista-modal" class="table table-striped table-bordered nowrap">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Tipo</th>
-                                    <th>Descrição</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Tabela será preenchida via JS -->
-                                <tr class="produto-item-modal" style="cursor:pointer" data-id="" data-tipo="" data-dm="" data-sts="" data-desc="" data-price="">
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
