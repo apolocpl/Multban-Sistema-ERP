@@ -521,7 +521,7 @@ class ClienteController extends Controller
         }
 
         return $query->select(
-            DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) as text')
+            DB::raw('cliente_id as id, cliente_id, cliente_doc, cliente_sts, UPPER(cliente_nome) as text')
         )->get()->toArray();
     }
 

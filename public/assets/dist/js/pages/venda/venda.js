@@ -1231,11 +1231,69 @@ $("body").on("keyup", "#valortotalpago", function() {
 });
 
 $("body").on("keyup", "#getCliente", function (e) {
+    // Funções de validação de CPF/CNPJ
+    function validaCPF(cpf) {
+        cpf = cpf.replace(/\D/g, '');
+        if (cpf.length !== 11 || /^([0-9])\1+$/.test(cpf)) return false;
+        var soma = 0, resto;
+        for (var i = 1; i <= 9; i++) soma += parseInt(cpf[i-1]) * (11 - i);
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf[9])) return false;
+        soma = 0;
+        for (var i = 1; i <= 10; i++) soma += parseInt(cpf[i-1]) * (12 - i);
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf[10])) return false;
+        return true;
+    }
+    function validaCNPJ(cnpj) {
+        cnpj = cnpj.replace(/\D/g, '');
+        if (cnpj.length !== 14) return false;
+        if (/^([0-9])\1+$/.test(cnpj)) return false;
+        var tamanho = cnpj.length - 2;
+        var numeros = cnpj.substring(0, tamanho);
+        var digitos = cnpj.substring(tamanho);
+        var soma = 0;
+        var pos = tamanho - 7;
+        for (var i = tamanho; i >= 1; i--) {
+            soma += numeros[tamanho - i] * pos--;
+            if (pos < 2) pos = 9;
+        }
+        var resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos[0]) return false;
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0, tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+        for (var i = tamanho; i >= 1; i--) {
+            soma += numeros[tamanho - i] * pos--;
+            if (pos < 2) pos = 9;
+        }
+        resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+        if (resultado != digitos[1]) return false;
+        return true;
+    }
 
     e.preventDefault();
     var texto = $(this).val();
     // Remove apenas '.', '/', '-' para manter compatibilidade com backend
     texto = texto.replace(/[\.\/-]/g, '');
+
+    // Validação de documento ao pressionar Enter
+    if (e.key == 'Enter') {
+        var doc = texto.replace(/\D/g, '');
+        if (!(validaCPF(doc) || validaCNPJ(doc))) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Documento inválido',
+                text: 'O número de documento informado não é um CPF ou CNPJ válido.',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            });
+            return;
+        }
+    }
     var url = "/cliente/get-client?parametro=" + texto;
 
     if (e.key == 'Enter' && texto ) {
@@ -1259,23 +1317,48 @@ $("body").on("keyup", "#getCliente", function (e) {
                         "Cliente não encontrado!",
                         "error"
                     );
+                    // Limpa campos se não encontrar cliente, mas só ao pressionar Enter
+                    $('#desCli').text('');
+                    $('#cliente_cadastro_id').val('');
+                    $('#getCliente').val('');
                     return;
                 }
                 var cliente = response[0];
                 // Preenche campos do cliente
                 $('#desCli').text(cliente.text || cliente.nome || cliente.razaosocial || '');
                 $('#cliente_cadastro_id').val(cliente.id);
-                $('#getCliente').val(cliente.cliente_doc);
-                    // Aplica máscara se for CPF/CNPJ
-                    if (cliente.cliente_doc) {
-                        var doc = cliente.cliente_doc.replace(/\D/g, '');
-                        if (doc.length === 11) {
-                            $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
-                        } else if (doc.length === 14) {
-                            $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
-                        } else {
-                            $('#getCliente').val(cliente.cliente_doc);
-                        }
+                // Só preenche o campo se vier documento válido
+                if (cliente.cliente_doc) {
+                    var doc = cliente.cliente_doc.replace(/\D/g, '');
+                    if (doc.length === 11) {
+                        $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+                    } else if (doc.length === 14) {
+                        $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
+                    } else {
+                        $('#getCliente').val(cliente.cliente_doc);
+                    }
+                } else {
+                    $('#getCliente').val('');
+                }
+
+                    // Verifica status de inadimplência
+                    if (cliente.client_sts && cliente.client_sts === "MN") {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ATENÇÃO',
+                            html: '<div>Este cliente tem histórico de inadimplência nos últimos 6 meses.<br><br>Deseja realmente continuar?</div>',
+                            showCancelButton: true,
+                            confirmButtonText: 'OK',
+                            cancelButtonText: 'Cancelar',
+                            allowOutsideClick: false
+                        }).then(function(result) {
+                            if (!result.isConfirmed) {
+                                // Limpa seleção se cancelar
+                                $('#desCli').text('');
+                                $('#cliente_cadastro_id').val('');
+                                $('#getCliente').val('');
+                            }
+                        });
                     }
             })
             .fail(function (xhr, status, error) {
