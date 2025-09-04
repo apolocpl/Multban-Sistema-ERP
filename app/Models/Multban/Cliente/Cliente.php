@@ -165,4 +165,9 @@ class Cliente extends Model
         return $this->hasOne(ClienteEmp::class, 'cliente_id', 'cliente_id');
     }
 
+    // RELACIONAMENTO ENTRE AS TABELAS TBDM_CLIENTES_GERAL e TBDM_CLIENTES_CARD
+    public function clienteCard()
+    {
+        return $this->hasMany(ClienteCard::class, 'cliente_id', 'cliente_id');
+    }
 }

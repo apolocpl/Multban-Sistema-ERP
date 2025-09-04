@@ -179,10 +179,7 @@ function atualizarParcelasBoleto() {
     // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
     try {
         initParcelSelect2IfAvailable('#parcelasBoleto');
-        // Abre o dropdown logo em seguida para que o primeiro clique já mostre o Select2 corretamente
-        setTimeout(function(){
-            try { $('#parcelasBoleto').select2('open'); } catch(err) { /* noop */ }
-        }, 60);
+
     } catch(e) { console.warn('initParcelSelect2IfAvailable erro:', e); }
 }
 
@@ -257,10 +254,7 @@ function atualizarParcelasCartao() {
     // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
     try {
         initParcelSelect2IfAvailable('#parcelasCartao');
-        // Abre o dropdown logo em seguida para que o primeiro clique já mostre o Select2 corretamente
-        setTimeout(function(){
-            try { $('#parcelasCartao').select2('open'); } catch(err) { /* noop */ }
-        }, 60);
+
     } catch(e) { console.warn('initParcelSelect2IfAvailable erro:', e); }
 }
 
@@ -369,6 +363,7 @@ function calculaDescontoValor(){
     const tipo_pagto = document.querySelector("#cartao");
     if(tipo_pagto.classList.contains("text-success")){
         $("#valortotalpago").val(valorAPagar);
+
     }
     else{
         $("#valortotalpago").val("0,00");
@@ -654,6 +649,11 @@ function show_cart() {
 /////////////////////
 // AÇÕES DE NAVEGAÇÂO
 /////////////////////
+$('#modalCartaoMult').on('show.bs.modal', function () {
+    var nomeCliente = $('#desCli').text() || '';
+    $('#modalCartaoMultLabel').text('Cartões Registrados Para: ' + nomeCliente);
+});
+
 $("body").on("change", "#find-product", function(e) {
     var data = $(this).select2('data')[0];
     if (data) {
@@ -1310,39 +1310,26 @@ $("body").on("keyup", "#getCliente", function (e) {
                 type: "GET",
             })
             .done(function (response) {
-                // Espera que o backend retorne: id, nome, documento, etc.
-                if (!response || response.length === 0) {
-                    Swal.fire(
-                        "Oops...",
-                        "Cliente não encontrado!",
-                        "error"
-                    );
-                    // Limpa campos se não encontrar cliente, mas só ao pressionar Enter
-                    $('#desCli').text('');
-                    $('#cliente_cadastro_id').val('');
-                    $('#getCliente').val('');
-                    return;
-                }
-                var cliente = response[0];
-                // Preenche campos do cliente
-                $('#desCli').text(cliente.text || cliente.nome || cliente.razaosocial || '');
-                $('#cliente_cadastro_id').val(cliente.id);
-                // Só preenche o campo se vier documento válido
-                if (cliente.cliente_doc) {
-                    var doc = cliente.cliente_doc.replace(/\D/g, '');
-                    if (doc.length === 11) {
-                        $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
-                    } else if (doc.length === 14) {
-                        $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
-                    } else {
-                        $('#getCliente').val(cliente.cliente_doc);
+                    // Espera que o backend retorne: {clientes: [...], cartoes: [...]}
+                    if (!response || !response.clientes || response.clientes.length === 0) {
+                        Swal.fire(
+                            "Oops...",
+                            "Cliente não encontrado!",
+                            "error"
+                        );
+                        // Limpa campos se não encontrar cliente, mas só ao pressionar Enter
+                        $('#desCli').text('');
+                        $('#cliente_cadastro_id').val('');
+                        $('#getCliente').val('');
+                        return;
                     }
-                } else {
-                    $('#getCliente').val('');
-                }
+                    var cliente = response.clientes[0];
+                    window.responseCliente = cliente;
+                    window.clienteDataFech = cliente.cliente_dt_fech;
+                    window.responseCartoesCliente = cliente.cartoes || [];
 
                     // Verifica status de inadimplência
-                    if (cliente.client_sts && cliente.client_sts === "MN") {
+                    if (cliente.cliente_sts && cliente.cliente_sts === "MN") {
                         Swal.fire({
                             icon: 'warning',
                             title: 'ATENÇÃO',
@@ -1360,6 +1347,25 @@ $("body").on("keyup", "#getCliente", function (e) {
                             }
                         });
                     }
+
+                    // Preenche campos do cliente
+                    $('#desCli').text(cliente.text || cliente.nome || cliente.razaosocial || '');
+                    $('#cliente_cadastro_id').val(cliente.id);
+                    // Só preenche o campo se vier documento válido
+                    if (cliente.cliente_doc) {
+                        var doc = cliente.cliente_doc.replace(/\D/g, '');
+                        if (doc.length === 11) {
+                            $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+                        } else if (doc.length === 14) {
+                            $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
+                        } else {
+                            $('#getCliente').val(cliente.cliente_doc);
+                        }
+                    } else {
+                        $('#getCliente').val('');
+                    }
+
+
             })
             .fail(function (xhr, status, error) {
                 $('#desCli').text('');
@@ -1753,11 +1759,321 @@ shortcut.add("ESC", function (e) {
 
 
 
-
 ////////////////////////////////////////////////////////////////////////
 // FUNÇOES EXECUTADAS SOMENTE DEPOIS QUE TODO A PÁGINA ESTIVER CARREGADA
 ////////////////////////////////////////////////////////////////////////
+
+// Recalcula parcelas do cartão ao alterar o checkbox "vendaSemJurosCartao"
+$(document).on('change', '#vendaSemJurosCartao', function() {
+    atualizarParcelasCartao();
+});
+
 $(document).ready(function () {
+
+    // Atualiza os valores visíveis do checkout imediatamente
+    atualizarCheckoutValores();
+
+    // Função para atualizar os textos das opções do select PrimeiraParaCartao
+    function atualizarOpcoesPrimeiraParaCartao() {
+        var $select = $('#PrimeiraParaCartao');
+        var hoje = new Date();
+        $select.find('option').each(function() {
+            var val = $(this).val();
+            if (val == '6') {
+                $(this).text('Rotativo');
+            } else if (val == '7') {
+                var mes = hoje.getMonth() + 2;
+                var ano = hoje.getFullYear();
+                if (mes > 12) { mes = 1; ano++; }
+                var mesNome = new Date(ano, mes-1, 1).toLocaleString('pt-BR', { month: 'long' });
+                $(this).text(mesNome.charAt(0).toUpperCase() + mesNome.slice(1) + ' ' + ano);
+            } else if (val == '8') {
+                var mes = hoje.getMonth() + 3;
+                var ano = hoje.getFullYear();
+                if (mes > 12) { mes -= 12; ano++; }
+                var mesNome = new Date(ano, mes-1, 1).toLocaleString('pt-BR', { month: 'long' });
+                $(this).text(mesNome.charAt(0).toUpperCase() + mesNome.slice(1) + ' ' + ano);
+            } else if (val == '9') {
+                var mes = hoje.getMonth() + 4;
+                var ano = hoje.getFullYear();
+                if (mes > 12) { mes -= 12; ano++; }
+                var mesNome = new Date(ano, mes-1, 1).toLocaleString('pt-BR', { month: 'long' });
+                $(this).text(mesNome.charAt(0).toUpperCase() + mesNome.slice(1) + ' ' + ano);
+            }
+        });
+    }
+
+    // Executa ao abrir o modal de checkout ou ao trocar cliente
+    $('#checkout-modal').on('show.bs.modal', function() {
+        atualizarOpcoesPrimeiraParaCartao();
+    });
+
+    $(document).on('change', '#cliente_cadastro_id', function() {
+        atualizarOpcoesPrimeiraParaCartao();
+    });
+
+    // Função para calcular e preencher dataPrimeiraParcelaCartao
+    function calcularDataPrimeiraParcelaCartao() {
+
+        var diaFech = parseInt(window.clienteDataFech) || 1;
+        console.log('Dia fechamento:', diaFech);
+
+        var hoje = new Date();
+        var ano = hoje.getFullYear();
+        var mes = hoje.getMonth() + 1;
+        var opcao = $('#PrimeiraParaCartao').val();
+        var dataBase;
+
+        if (opcao == '6') {
+            dataBase = new Date(ano, mes-1, diaFech);
+            // Se hoje >= diaFech OU faltam menos de 10 dias para o fechamento
+            if (hoje.getDate() >= diaFech || (diaFech - hoje.getDate() < 10 && diaFech - hoje.getDate() >= 0)) {
+                mes++;
+                if (mes > 12) { mes = 1; ano++; }
+                dataBase = new Date(ano, mes-1, diaFech);
+            }
+
+        } else if (opcao == '7') {
+            mes++;
+            if (mes > 12) { mes = 1; ano++; }
+            dataBase = new Date(ano, mes-1, diaFech);
+        } else if (opcao == '8') {
+            mes += 2;
+            if (mes > 12) { mes -= 12; ano++; }
+            dataBase = new Date(ano, mes-1, diaFech);
+        } else if (opcao == '9') {
+            mes += 3;
+            if (mes > 12) { mes -= 12; ano++; }
+            dataBase = new Date(ano, mes-1, diaFech);
+        } else {
+            $('#dataPrimeiraParcelaCartao').val('');
+            $('#dataPrimeiraParcelaCartaoHelp').text('');
+            return;
+        }
+        var dataStr = dataBase.toISOString().slice(0,10);
+        $('#dataPrimeiraParcelaCartao').val(dataStr);
+        var mesNome = dataBase.toLocaleString('pt-BR', { month: 'long' });
+        $('#dataPrimeiraParcelaCartaoHelp').text('Data calculada: ' + diaFech + '/' + mesNome.charAt(0).toUpperCase() + mesNome.slice(1) + '/' + ano);
+    }
+
+    // Executa ao trocar opção do select
+    $(document).on('change', '#PrimeiraParaCartao', function() {
+        calcularDataPrimeiraParcelaCartao();
+    });
+
+    // Atualiza cliente global ao selecionar cliente
+    $(document).on('change', '#cliente_cadastro_id', function() {
+        var id = $(this).val();
+        var cliente = {};
+        if (window.responseClientes && Array.isArray(window.responseClientes)) {
+            cliente = window.responseClientes.find(function(c) { return c.id == id; }) || {};
+        }
+        window.responseCliente = cliente;
+    });
+
+    // AÇÕES COM O COMOBO BOX DE PARCELAS CARTÃO E BOLETO
+    // Recalcula parcelas apenas do bloco visível ao perder o foco
+    $("#valortotalacobrar").on("blur", function() {
+        if ($('#div-cartao').is(':visible')) {
+            atualizarParcelasCartao();
+        }
+        if ($('#div-boleto').is(':visible')) {
+            atualizarParcelasBoleto();
+        }
+    });
+
+    // Garante que toda vez que clicar no comboBox de parcelas do cartão, recalcula as parcelas
+    $("body").on("mousedown", "#parcelasCartao", function(e) {
+        // Se não for Select2, recalcula normalmente
+        if (!$(this).hasClass('select2-hidden-accessible')) {
+            e.preventDefault(); // evita dropdown nativo
+            atualizarCheckoutValores();
+            atualizarParcelasCartao();
+        } else {
+            // Se for Select2, força recalcular antes de abrir o dropdown
+            atualizarCheckoutValores();
+            atualizarParcelasCartao();
+        }
+    });
+
+    // Garante que toda vez que clicar no comboBox de parcelas do cartão, recalcula as parcelas
+    $("body").on("mousedown", "#parcelasBoleto", function(e) {
+        // Se não for Select2, recalcula normalmente
+        if (!$(this).hasClass('select2-hidden-accessible')) {
+            e.preventDefault(); // evita dropdown nativo
+            atualizarCheckoutValores();
+            atualizarParcelasBoleto();
+        } else {
+            // Se for Select2, força recalcular antes de abrir o dropdown
+            atualizarCheckoutValores();
+            atualizarParcelasBoleto();
+        }
+    });
+
+    // Handler do botão Cobrar
+    $("#btnCobrar").on("click", function() {
+        var tipoPagto = tipoPagamentoSelecionado || $("#id_forma_pagto").val();
+
+        // MEIO DE PAGAMENTO CARTÃO
+        if (tipoPagto === "CM") {
+
+            var parcela = $("#parcelasCartao").val();
+            var primeiraParcela = $("#PrimeiraParaCartao").val();
+            var dataPrimeira = $("#dataPrimeiraParcelaCartao").val();
+            if (!parcela || parcela === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione o número de parcelas!',
+                    text: 'É necessário selecionar uma opção de parcelamento para cartão.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+            if (!primeiraParcela || primeiraParcela === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione a opção da 1ª parcela!',
+                    text: 'É necessário selecionar uma opção para a data da primeira parcela.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+            if (!dataPrimeira || dataPrimeira === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione a data da 1ª parcela!',
+                    text: 'É necessário informar a data da primeira parcela.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+
+            // Usa os cartões já carregados do cliente
+            var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
+            // Assume que responseCartoesCliente está disponível globalmente ou foi salvo ao selecionar o cliente
+            var cartoes = window.responseCartoesCliente || [];
+            if (!Array.isArray(cartoes) || cartoes.length === 0) {
+                Swal.fire("Erro", "Nenhum cartão Mult disponível para este cliente.", "error");
+                return;
+            }
+            var tbody = "";
+            cartoes.forEach(function(cartao) {
+                var statusHtml = formatarStatusCartao(cartao.card_sts);
+                // Máscara para número do cartão: 1111.1111.1111.1111
+                function maskCardNumber(num) {
+                    if (!num) return '';
+                    var n = String(num).replace(/\D/g, '');
+                    return n.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1.$2.$3.$4');
+                }
+                // Formata valor para moeda brasileira
+                function formatBRL(v) {
+                    var f = parseFloat(v);
+                    if (isNaN(f)) return '';
+                    return f.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                }
+                tbody += `<tr class="linha-cartao-mult" data-saldo="${cartao.card_saldo_vlr}" data-id="${cartao.cliente_cardn}">
+                    <td>${cartao.card_tp_desc}</td>
+                    <td>${cartao.card_mod_desc}</td>
+                    <td>${cartao.card_categ}</td>
+                    <td>${cartao.card_desc}</td>
+                    <td>${maskCardNumber(cartao.cliente_cardn)}</td>
+                    <td>${formatBRL(cartao.card_saldo_vlr)}</td>
+                    <td>${formatBRL(cartao.card_limite)}</td>
+                    <td>${statusHtml}</td>
+                </tr>`;
+            });
+            $("#tabelaCartoesMult tbody").html(tbody);
+            $("#modalCartaoMult").modal("show");
+
+        // MEIO DE PAGAMENTO BOLETO
+        } else if (tipoPagto === "BL") {
+
+            var parcela = $("#parcelasBoleto").val();
+            var primeiraParcela = $("#PrimeiraParaBoleto").val();
+            var dataPrimeira = $("#dataPrimeiraParcelaBoleto").val();
+            if (!parcela || parcela === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione o número de parcelas!',
+                    text: 'É necessário selecionar uma opção de parcelamento para boleto.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+            if (!primeiraParcela || primeiraParcela === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione a opção da 1ª parcela!',
+                    text: 'É necessário selecionar uma opção para a data da primeira parcela.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+            if (!dataPrimeira || dataPrimeira === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selecione a data da 1ª parcela!',
+                    text: 'É necessário informar a data da primeira parcela.',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false
+                });
+                return;
+            }
+
+            // Segue fluxo normal de cobrança para boleto
+            // ...código existente...
+
+        // MEIO DE PAGAMENTO DINHEIRO
+        } else if (tipoPagto === "DN") {
+            // Segue fluxo normal de cobrança
+            // ...código existente...
+
+        // MEIO DE PAGAMENTO PIX
+        } else if (tipoPagto === "PX") {
+            // Segue fluxo normal de cobrança
+            // ...código existente...
+
+        // MEIO DE PAGAMENTO OUTROS
+        } else if (tipoPagto === "OT") {
+            // Segue fluxo normal de cobrança
+            // ...código existente...
+
+        }
+    });
+
+    // Handler para seleção de cartão na tabela
+    $(document).on("click", ".linha-cartao-mult", function() {
+        var saldo = parseFloat($(this).data("saldo")) || 0;
+        var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
+        if (saldo < valorCobrar) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Saldo insuficiente',
+                text: 'O saldo do cartão é insuficiente para esta cobrança.',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            });
+            return;
+        }
+        // Fecha modal e segue com operação usando o cartão selecionado
+        $("#modalCartaoMult").modal("hide");
+        // ...código para continuar operação com o cartão selecionado...
+    });
+
+    // Função para formatar status do cartão
+    function formatarStatusCartao(sts) {
+        // Exemplo: pode adaptar para cores/icons conforme padrão dos produtos
+        if (sts === 'AT') return '<span class="badge badge-success">Ativo</span>';
+        if (sts === 'BL') return '<span class="badge badge-warning">Bloqueado</span>';
+        if (sts === 'IN') return '<span class="badge badge-danger">Inativo</span>';
+        if (sts === 'EX') return '<span class="badge badge-danger">Inativo</span>';
+        return sts;
+    }
 
     // Limpa o nome do cliente quando o campo CPF/CNPJ é limpo e aplica máscara dinâmica
     $('#getCliente').on('input', function() {
@@ -1895,9 +2211,9 @@ $(document).ready(function () {
         $('#desProd').html(prodDesc);
         $('#item-price').val(prodPrice);
         $('#item-price').trigger('keyup');
-        // Atualizar campo oculto com o id do produto selecionado
+        // Atualiza campo oculto com o id do produto selecionado
         $('#produto_dmf_id').val(prodId);
-        // Atualizar o atributo data-id do botão inserir
+        // Atualiza o atributo data-id do botão inserir
         $('#btn-adicionar-item').data('id', prodId);
         // Fechar modal
         $('#pesquisar-produto-modal').modal('hide');
@@ -1948,6 +2264,7 @@ $(document).ready(function () {
             troco = valorCobrar - totalCarrinho;
         }
         $('#valortroco').val(formatBRL(troco));
+
     });
 
     // Ao sair do campo, formata o valor para padrão brasileiro
@@ -1969,70 +2286,7 @@ $(document).ready(function () {
             valor = parseFloat(s) || 0;
         }
         $(this).val(formatBRL(valor));
-    });
 
-    // Atualiza os valores visíveis do checkout imediatamente
-    atualizarCheckoutValores();
-
-    // Controla o comportamento do DropDown para Parcelas de Boleto
-    $("body").on('mousedown', '#parcelasBoleto', function(e){
-        var $sel = $(this);
-        if (!$sel.hasClass('select2-hidden-accessible')) {
-            e.preventDefault(); // avoid native dropdown
-            atualizarCheckoutValores();
-            atualizarParcelasBoleto();
-        }
-    });
-
-    $("body").on('focus', '#parcelasBoleto', function(){
-        var $sel = $(this);
-        if (!$sel.hasClass('select2-hidden-accessible')) {
-            atualizarCheckoutValores();
-            atualizarParcelasBoleto();
-        }
-    });
-
-    // Ao fechar o select2 ou perder foco, limpa as opções para forçar recálculo na próxima abertura
-    $("body").on('select2:close', '#parcelasBoleto', function(e){
-        try {
-            var $el = $(this);
-            $el.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            try { $el.select2('destroy'); } catch(ex) {}
-        } catch(err) {}
-    });
-
-    $("body").on('blur', '#parcelasBoleto', function(e){
-        try { $(this).empty().append('<option value="">Selecione...</option>').val("").trigger('change'); } catch(err) {}
-    });
-
-    // Controla o comportamento do DropDown para Parcelas de Cartão
-    $("body").on('mousedown', '#parcelasCartao', function(e){
-        var $sel = $(this);
-        if (!$sel.hasClass('select2-hidden-accessible')) {
-            e.preventDefault(); // avoid native dropdown
-            atualizarCheckoutValores();
-            atualizarParcelasCartao();
-        }
-    });
-
-    $("body").on('focus', '#parcelasCartao', function(){
-        var $sel = $(this);
-        if (!$sel.hasClass('select2-hidden-accessible')) {
-            atualizarCheckoutValores();
-            atualizarParcelasCartao();
-        }
-    });
-
-    $("body").on('select2:close', '#parcelasCartao', function(e){
-        try {
-            var $el = $(this);
-            $el.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            try { $el.select2('destroy'); } catch(ex) {}
-        } catch(err) {}
-    });
-
-    $("body").on('blur', '#parcelasCartao', function(e){
-        try { $(this).empty().append('<option value="">Selecione...</option>').val("").trigger('change'); } catch(err) {}
     });
 
     // Mantém atualização dos valores do checkout quando o DOM mudar, mas evita recalcular parcelas automaticamente
@@ -2123,6 +2377,7 @@ $(document).ready(function () {
         var clientId = data.id;
         var clientName = data.text;
         var clientDoc = data.cliente_doc;
+        window.clienteDataFech = data.cliente_dt_fech;
 
         $('#cliente_cadastro_id').val(clientId);
         // Aplica máscara ao CPF/CNPJ
@@ -2146,31 +2401,10 @@ $(document).ready(function () {
         } else if (clientDoc && clientDoc.length === 14) {
             $('#getCliente').mask('00.000.000/0000-00');
         }
+        // Preenche array de cartões do cliente
+        var cartoes = data.cartoes || [];
+        window.responseCartoesCliente = cartoes;
     });
-
-    // // Ao clicar em OK no modal de produto, preenche os campos com o produto selecionado
-    // $('#btn-find-product').on('click', function() {
-
-    //     var data = $('#produto_dmf').select2('data')[0];
-    //     console.log('Produto selecionado:', data);
-
-    //     if (data) {
-    //         $('#getProduto').val(data.id || data.produto_id);
-    //         // Sempre prioriza produto_dm
-    //         var descricao = data.text || data.produto_dm || '';
-    //         $('#desProd').html(descricao);
-    //         var valor = data.produto_vlr || data.valor_venda || data.farvre || '';
-    //         $('#item-price').val(valor);
-    //         $('#item-price').trigger('keyup');
-    //         // Atualiza o data-id do botão 'Inserir' com o id do produto selecionado
-    //         $('#btn-adicionar-item').data('id', data.id || data.produto_id);
-    //         // Limpa o modal após transferir os dados
-    //         $('#produto_dmf').val(null).trigger('change');
-    //         $('#produto_dmf_id').val('');
-    //         // Zera a variável data
-    //         data = null;
-    //     }
-    // });
 
     $("#invoiceShow").css("height", ($(window).height() - 150) + "px");
 
@@ -2215,10 +2449,12 @@ $(document).ready(function () {
             $("#div-boleto").show();
             $("#div-cartao").hide();
             $("#payment-instructions").show();
+            atualizarParcelasBoleto();
         } else if (tipoPagamentoSelecionado === "CM") {
             $("#div-cartao").show();
             $("#div-boleto").hide();
             $("#payment-instructions").show();
+            atualizarParcelasCartao();
         } else {
             $("#div-boleto, #div-cartao").hide();
             $("#payment-instructions").hide();

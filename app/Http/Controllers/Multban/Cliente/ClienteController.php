@@ -12,7 +12,7 @@ use App\Models\Multban\Cliente\CardMod;
 use App\Models\Multban\Cliente\CardStatus;
 use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
-use App\Models\Multban\Cliente\ClienteEmp;
+use App\Models\Multban\Cliente\ClienteCard;
 use App\Models\Multban\Cliente\ClienteProntuario;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
@@ -507,7 +507,10 @@ class ClienteController extends Controller
         $emp_id = Auth::user()->emp_id;
 
         if (empty($parametro)) {
-            return [];
+            return [
+                'clientes' => [],
+                'cartoes' => []
+            ];
         }
 
         $query = Cliente::whereHas('clienteEmp', function($q) use ($emp_id) {
@@ -520,9 +523,33 @@ class ClienteController extends Controller
             $query->where('cliente_nome', 'LIKE', '%' . $parametro . '%');
         }
 
-        return $query->select(
-            DB::raw('cliente_id as id, cliente_id, cliente_doc, cliente_sts, UPPER(cliente_nome) as text')
-        )->get()->toArray();
+        $clientes = $query->select(
+            DB::raw('cliente_id as id, cliente_id, cliente_doc, cliente_sts, cliente_dt_fech, UPPER(cliente_nome) as text')
+        )->get();
+
+        foreach ($clientes as $cliente) {
+            $cliente->cartoes = ClienteCard::where('cliente_id', $cliente->cliente_id)
+                ->where('emp_id', $emp_id)
+                ->select(
+                    'card_tp', 'card_mod', 'card_categ', 'card_desc', 'cliente_cardn', 'card_saldo_vlr', 'card_limite', 'card_sts'
+                )
+                ->get()
+                ->map(function($cartao) {
+                    // Busca os textos descritivos usando os models
+                    $tp = CardTipo::where('card_tp', $cartao->card_tp)->first();
+                    $mod = CardMod::where('card_mod', $cartao->card_mod)->first();
+                    $sts = CardStatus::where('card_sts', $cartao->card_sts)->first();
+                    $cartao->card_tp_desc = $tp ? $tp->card_tp_desc : $cartao->card_tp;
+                    $cartao->card_mod_desc = $mod ? $mod->card_mod_desc : $cartao->card_mod;
+                    $cartao->card_sts_desc = $sts ? $sts->card_sts_desc : $cartao->card_sts;
+                    return $cartao;
+                })
+                ->toArray();
+        }
+
+        return [
+            'clientes' => $clientes->toArray()
+        ];
     }
 
     // public function getClient(Request $request)

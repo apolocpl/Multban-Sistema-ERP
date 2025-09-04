@@ -584,7 +584,7 @@
                                 </div>
 
                                 <div class="col-md-3 d-flex align-items-center justify-content-center">
-                                    <button type="button" class="form-control form-control-sm btn btn-secundary-multban d-flex align-items-center justify-content-center" style="height: 100%;">
+                                    <button type="button" id="btnCobrar" class="form-control form-control-sm btn btn-secundary-multban d-flex align-items-center justify-content-center" style="height: 100%;">
                                         <h5 class="text-bold m-0 w-100 text-center">Cobrar</h5>
                                     </button>
                                 </div>
@@ -592,6 +592,72 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO DO CARTÃO DE CRÉDITO (fora do checkout-modal) -->
+    <div class="modal fade" id="modalCartaoMult" tabindex="-1" role="dialog" aria-labelledby="modalCartaoMultLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCartaoMultLabel">Cartões Registrados Para:</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered nowrap tabela-cartoes-menor" id="tabelaCartoesMult">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Modalidade</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th>Número</th>
+                                <th>Saldo</th>
+                                <th>Limite</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Linhas dos cartões serão preenchidas via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO DO CARTÃO DE CRÉDITO -->
+    <div class="modal fade" id="modalCartaoMult" tabindex="-1" role="dialog" aria-labelledby="modalCartaoMultLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCartaoMultLabel">Cartões Registrados Para:</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered nowrap" id="tabelaCartoesMult">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Modalidade</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th>Número</th>
+                                <th>Saldo</th>
+                                <th>Limite</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Linhas dos cartões serão preenchidas via JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -759,6 +825,50 @@
 
     <!-- ESTILO CSS DOS CAMPOS ESPECÍFICOS DO PDV -->
     <style>
+
+        /* ESTILO DA TABELA DE CARTÕES */
+        .modal-dialog.modal-lg {
+            max-width: 950px;
+        }
+        #modalCartaoMult .modal-content {
+            padding: 24px 18px 18px 18px;
+        }
+        .tabela-cartoes-menor {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fafbfc;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .tabela-cartoes-menor th, .tabela-cartoes-menor td {
+            font-size: 13px;
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+        .tabela-cartoes-menor th {
+            background: #f3f3f3;
+            font-weight: 600;
+            text-align: center;
+        }
+        .tabela-cartoes-menor td {
+            text-align: center;
+        }
+        .tabela-cartoes-menor td.descricao, .tabela-cartoes-menor th.descricao {
+            min-width: 160px;
+            max-width: 220px;
+            text-align: left;
+        }
+        #modalCartaoMult .modal-header {
+            border-bottom: 1px solid #e5e5e5;
+            margin-bottom: 10px;
+        }
+        #modalCartaoMultLabel {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            width: 100%;
+        }
+        /* ESTILO DA TABELA DE CARTÕES */
 
         .text-multban-bold-secundary {
             font-weight: 700 !important;
