@@ -1127,6 +1127,7 @@ class DadosMestreSeeder extends Seeder
             ['cliente_sts' => 'BL', 'langu' => 'PORT', 'cliente_sts_desc' => 'Bloqueado'],
             ['cliente_sts' => 'NA', 'langu' => 'PORT', 'cliente_sts_desc' => 'Em Análise'],
             ['cliente_sts' => 'ID', 'langu' => 'PORT', 'cliente_sts_desc' => 'Inadimplente'],
+            ['cliente_sts' => 'MN', 'langu' => 'PORT', 'cliente_sts_desc' => 'Monitorado'],
         ];
 
         DB::table('tbdm_cliente_sts')->insert($cliente_sts);

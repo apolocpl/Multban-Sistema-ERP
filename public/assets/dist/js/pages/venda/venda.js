@@ -1323,17 +1323,26 @@ $("body").on("keyup", "#getCliente", function (e) {
                         $('#getCliente').val('');
                         return;
                     }
-                    var cliente = response.clientes[0];
+
                     window.responseCliente = cliente;
-                    window.clienteDataFech = cliente.cliente_dt_fech;
-                    window.responseCartoesCliente = cliente.cartoes || [];
+                    window.clientId = response.clientes[0].id;
+                    window.clientName = response.clientes[0].text;
+                    window.clientDoc = response.clientes[0].cliente_doc;
+                    window.clienteDataFech = response.clientes[0].cliente_dt_fech;
+                    window.responseCartoesCliente = response.clientes[0].cartoes || [];
 
                     // Verifica status de inadimplência
-                    if (cliente.cliente_sts && cliente.cliente_sts === "MN") {
+                    if (response.clientes[0].cliente_sts && response.clientes[0].cliente_sts === "MN") {
                         Swal.fire({
                             icon: 'warning',
                             title: 'ATENÇÃO',
-                            html: '<div>Este cliente tem histórico de inadimplência nos últimos 6 meses.<br><br>Deseja realmente continuar?</div>',
+                            html: '<div>Identificamos que este cliente, nos últimos 6 meses,<br>' +
+                                  'tem histórico de atraso nos pagamentos.<br><br>' +
+                                  'Sugestões:<br>' +
+                                  '- Solicite um valor de entrada.<br>' +
+                                  '- De preferência por um meio de pagamento à vista.<br>' +
+                                  '- Coloque juros nas parcelas para cobrir um possível atraso.<br><br>' +
+                                  '<strong>Deseja realmente continuar?</strong></div>',
                             showCancelButton: true,
                             confirmButtonText: 'OK',
                             cancelButtonText: 'Cancelar',
@@ -1349,17 +1358,17 @@ $("body").on("keyup", "#getCliente", function (e) {
                     }
 
                     // Preenche campos do cliente
-                    $('#desCli').text(cliente.text || cliente.nome || cliente.razaosocial || '');
-                    $('#cliente_cadastro_id').val(cliente.id);
+                    $('#desCli').text(window.clientName || cliente.nome || cliente.razaosocial || '');
+                    $('#cliente_cadastro_id').val(window.clientId);
                     // Só preenche o campo se vier documento válido
-                    if (cliente.cliente_doc) {
-                        var doc = cliente.cliente_doc.replace(/\D/g, '');
+                    if (window.clientDoc) {
+                        var doc = window.clientDoc.replace(/\D/g, '');
                         if (doc.length === 11) {
                             $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
                         } else if (doc.length === 14) {
                             $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
                         } else {
-                            $('#getCliente').val(cliente.cliente_doc);
+                            $('#getCliente').val(window.clientDoc);
                         }
                     } else {
                         $('#getCliente').val('');
@@ -1977,7 +1986,7 @@ $(document).ready(function () {
                 tbody += `<tr class="linha-cartao-mult" data-saldo="${cartao.card_saldo_vlr}" data-id="${cartao.cliente_cardn}">
                     <td>${cartao.card_tp_desc}</td>
                     <td>${cartao.card_mod_desc}</td>
-                    <td>${cartao.card_categ}</td>
+                    <td>${cartao.card_categ == null ? '' : cartao.card_categ}</td>
                     <td>${cartao.card_desc}</td>
                     <td>${maskCardNumber(cartao.cliente_cardn)}</td>
                     <td>${formatBRL(cartao.card_saldo_vlr)}</td>
@@ -2374,36 +2383,62 @@ $(document).ready(function () {
         var data = $('#cliente_id').select2('data')[0];
         if (!data) return;
 
-        var clientId = data.id;
-        var clientName = data.text;
-        var clientDoc = data.cliente_doc;
+        window.clientId = data.id;
+        window.clientName = data.text;
+        window.clientDoc = data.cliente_doc;
         window.clienteDataFech = data.cliente_dt_fech;
+        window.responseCartoesCliente = data.cartoes || [];
 
-        $('#cliente_cadastro_id').val(clientId);
+        // Verifica status de inadimplência
+        if (data.cliente_sts && data.cliente_sts === "MN") {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ATENÇÃO',
+                html: '<div>Identificamos que este cliente, nos últimos 6 meses,<br>' +
+                      'tem histórico de atraso nos pagamentos.<br><br>' +
+                      'Sugestões:<br>' +
+                      '- Solicite um valor de entrada.<br>' +
+                      '- De preferência por um meio de pagamento à vista.<br>' +
+                      '- Coloque juros nas parcelas para cobrir um possível atraso.<br><br>' +
+                      '<strong>Deseja realmente continuar?</strong></div>',
+                showCancelButton: true,
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancelar',
+                allowOutsideClick: false
+            }).then(function(result) {
+                if (!result.isConfirmed) {
+                    // Limpa seleção se cancelar
+                    $('#desCli').text('');
+                    $('#cliente_cadastro_id').val('');
+                    $('#getCliente').val('');
+                }
+            });
+        }
+
+        $('#cliente_cadastro_id').val(window.clientId).trigger('change'); // Preenche o select2 oculto
+        $('#cliente_cadastro_id').trigger('change'); // Dispara change para atualizar qualquer listener
         // Aplica máscara ao CPF/CNPJ
-        if (clientDoc) {
-            var doc = clientDoc.replace(/\D/g, '');
+        if (window.clientDoc) {
+            var doc = window.clientDoc.replace(/\D/g, '');
             if (doc.length === 11) {
                 $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
             } else if (doc.length === 14) {
                 $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
             } else {
-                $('#getCliente').val(clientDoc);
+                $('#getCliente').val(window.clientDoc);
             }
         } else {
             $('#getCliente').val('');
         }
-        $('#desCli').text(clientName);        // Preenche o nome do cliente
+        $('#desCli').text(window.clientName);        // Preenche o nome do cliente
 
         // Aplica máscara
-        if (clientDoc && clientDoc.length === 11) {
+        if (window.clientDoc && window.clientDoc.length === 11) {
             $('#getCliente').mask('000.000.000-00');
-        } else if (clientDoc && clientDoc.length === 14) {
+        } else if (window.clientDoc && window.clientDoc.length === 14) {
             $('#getCliente').mask('00.000.000/0000-00');
         }
-        // Preenche array de cartões do cliente
-        var cartoes = data.cartoes || [];
-        window.responseCartoesCliente = cartoes;
+
     });
 
     $("#invoiceShow").css("height", ($(window).height() - 150) + "px");

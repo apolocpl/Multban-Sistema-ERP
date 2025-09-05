@@ -26,8 +26,8 @@ class CreateTbdmClientesCardTable extends Migration
             $table->string('card_sts', 2);
             $table->string('card_tp', 4);
             $table->string('card_mod', 4);
-            $table->string('card_categ', 4);
-            $table->string('card_desc', 100);
+            $table->string('card_categ', 4)->nullable();
+            $table->string('card_desc', 100)->nullable();
             $table->decimal('card_saldo_vlr', 10, 2);
             $table->decimal('card_limite', 10, 2);
             $table->decimal('card_saldo_pts', 10, 2);
