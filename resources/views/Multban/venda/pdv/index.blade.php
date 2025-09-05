@@ -432,7 +432,7 @@
                         <div class="row m-0">
                                 <div class="col-md-6">
                                     <p class="m-0 text-bold">Total da Compra: <span class="float-right font-weight-light" id="checkout_subtotal">R$ 0,00</span></p>
-                                    <p class="m-0 text-bold">Total de Pontos / CashBack Resgatado: <span class="float-right font-weight-light">0</span></p>
+                                    <p class="m-0 text-bold">Total de Pontos / CashBack Resgatado: <span class="float-right font-weight-light" id="checkout_cashback">0</span></p>
                                     <p class="m-0 text-bold">Total de Desconto Concedido: <span class="float-right font-weight-light" id="checkout_desconto">R$ 0,00</span></p>
                                 </div>
                                 <div class="col-md-6 text-right">

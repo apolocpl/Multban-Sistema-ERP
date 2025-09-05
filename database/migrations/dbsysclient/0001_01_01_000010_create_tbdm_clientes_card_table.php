@@ -38,6 +38,8 @@ class CreateTbdmClientesCardTable extends Migration
             $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
             $table->primary(['emp_id', 'cliente_id', 'cliente_doc', 'card_uuid', 'cliente_cardn', 'cliente_cardcv']);
+            //INDICES
+            $table->index('card_uuid');
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');

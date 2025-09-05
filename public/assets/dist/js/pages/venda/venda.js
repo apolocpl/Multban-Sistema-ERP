@@ -2039,8 +2039,47 @@ $(document).ready(function () {
 
         // MEIO DE PAGAMENTO DINHEIRO
         } else if (tipoPagto === "DN") {
-            // Segue fluxo normal de cobrança
-            // ...código existente...
+            // Chama backend para gravar cobrança DN
+            var token = $('meta[name="csrf-token"]').attr("content");
+            var cliente_id = $("#cliente_cadastro_id").val() || $("#idcliente").val();
+            var valortotalacobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
+            var checkout_total = parseFloat($("#checkout_total").text().replace(/\./g, '').replace(',', '.')) || 0;
+            var checkout_desconto = parseFloat($("#checkout_desconto").text().replace(/\./g, '').replace(',', '.')) || 0;
+            var checkout_cashback = typeof checkout_cashback !== 'undefined' ? checkout_cashback : 0;
+            var carrinho = cart.map(function(item) {
+                return {
+                    produto_tipo: item.produto_tipo || '',
+                    produto_id: item.product_id,
+                    qtd_item: item.quantity,
+                    vlr_unit_item: item.price,
+                    vlr_brt_item: item.subtotal ? parseFloat(item.subtotal) : (item.price * item.quantity)
+                };
+            });
+
+            $.ajax({
+                url: '/pdv-web/cobrar-dn',
+                type: 'POST',
+                headers: { 'X-CSRF-TOKEN': token },
+                data: {
+                    cliente_id: cliente_id,
+                    valortotalacobrar: valortotalacobrar,
+                    checkout_total: checkout_total,
+                    checkout_desconto: checkout_desconto,
+                    checkout_cashback: checkout_cashback,
+                    carrinho: carrinho
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        Swal.fire('Sucesso', 'Cobrança registrada!', 'success');
+                        // Limpar carrinho, atualizar tela, etc.
+                    } else {
+                        Swal.fire('Erro', 'Não foi possível registrar a cobrança.', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
+                }
+            });
 
         // MEIO DE PAGAMENTO PIX
         } else if (tipoPagto === "PX") {
