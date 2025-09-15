@@ -531,7 +531,9 @@ class ClienteController extends Controller
             $cliente->cartoes = ClienteCard::where('cliente_id', $cliente->cliente_id)
                 ->where('emp_id', $emp_id)
                 ->select(
-                    'card_tp', 'card_mod', 'card_categ', 'card_desc', 'cliente_cardn', 'card_saldo_vlr', 'card_limite', 'card_sts'
+                    'card_tp', 'card_mod', 'card_categ',
+                    'card_desc', 'cliente_cardn', 'card_saldo_vlr',
+                    'card_limite', 'card_saldo_pts','card_sts'
                 )
                 ->get()
                 ->map(function($cartao) {
@@ -545,6 +547,13 @@ class ClienteController extends Controller
                     return $cartao;
                 })
                 ->toArray();
+
+            // Soma dos pontos do cliente (card_saldo_pts)
+            $cliente->cliente_pts = ClienteCard::where('cliente_id', $cliente->cliente_id)
+            ->where('emp_id', $emp_id)
+            ->where('cliente_doc', $cliente->cliente_doc)
+            ->sum('card_saldo_pts');
+
         }
 
         return [
@@ -1386,4 +1395,5 @@ class ClienteController extends Controller
             ->rawColumns(['action', 'card_sts', 'card_categ'])
             ->make(true);
     }
+
 }

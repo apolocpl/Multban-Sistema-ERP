@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\DataTables;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Intervention\Image\Laravel\Facades\Image;
 

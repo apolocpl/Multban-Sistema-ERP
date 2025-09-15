@@ -11,6 +11,18 @@ class TbtrSTitulos extends Model
     protected $table = 'tbtr_s_titulos';
     public $timestamps = false;
     protected $fillable = [
-        'emp_id', 'user_id', 'titulo', 'parcela', 'produto_id', 'lanc_tp', 'recebedor', 'tax_adm', 'vlr_plan', 'perc_real', 'vlr_real'
+        'emp_id',
+        'user_id',
+        'titulo',
+        'nsu_titulo',
+        'nsu_autoriz',
+        'parcela',
+        'produto_id',
+        'lanc_tp',
+        'recebedor',
+        'tax_adm',
+        'vlr_plan',
+        'perc_real',
+        'vlr_real',
     ];
 }

@@ -12,69 +12,83 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbtr_h_titulos', function (Blueprint $table) {
-            //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
-            $table->uuid('nid_titulo');
+            // PRIMARY KEY & FOREIGN KEYS
+            $table->foreignId('emp_id');
+            $table->foreignId('user_id');
+            $table->bigIncrements('titulo');
+            $table->uuid('nsu_titulo');
             $table->integer('qtd_parc');
             $table->integer('primeira_para');
             $table->integer('cnd_pag');
-            $table->foreignid('cliente_id');
-            $table->string('meio_pag', 2);
-            $table->foreignuuid('card_uuid');
+            $table->foreignId('cliente_id');
+            $table->string('meio_pag_v', 2);
+            $table->foreignUuid('card_uuid')->nullable();
             $table->date('data_mov');
-            $table->string('check_reemb', 1);
-            $table->string('lib_ant', 1);
-            //FIELDS
+            $table->uuid('nsu_autoriz');
+
+            // FIELDS
+            $table->string('check_reemb', 1)->nullable();
+            $table->string('lib_ant', 1)->nullable();
             $table->decimal('vlr_brt', 10, 2)->nullable();
-            $table->float('tax_adm')->nullable();
-            $table->float('tax_rebate')->nullable();
-            $table->float('tax_royalties')->nullable();
-            $table->float('tax_comissao')->nullable();
+            $table->decimal('tax_adm', 10, 2)->nullable();
+            $table->decimal('tax_rebate', 10, 2)->nullable();
+            $table->decimal('tax_royalties', 10, 2)->nullable();
+            $table->decimal('tax_comissao', 10, 2)->nullable();
             $table->integer('qtd_pts_utlz')->nullable();
-            $table->float('perc_pts_utlz')->nullable();
+            $table->decimal('perc_pts_utlz', 5, 2)->nullable();
             $table->decimal('vlr_btot', 10, 2)->nullable();
-            $table->float('perc_desc')->nullable();
+            $table->decimal('perc_desc', 5, 2)->nullable();
             $table->decimal('vlr_dec', 10, 2)->nullable();
             $table->decimal('vlr_dec_mn', 10, 2)->nullable();
             $table->decimal('vlr_btot_split', 10, 2)->nullable();
-            $table->float('perc_juros')->nullable();
+            $table->decimal('perc_juros', 5, 2)->nullable();
             $table->decimal('vlr_juros', 10, 2)->nullable();
             $table->decimal('vlr_btot_cj', 10, 2)->nullable();
             $table->decimal('vlr_atr_m', 10, 2)->nullable();
             $table->decimal('vlr_atr_j', 10, 2)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();
-            //KEYS
-            $table->primary(['titulo', 'nid_titulo', 'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag', 'data_mov', 'check_reemb', 'lib_ant']);
-            //INDICES
-            $table->index('nid_titulo');
-            //FOREIGN KEY
+            // KEYS
+            $table->primary(['titulo', 'nsu_titulo', 'nsu_autoriz']);
+            // INDICES SIMPLES
+            $table->index('qtd_parc');
+            $table->index('primeira_para');
+            $table->index('cnd_pag');
+            $table->index('meio_pag_v');
+            $table->index('data_mov');
+            $table->index('nsu_titulo');
+            $table->index('nsu_autoriz');
+            $table->index('check_reemb');
+            $table->index('lib_ant');
+            // INDICES COMPOSTOS
+            $table->index(['emp_id', 'cliente_id', 'cnd_pag', 'meio_pag_v', 'data_mov'], 'idx_emp_cli_cnd_meio_data');
+            $table->index(['emp_id', 'cnd_pag', 'meio_pag_v', 'data_mov'], 'idx_emp_cnd_meio_data');
+            $table->index(['emp_id', 'data_mov'], 'idx_emp_data');
+            // FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
-
         });
 
         Schema::create('tbtr_i_titulos', function (Blueprint $table) {
-            //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
-            $table->foreignuuid('nid_titulo');
+            // PRIMARY KEY & FOREIGN KEYS
+            $table->foreignId('emp_id');
+            $table->foreignId('user_id');
+            $table->foreignId('titulo');
+            $table->foreignUuid('nsu_titulo');
+            $table->foreignUuid('nsu_autoriz');
             $table->integer('item');
             $table->integer('produto_tipo');
-            $table->foreignid('produto_id');
-            //FIELDS
+            $table->foreignId('produto_id');
+            // FIELDS
             $table->integer('qtd_item')->nullable();
             $table->decimal('vlr_unit_item', 10, 2)->nullable();
             $table->decimal('vlr_brt_item', 10, 2)->nullable();
-            $table->float('perc_toti')->nullable();
-            $table->integer('qtd_pts_utlz_item')->nullable();
-            $table->decimal('vlr_base_item', 10, 2)->nullable();
             $table->decimal('vlr_dec_item', 10, 2)->nullable();
             $table->decimal('vlr_dec_mn', 10, 2)->nullable();
+            $table->decimal('vlr_base_item', 10, 2)->nullable();
+            $table->decimal('perc_toti', 5, 2)->nullable();
+            $table->integer('qtd_pts_utlz_item')->nullable();
             $table->decimal('vlr_bpar_split_item', 10, 2)->nullable();
             $table->decimal('vlr_jpar_item', 10, 2)->nullable();
             $table->decimal('vlr_bpar_cj_item', 10, 2)->nullable();
@@ -87,26 +101,28 @@ return new class extends Migration
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp')->nullable();
-            //KEYS
-            $table->primary(['item', 'produto_tipo']);
-            //FOREIGN KEY
+            // KEYS
+            $table->primary(['emp_id', 'user_id', 'titulo', 'nsu_titulo', 'nsu_autoriz', 'produto_tipo', 'produto_id', 'item']);
+            // INDICES COMPOSTOS
+            $table->index(['emp_id', 'titulo', 'nsu_titulo', 'produto_tipo', 'produto_id'], 'idx_emp_titulo_nid_prod');
+            $table->index(['emp_id', 'produto_tipo', 'produto_id'], 'idx_emp_prod');
+            // FOREIGN KEYS
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            $table->foreign('titulo')->references('titulo')->on('tbtr_h_titulos');
-            $table->foreign('nid_titulo')->references('nid_titulo')->on('tbtr_h_titulos');
+            $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('produto_id')->references('produto_id')->on('tbdm_produtos_geral');
         });
 
         Schema::create('tbtr_f_titulos', function (Blueprint $table) {
-            //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
-            $table->foreignuuid('nid_titulo');
-            $table->foreignid('cliente_id');
-            $table->foreignuuid('card_uuid');
+            // PRIMARY KEY
+            // $table->foreignId('emp_id');
+            // $table->foreignId('user_id');
             $table->uuid('id_fatura');
-            //FIELDS
+            // $table->foreignId('titulo');
+            // $table->foreignUuid('nsu_titulo');
+            $table->foreignId('cliente_id');
+            $table->foreignUuid('card_uuid');
+            // FIELDS
             $table->uuid('integ_bc')->nullable();
             $table->integer('fatura_sts')->nullable();
             $table->date('data_fech')->nullable();
@@ -114,42 +130,52 @@ return new class extends Migration
             $table->date('data_pgto')->nullable();
             $table->decimal('vlr_tot', 10, 2)->nullable();
             $table->decimal('vlr_pgto', 10, 2)->nullable();
-            //KEYS
-            $table->primary(['id_fatura']);
-            //INDICES
+            // KEYS
+            $table->primary(['id_fatura', 'cliente_id', 'card_uuid']);
+            // INDICES SIMPLES
             $table->index('id_fatura');
+            $table->index('cliente_id');
+            $table->index('card_uuid');
+            $table->index('data_fech');
+            // INDICES COMPOSTOS
+            $table->index(['id_fatura', 'cliente_id', 'fatura_sts'], 'idx_id_cliente_sts');
+            $table->index(['id_fatura', 'cliente_id', 'fatura_sts', 'data_venc'], 'idx_id_cliente_stsdt');
+            // $table->index(['emp_id', 'id_fatura', 'cliente_id'], 'idx_emp_fatura_cliente');
+            // $table->index(['emp_id', 'id_fatura', 'data_fech', 'cliente_id'], 'idx_emp_fatura_fech_cliente');
+            // $table->index(['emp_id', 'id_fatura', 'data_venc', 'cliente_id'], 'idx_emp_fatura_venc_cliente');
+            // $table->index(['emp_id', 'id_fatura', 'data_pgto', 'cliente_id'], 'idx_emp_fatura_pgto_cliente');
             //FOREIGN KEY
-            $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            $table->foreign('titulo')->references('titulo')->on('tbtr_h_titulos');
-            $table->foreign('nid_titulo')->references('nid_titulo')->on('tbtr_h_titulos');
+            // $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
+            // $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign(['titulo', 'nsu_titulo'])->references(['titulo', 'nsu_titulo'])->on('tbtr_h_titulos');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
         });
 
         Schema::create('tbtr_p_titulos_ab', function (Blueprint $table) {
             //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
-            $table->foreignuuid('nid_titulo');
+            $table->foreignId('emp_id');
+            $table->foreignId('user_id');
+            $table->foreignId('titulo');
+            $table->foreignUuid('nsu_titulo');
+            $table->foreignUuid('nsu_autoriz');
             $table->integer('qtd_parc');
             $table->integer('primeira_para');
             $table->integer('cnd_pag');
-            $table->foreignid('cliente_id');
+            $table->foreignId('cliente_id');
             $table->string('meio_pag_v', 2);
-            $table->foreignuuid('card_uuid');
             $table->date('data_mov');
             $table->integer('parcela');
             $table->uuid('nid_parcela');
-            $table->foreignuuid('id_fatura');
             $table->date('data_venc');
+            $table->string('parcela_sts', 3);
             $table->string('destvlr', 4);
             //FIELDS
-            $table->uuid('integ_bc');
-            $table->date('data_pgto');
-            $table->string('meio_pag_t', 2);
-            $table->string('parcela_sts', 3);
+            $table->foreignuuid('card_uuid')->nullable();
+            $table->foreignuuid('id_fatura')->nullable();
+            $table->uuid('integ_bc')->nullable();
+            $table->date('data_pgto')->nullable();
+            $table->string('meio_pag_t', 2)->nullable();
             $table->string('nid_parcela_org', 36)->nullable();
             $table->longtext('parcela_obs')->nullable();
             $table->longtext('parcela_ins_pg')->nullable();
@@ -168,7 +194,7 @@ return new class extends Migration
             $table->longtext('negociacao_obs')->nullable();
             $table->longtext('negociacao_file')->nullable();
             $table->date('follow_dt')->nullable();
-            $table->float('perct_ant')->nullable();
+            $table->decimal('perct_ant', 5, 2)->nullable();
             $table->decimal('ant_desc', 10, 2)->nullable();
             $table->decimal('pgt_vlr', 10, 2)->nullable();
             $table->decimal('pgt_desc', 10, 2)->nullable();
@@ -176,11 +202,15 @@ return new class extends Migration
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp_item')->nullable();
             //KEYS
-            $table->primary(['nid_titulo' ,'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
+            $table->primary(['emp_id', 'user_id', 'titulo','nsu_titulo' , 'nsu_autoriz', 'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
+            // INDICES COMPOSTOS
+            $table->index(['emp_id', 'titulo', 'cnd_pag','cliente_id', 'meio_pag_v', 'data_mov', 'data_venc', 'parcela_sts'], 'idx_emp_tit_cliente_datas');
+            $table->index(['emp_id', 'titulo', 'data_mov', 'data_venc','parcela_sts'], 'idx_emp_tit_parcela_sts_data');
+            $table->index(['emp_id', 'titulo', 'parcela_sts'], 'idx_emp_tit_parcela_sts');
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            $table->foreign('titulo')->references('titulo')->on('tbtr_h_titulos');
+            $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
             $table->foreign('id_fatura')->references('id_fatura')->on('tbtr_f_titulos');
@@ -188,27 +218,28 @@ return new class extends Migration
 
         Schema::create('tbtr_p_titulos_cp', function (Blueprint $table) {
             //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
-            $table->foreignuuid('nid_titulo');
+            $table->foreignId('emp_id');
+            $table->foreignId('user_id');
+            $table->foreignId('titulo');
+            $table->foreignUuid('nsu_titulo');
+            $table->foreignUuid('nsu_autoriz');
             $table->integer('qtd_parc');
             $table->integer('primeira_para');
             $table->integer('cnd_pag');
-            $table->foreignid('cliente_id');
+            $table->foreignId('cliente_id');
             $table->string('meio_pag_v', 2);
-            $table->foreignuuid('card_uuid');
             $table->date('data_mov');
             $table->integer('parcela');
             $table->uuid('nid_parcela');
-            $table->foreignuuid('id_fatura');
             $table->date('data_venc');
+            $table->string('parcela_sts', 3);
             $table->string('destvlr', 4);
             //FIELDS
-            $table->uuid('integ_bc');
-            $table->date('data_pgto');
-            $table->string('meio_pag_t', 2);
-            $table->string('parcela_sts', 3);
+            $table->foreignuuid('card_uuid')->nullable();
+            $table->foreignuuid('id_fatura')->nullable();
+            $table->uuid('integ_bc')->nullable();
+            $table->date('data_pgto')->nullable();
+            $table->string('meio_pag_t', 2)->nullable();
             $table->string('nid_parcela_org', 36)->nullable();
             $table->longtext('parcela_obs')->nullable();
             $table->longtext('parcela_ins_pg')->nullable();
@@ -227,7 +258,7 @@ return new class extends Migration
             $table->longtext('negociacao_obs')->nullable();
             $table->longtext('negociacao_file')->nullable();
             $table->date('follow_dt')->nullable();
-            $table->float('perct_ant')->nullable();
+            $table->decimal('perct_ant', 5, 2)->nullable();
             $table->decimal('ant_desc', 10, 2)->nullable();
             $table->decimal('pgt_vlr', 10, 2)->nullable();
             $table->decimal('pgt_desc', 10, 2)->nullable();
@@ -235,11 +266,15 @@ return new class extends Migration
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp_item')->nullable();
             //KEYS
-            $table->primary(['nid_titulo' ,'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
+            $table->primary(['emp_id', 'user_id', 'titulo','nsu_titulo' , 'nsu_autoriz', 'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
+            // INDICES COMPOSTOS
+            $table->index(['emp_id', 'titulo', 'cnd_pag','cliente_id', 'meio_pag_v', 'data_mov', 'data_venc', 'parcela_sts'], 'idx_emp_tit_cliente_datas');
+            $table->index(['emp_id', 'titulo', 'data_mov', 'data_venc','parcela_sts'], 'idx_emp_tit_parcela_sts_data');
+            $table->index(['emp_id', 'titulo', 'parcela_sts'], 'idx_emp_tit_parcela_sts');
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            $table->foreign('titulo')->references('titulo')->on('tbtr_h_titulos');
+            $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
             $table->foreign('id_fatura')->references('id_fatura')->on('tbtr_f_titulos');
@@ -247,24 +282,26 @@ return new class extends Migration
 
         Schema::create('tbtr_s_titulos', function (Blueprint $table) {
             //PRIMARY KEY
-            $table->foreignid('emp_id');
-            $table->foreignid('user_id');
-            $table->integer('titulo');
+            $table->foreignId('emp_id');
+            $table->foreignId('user_id');
+            $table->foreignId('titulo');
+            $table->foreignUuid('nsu_titulo');
+            $table->foreignUuid('nsu_autoriz');
             $table->integer('parcela');
-            $table->foreignid('produto_id');
+            $table->foreignId('produto_id');
             $table->string('lanc_tp', 10);
-            $table->foreignid('recebedor');
+            $table->foreignId('recebedor');
             //FIELDS
-            $table->float('tax_adm')->nullable();
+            $table->decimal('tax_adm', 10, 2)->nullable();
             $table->decimal('vlr_plan', 10, 2)->nullable();
-            $table->float('perc_real')->nullable();
+            $table->decimal('perc_real', 5, 2)->nullable();
             $table->decimal('vlr_real', 10, 2)->nullable();
             //KEYS
-            $table->primary(['parcela', 'lanc_tp']);
+            $table->primary(['emp_id', 'user_id', 'titulo', 'nsu_titulo', 'nsu_autoriz', 'parcela', 'produto_id', 'lanc_tp','recebedor']);
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            $table->foreign('titulo')->references('titulo')->on('tbtr_h_titulos');
+            $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('produto_id')->references('produto_id')->on('tbdm_produtos_geral');
             $table->foreign('recebedor')->references('emp_id')->on('tbdm_empresa_geral');
         });

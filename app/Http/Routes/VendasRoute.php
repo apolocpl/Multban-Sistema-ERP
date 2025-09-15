@@ -17,6 +17,10 @@ class VendasRoute
     Route::get('api/produtos', [ProdutoController::class, 'apiProdutos']);
 
     // Rota para cobrança DN
-    Route::post('pdv-web/cobrar-dn', [PdvWebController::class, 'cobrarDN'])->name('pdv-web.cobrar-dn');
+    Route::post('pdv-web/realizar-venda', [PdvWebController::class, 'realizarVenda'])->name('pdv-web.realizar-venda');
+
+    // Rota para cancelar venda
+    Route::post('/pdv-web/cancelar-venda', [PdvWebController::class, 'cancelarVenda']);
+
     }
 }

@@ -5,10 +5,10 @@ namespace App\Models\Multban\TbTr;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Multban\Traits\DbSysClientTrait;
 
-class TbtrPTitulosCp extends Model
+class TbtrPTitulosAb extends Model
 {
     use DbSysClientTrait;
-    protected $table = 'tbtr_p_titulos_cp';
+    protected $table = 'tbtr_p_titulos_ab';
     public $timestamps = false;
     protected $fillable = [
         'emp_id',

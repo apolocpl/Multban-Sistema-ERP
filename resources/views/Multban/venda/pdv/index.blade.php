@@ -372,6 +372,7 @@
                             data-placeholder="Pesquise o Nome do Produto" style="width: 100%;" aria-hidden="true">
                         </select>
                         <input type="hidden" id="produto_dmf_id" name="produto_dmf_id" value="">
+                        <input type="hidden" id="produto_tipo_id" name="produto_tipo_id" value="">
                     </div>
 
                     <div class="table-responsive">
@@ -420,10 +421,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p class="m-0 text-bold">Forma de Pagamento: <span class="font-weight-light">Nome completo do cliente</span></p>
-                            <p class="text-bold">Pontos / CashBack: <span class="text-multban-bold-secundary">0</span></p>
+                            <p class="text-bold">Pontos / CashBack: <span class="text-multban-bold-secundary" id="cliente_pts">0</span></p>
                         </div>
                         <div class="col-md-6 text-right">
-                            <button type="button" id="" class="btn btn-primary btn-sm">Resgatar Pontos/Cash Back</button>
+                            <button type="button" id="btn_resgatar_pts" class="btn btn-primary btn-sm">Resgatar Pontos/Cash Back</button>
                         </div>
                     </div>
 
@@ -432,12 +433,16 @@
                         <div class="row m-0">
                                 <div class="col-md-6">
                                     <p class="m-0 text-bold">Total da Compra: <span class="float-right font-weight-light" id="checkout_subtotal">R$ 0,00</span></p>
-                                    <p class="m-0 text-bold">Total de Pontos / CashBack Resgatado: <span class="float-right font-weight-light" id="checkout_cashback">0</span></p>
+                                    <p class="m-0 text-bold">Total Pontos / CashBack À Resgatar: <span class="float-right font-weight-light" id="checkout_cashback">0</span></p>
                                     <p class="m-0 text-bold">Total de Desconto Concedido: <span class="float-right font-weight-light" id="checkout_desconto">R$ 0,00</span></p>
+                                    <p class="m-0 text-bold">Valor Pago: <span class="float-right font-weight-light" id="checkout_pago">R$ 0,00</span></p>
+                                    <p class="m-0 text-bold">Valor Descontado: <span class="float-right font-weight-light" id="checkout_descontado">R$ 0,00</span></p>
+                                    <p class="m-0 text-bold">Pontos / CashBack Resgatado: <span class="float-right font-weight-light" id="checkout_resgatado">0</span></p>
                                 </div>
                                 <div class="col-md-6 text-right">
                                     <p class="mr-4 text-bold m-0" >Total a Pagar</p>
                                     <p class="text-bold"><span class="money-multban-bold-secundary" id="checkout_total">R$ 0,00</span></p>
+                                    <p class="m-0 text-bold">Total dos Juros:&nbsp;<span class="float-right font-weight-light" id="checkout_juros">R$ 0,00</span></p>
                                 </div>
                             </div>
                         </div>
@@ -465,7 +470,7 @@
                         <div class="col">
                             <div class="form-group text-center">
                                 <div data-identificacao="{{$meio->meio_pag}}" id="{{$meio->meio_pag_desc}}" data-id="{{$meio->meio_pag_desc}}"
-                                    class="payment-box @if($meio->meio_pag == "DN") payment-box-active @endif">
+                                    class="payment-box">
                                     <span class="payment-box-icon"><img src="{{ asset('assets/dist/img/payment/'). '/' . $meio->meio_pag_icon}}"/></span>
                                     <div class="payment-box-content">
                                         <span>{{$meio->meio_pag_desc}}</span>
@@ -796,6 +801,9 @@
     <script src="{{ asset('assets/plugins/select2/js/i18n/pt-BR.js') }}"></script>
 
     <script src="{{ asset('assets/dist/js/app.js') }}"></script>
+    <script src="{{ asset('assets/dist/js/comprovante.js') }}"></script>
+    <script src="{{ asset('assets/dist/js/pages/venda/venda.js') }}"></script>
+    <script src="{{ asset('assets/dist/js/pages/cliente/gridcliente.js') }}"></script>
 
     <script src="{{ asset('assets/plugins/lodash/lodash.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
@@ -807,12 +815,13 @@
     <script src="{{ asset('assets/plugins/datatables-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ asset('assets/dist/js/pages/venda/venda.js') }}"></script>
-    <script src="{{ asset('assets/dist/js/pages/cliente/gridcliente.js') }}"></script>
+
+
 
     <script type="text/javascript">
 
         window.empresaParam = @json($empresaParam ?? null);
+        window.empresa = @json($empresa ?? null);
 
         // Mapeia as opções de regra_parc para uso no JS
         @if(isset($RegrasParc) && count($RegrasParc) > 0)

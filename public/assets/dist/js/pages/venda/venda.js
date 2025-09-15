@@ -2,6 +2,8 @@
 // VARIÁVEIS
 
 // Armazena o valor original do produto selecionado
+var tituloAtual = null;
+var nsu_tituloAtual = null;
 var precoOriginalProduto = 0;
 var data = [];
 var tipoPagamentoSelecionado = null;
@@ -13,11 +15,18 @@ var itens = {};
 var finalizarClick = false;
 var searchProduct = false;
 var discountType = '%';
+var empresa = window.empresa || null;
 var empresaParam = window.empresaParam || null;
+var podeFecharCheckoutModal = false;
 var lastToastr = {};
 var venda_subtotal = $("#p_subtotal").text().replace("R$", "").trim();
 var venda_desconto = $("#p_discount").text().replace("R$", "").trim();
 var venda_total = $("#valorTotal").text().replace("R$", "").trim();
+var arr_nsu_autoriz = [];
+var arr_checkout_desconto = [];
+var arr_checkout_cashback = [];
+var arr_checkout_total = [];
+var arr_meiosPagtoUtilizados = [];
 
 //status das mesas
 var mesaStatus = {}
@@ -109,7 +118,7 @@ function validarSubtotal() {
 // Atualiza o campo #valortotalacobrar a partir de um número (evita disparar o handler de input
 // que aplica a máscara calculadora e pode converter vírgula para ponto). Também recalcula saldo e troco.
 function atualizarCampoValortotalacobrar(valorNumero) {
-    var totalCarrinho = parseBRL($('.valorTotal').text());
+    var totalCarrinho = parseBRL($('#checkout_total').text());
     var tipoPagamento = $('.payment-box-active').data('identificacao') || $('#id_forma_pagto').val();
     var valorCobrar = Number(valorNumero) || 0;
     // Para tipos diferentes de Dinheiro, não permitir cobrar mais que o total
@@ -232,6 +241,7 @@ function atualizarParcelasCartao() {
     for (var i = 1; i <= parclib; i++) {
         var parcelaValor = 0;
         var descricaoJuros = '';
+        var totalComJuros = 0;
 
         // Se a empresa permite juros e a parcela atual está na faixa que cobra juros (>= parc_jr_deprc_val)
         if (parc_cjuros_flag && parc_jr_deprc_val > 0 && i >= parc_jr_deprc_val && !$('#vendaSemJurosCartao').is(':checked')) {
@@ -240,16 +250,19 @@ function atualizarParcelasCartao() {
             // valor absoluto de juros sobre o total da venda
             var jurosAmount = totalVenda * jurosPercentTotal;
             // soma os juros ao total e divide pela quantidade de parcelas
-            var adjustedTotal = totalVenda + jurosAmount;
-            parcelaValor = adjustedTotal / i;
+            var totalComJuros = totalVenda + jurosAmount;
+
+            parcelaValor = totalComJuros / i;
             descricaoJuros = ' - com juros';
+
         } else {
             parcelaValor = i > 0 ? (totalVenda / i) : totalVenda;
+
         }
 
         var parcelaValorFormatado = (typeof formatBRL === 'function') ? formatBRL(parcelaValor) : parcelaValor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         var numParcela = i.toString().padStart(2, '0');
-        select.append(`<option value="${i}">${numParcela} X R$ ${parcelaValorFormatado}${descricaoJuros}</option>`);
+        select.append(`<option value="${i}" data-total-com-juros="${totalComJuros.toFixed(2)}">${numParcela} X R$ ${parcelaValorFormatado}${descricaoJuros}</option>`);
     }
     // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
     try {
@@ -293,7 +306,7 @@ function initParcelSelect2IfAvailable(selector) {
 
 function formataNumeroTelefone(numero) {
     numero = numero.replace(" ", "").replace("-", "").replace("(", "").replace(")", "");
-    console.log("numero", numero);
+
     if(numero.length == 0)
     return "Sem número";
     var length = numero.length;
@@ -396,7 +409,8 @@ function adicionarAoCarrinho(item){
         cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
         // Não atualiza o contador de itens distintos
     }
-    console.log('adicionarAoCarrinho', item)
+
+    // console.log('adicionarAoCarrinho', item)
 }
 
 function deleteItemFromCart(item) {
@@ -559,7 +573,7 @@ function show_cart() {
         var cart_html = "";
         var obj = cart;
         $.each(obj, function(key, value) {
-            console.log('show_cart', value)
+            // console.log('show_cart', value)
             qty = Number(value.quantity);
             var itemTotal = Number(value.price * qty);
 
@@ -611,7 +625,6 @@ function show_cart() {
 
         $("#p_subtotal").html($.toMoney(total));
         $("#p_discount").html($.toMoney(discount));
-        console.log($.toMoney(discount))
         $("#valorDesconto").val($.toMoneyVendaSimples(String(discount), false));
 
         var total_amount = Number(total) - discount;
@@ -768,6 +781,8 @@ $("body").on("click", "#btn-adicionar-item", async function(){
 
     // Gera um id único para o item
     var item_uid = 'item_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    var prodTipoId = $('#produto_tipo_id').val();
+
     var item = {
         id: item_uid,
         product_id: parseInt(id),
@@ -777,6 +792,7 @@ $("body").on("click", "#btn-adicionar-item", async function(){
         discount: discount,
         discountType: discountType,
         discountValue: discountValue,
+        produto_tipo: prodTipoId,
     };
 
     adicionarAoCarrinho(item);
@@ -794,6 +810,7 @@ $("body").on("click", "#btn-adicionar-item", async function(){
     // Limpa os campos do modal de produto
     $('#produto_dmf').val(null).trigger('change');
     $('#produto_dmf_id').val('');
+    $('#produto_tipo_id').val('');
 
 });
 
@@ -1171,15 +1188,25 @@ $('#impressaoModal').on('hidden.bs.modal', function() {
 $('#checkout-modal').on('shown.bs.modal', function() {
     $(".payment-box-active").removeClass("payment-box-active");
     $("#valortotalpago").val("0,00");
-    //$("#valorDescCento").val("0");
-    //$("#valorDesconto").val("0,00");
+    // $("#valorDescCento").val("0");
+    // $("#valorDesconto").val("0,00");
     var valorTotal = $("#total_amount_modal").html().replace("R$", "");
-    //$("#valorAPagar").val(valorTotal);
-    $("#Dinheiro").addClass("payment-box-active");
+    //$ ("#valorAPagar").val(valorTotal);
+    // $("#Dinheiro").addClass("payment-box-active");
     $("#valortroco").val("0,00");
     $("#valortotalpago").habilitar();
     $("#valortotalpago").focus();
     $("#valortotalpago").select();
+    // Não seleciona nenhuma forma de pagamento por padrão
+    $("#valortroco").val("0,00");
+    $("#valortotalpago").habilitar();
+    $("#valortotalpago").focus();
+    $("#valortotalpago").select();
+});
+
+$('#checkout-modal').on('hidden.bs.modal', function() {
+    // Ao fechar o modal, remove seleção de pagamento
+    $(".payment-box-active").removeClass("payment-box-active");
 });
 
 $('#modalCliente').on('shown.bs.modal', function() {
@@ -1247,6 +1274,7 @@ $("body").on("keyup", "#getCliente", function (e) {
         if (resto !== parseInt(cpf[10])) return false;
         return true;
     }
+
     function validaCNPJ(cnpj) {
         cnpj = cnpj.replace(/\D/g, '');
         if (cnpj.length !== 14) return false;
@@ -1329,6 +1357,7 @@ $("body").on("keyup", "#getCliente", function (e) {
                     window.clientName = response.clientes[0].text;
                     window.clientDoc = response.clientes[0].cliente_doc;
                     window.clienteDataFech = response.clientes[0].cliente_dt_fech;
+                    window.clientPontos = response.clientes[0].cliente_pts;
                     window.responseCartoesCliente = response.clientes[0].cartoes || [];
 
                     // Verifica status de inadimplência
@@ -1417,121 +1446,121 @@ $("body").on("keyup", "#getCliente", function (e) {
 
 $("body").on("keyup", "#getProduto", function (e) {
 
-        e.preventDefault();
-        var texto = $(this).val();
-        var url = "/produto/obter-descricao-produto?pdv='sim'&parametro=" + texto;
-        var quantity = $.tratarValor($('#item-quantity').val());
+    e.preventDefault();
+    var texto = $(this).val();
+    var url = "/produto/obter-descricao-produto?pdv='sim'&parametro=" + texto;
+    var quantity = $.tratarValor($('#item-quantity').val());
 
-        if (e.key == 'Enter' && texto ) {
-            Pace.restart();
-            Pace.track(function () {
-                $.ajaxSetup({
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    }
-                });
-
-                $.ajax({
-                    url: url,
-                    type: "GET",
-                })
-                .done(function (response) {
-                    // Espera que o backend retorne um array de produtos
-                    var produto = Array.isArray(response) ? response[0] : response;
-                    if (!produto || !produto.produto_id || !produto.produto_dm || !produto.produto_vlr) {
-                        Swal.fire(
-                            "Oops...",
-                            "Produto não encontrado!",
-                            "error"
-                        );
-                        return;
-                    }
-                    if(parseFloat(produto.produto_vlr) == 0){
-                        Swal.fire(
-                            "Oops...",
-                            "Produto sem preço, contate o administrador.",
-                            "error"
-                        );
-                        return;
-                    }
-
-                    // Preenche campos conforme solicitado
-                    $('#getProduto').val(texto); // Mantém o valor digitado
-                    $('#desProd').html(produto.produto_dm); // Descrição do produto
-                    $('#item-price').val($.toMoneySimples(produto.produto_vlr)); // Valor do produto
-
-                    // // Adiciona ao carrinho
-                    // var item = {
-                    //     id: parseInt(response.id),
-                    //     product_id: parseInt(response.id),
-                    //     price: response.farvre,
-                    //     name: response.fardes,
-                    //     quantity: quantity,
-                    //     discount: 0,
-                    //     discountType: discountType,
-                    //     discountValue: 0,
-                    // };
-                    // itens = item;
-                    // adicionarAoCarrinho(item);
-                    // show_cart();
-
-                    // // Limpa campos do produto
-                    // $('#getProduto').val("");
-                    // $('#getProduto').focus();
-                    // $('#item-quantity').val("1");
-                    // $('#item-discount').val('0,00');
-                    // $('#item-price').val('0,00');
-                    // $('#item-subtotal').val('0,00');
-                    // $('#find-product').select2('data', null);
-                    // $('#find-product').val(null);
-                    // $('#find-product').trigger('change');
-                    // $('#desProd').html('');
-
-                })
-                .fail(function (xhr, status, error) {
-                    $('#desProd').html('');
-                    $('#item-price').val('0,00');
-                    $('#item-quantity').val('1');
-                    $('#item-discount').val('0,00');
-                    $('#item-subtotal').val('0,00');
-                    $('#find-product').select2('data', null);
-                    $('#find-product').val(null);
-                    $('#find-product').trigger('change');
-                    discountType = "%";
-
-                    if (xhr.status == 403) {
-                        Swal.fire(
-                            "Oops...",
-                            "Você não tem permissão, contate o administrador!",
-                            "error"
-                        );
-                    } else if (xhr.status == 404){
-                        Swal.fire(
-                            "Oops...",
-                            "Produto não encontrado!",
-                            "error"
-                        );
-                    }else if(xhr.status == 401 || xhr.status == 419){
-                        Swal.fire({
-                            title: "Erro",
-                            text: "Sua sessão expirou, é preciso fazer o login novamente.",
-                            type: "error",
-                            showCancelButton: false,
-                            allowOutsideClick: false,
-                        }).then(function (result) {
-                            $.limparBloqueioSairDaTela();
-                            location.reload();
-                        });
-                    }else {
-                        Swal.fire(
-                            "Oops...",
-                            "Algo deu errado!",
-                            "error"
-                        );
-                    }
-                });
+    if (e.key == 'Enter' && texto ) {
+        Pace.restart();
+        Pace.track(function () {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
             });
-        }
+
+            $.ajax({
+                url: url,
+                type: "GET",
+            })
+            .done(function (response) {
+                // Espera que o backend retorne um array de produtos
+                var produto = Array.isArray(response) ? response[0] : response;
+                if (!produto || !produto.produto_id || !produto.produto_dm || !produto.produto_vlr) {
+                    Swal.fire(
+                        "Oops...",
+                        "Produto não encontrado!",
+                        "error"
+                    );
+                    return;
+                }
+                if(parseFloat(produto.produto_vlr) == 0){
+                    Swal.fire(
+                        "Oops...",
+                        "Produto sem preço, contate o administrador.",
+                        "error"
+                    );
+                    return;
+                }
+
+                // Preenche campos conforme solicitado
+                $('#getProduto').val(texto); // Mantém o valor digitado
+                $('#desProd').html(produto.produto_dm); // Descrição do produto
+                $('#item-price').val($.toMoneySimples(produto.produto_vlr)); // Valor do produto
+
+                // // Adiciona ao carrinho
+                // var item = {
+                //     id: parseInt(response.id),
+                //     product_id: parseInt(response.id),
+                //     price: response.farvre,
+                //     name: response.fardes,
+                //     quantity: quantity,
+                //     discount: 0,
+                //     discountType: discountType,
+                //     discountValue: 0,
+                // };
+                // itens = item;
+                // adicionarAoCarrinho(item);
+                // show_cart();
+
+                // // Limpa campos do produto
+                // $('#getProduto').val("");
+                // $('#getProduto').focus();
+                // $('#item-quantity').val("1");
+                // $('#item-discount').val('0,00');
+                // $('#item-price').val('0,00');
+                // $('#item-subtotal').val('0,00');
+                // $('#find-product').select2('data', null);
+                // $('#find-product').val(null);
+                // $('#find-product').trigger('change');
+                // $('#desProd').html('');
+
+            })
+            .fail(function (xhr, status, error) {
+                $('#desProd').html('');
+                $('#item-price').val('0,00');
+                $('#item-quantity').val('1');
+                $('#item-discount').val('0,00');
+                $('#item-subtotal').val('0,00');
+                $('#find-product').select2('data', null);
+                $('#find-product').val(null);
+                $('#find-product').trigger('change');
+                discountType = "%";
+
+                if (xhr.status == 403) {
+                    Swal.fire(
+                        "Oops...",
+                        "Você não tem permissão, contate o administrador!",
+                        "error"
+                    );
+                } else if (xhr.status == 404){
+                    Swal.fire(
+                        "Oops...",
+                        "Produto não encontrado!",
+                        "error"
+                    );
+                }else if(xhr.status == 401 || xhr.status == 419){
+                    Swal.fire({
+                        title: "Erro",
+                        text: "Sua sessão expirou, é preciso fazer o login novamente.",
+                        type: "error",
+                        showCancelButton: false,
+                        allowOutsideClick: false,
+                    }).then(function (result) {
+                        $.limparBloqueioSairDaTela();
+                        location.reload();
+                    });
+                }else {
+                    Swal.fire(
+                        "Oops...",
+                        "Algo deu errado!",
+                        "error"
+                    );
+                }
+            });
+        });
+    }
 });
 
 $("body").on("click", "#limparCarrinho", function() {
@@ -1779,8 +1808,40 @@ $(document).on('change', '#vendaSemJurosCartao', function() {
 
 $(document).ready(function () {
 
-    // Atualiza os valores visíveis do checkout imediatamente
+    // Atualiza os valores visíveis do checkout ao mudar as parcelas
     atualizarCheckoutValores();
+
+    $('#parcelasCartao').on('change', function () {
+        // Pegue o valor total original (exemplo: do campo #checkout_total)
+        var valorTotal = parseFloat($('#checkout_total').text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+
+        // Pegue o valor total com juros da opção selecionada (exemplo: pode estar em um data-attribute ou calculado via JS)
+        // Exemplo: <option value="2" data-total-com-juros="120.00">2x</option>
+        var totalComJuros = parseFloat($('#parcelasCartao option:selected').data('total-com-juros')) || valorTotal;
+
+        // Só calcula se o checkbox NÃO estiver marcado
+        if (!$('#vendaSemJurosCartao').is(':checked')) {
+            var juros = totalComJuros - valorTotal;
+            // Verifica se o juros é maior que zero
+            if (juros > 0) {
+                $('#checkout_juros').text('R$ ' + juros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#checkout_total').text('R$ ' + totalComJuros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            } else {
+                // Se não houver juros, zera os campos
+                $('#checkout_juros').text('R$ 0,00');
+                $('#checkout_total').text($(".valorTotal").text());
+            }
+
+        } else {
+            $('#checkout_juros').text(' R$ 0,00');
+            $('#checkout_total').text($(".valorTotal").text());
+        }
+    });
+
+    // Também atualize ao marcar/desmarcar o checkbox
+    $('#vendaSemJurosCartao').on('change', function () {
+        $('#parcelasCartao').trigger('change');
+    });
 
     // Função para atualizar os textos das opções do select PrimeiraParaCartao
     function atualizarOpcoesPrimeiraParaCartao() {
@@ -1812,9 +1873,9 @@ $(document).ready(function () {
         });
     }
 
-    // Executa ao abrir o modal de checkout ou ao trocar cliente
-    $('#checkout-modal').on('show.bs.modal', function() {
-        atualizarOpcoesPrimeiraParaCartao();
+    $('#btnPesquisarCliente').on('click', function() {
+        $('#getCliente').val('');
+        $('#desCli').text('');
     });
 
     $(document).on('change', '#cliente_cadastro_id', function() {
@@ -1825,7 +1886,6 @@ $(document).ready(function () {
     function calcularDataPrimeiraParcelaCartao() {
 
         var diaFech = parseInt(window.clienteDataFech) || 1;
-        console.log('Dia fechamento:', diaFech);
 
         var hoje = new Date();
         var ano = hoje.getFullYear();
@@ -1919,9 +1979,791 @@ $(document).ready(function () {
         }
     });
 
-    // Handler do botão Cobrar
+    // Handler para seleção de cartão na tabela
+    $(document).on("click", ".linha-cartao-mult", function() {
+        var saldo = parseFloat($(this).data("saldo")) || 0;
+        var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
+        if (saldo < valorCobrar) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Saldo insuficiente',
+                text: 'O saldo do cartão é insuficiente para esta cobrança.',
+                confirmButtonText: 'OK',
+                allowOutsideClick: false
+            });
+            return;
+        }
+        // Fecha modal e segue com operação usando o cartão selecionado
+        $("#modalCartaoMult").modal("hide");
+        // ...código para continuar operação com o cartão selecionado...
+    });
+
+    // Função para formatar status do cartão
+    function formatarStatusCartao(sts) {
+        // Exemplo: pode adaptar para cores/icons conforme padrão dos produtos
+        if (sts === 'AT') return '<span class="badge badge-success">Ativo</span>';
+        if (sts === 'BL') return '<span class="badge badge-warning">Bloqueado</span>';
+        if (sts === 'IN') return '<span class="badge badge-danger">Inativo</span>';
+        if (sts === 'EX') return '<span class="badge badge-danger">Inativo</span>';
+        return sts;
+    }
+
+    // Limpa o nome do cliente quando o campo CPF/CNPJ é limpo e aplica máscara dinâmica
+    $('#getCliente').on('input', function() {
+        var valor = $(this).val().replace(/\D/g, '');
+        if (!valor) {
+            $('#desCli').text('');
+            $(this).val('');
+            $(this).unmask();
+            $('#cliente_cadastro_id').empty().trigger('change');
+            $('#cliente_cadastro_id').val(null).trigger('change');
+            return;
+        }
+        // Aplica máscara CPF ou CNPJ
+        if (valor.length <= 11) {
+            $(this).mask('000.000.000-00');
+        } else {
+            $(this).mask('00.000.000/0000-00');
+        }
+    });
+
+    $(function () {
+        //Initialize Select2 Elements
+        $('.select2').select2();
+        ns.comboBoxSelectTags("produto_dmf", "/produto/obter-descricao-produto", "produto_id");
+
+        $('#produto_dmf').on('select2:select', function (e) {
+            var data = e.params.data;
+            $('#produto_dmf_id').val(data.id); // Aqui você utiliza o ID do produto selecionado
+            $('#produto_tipo_id').val(data.produto_tipo_id); // Aqui você utiliza o ID do tipo do produto selecionado
+        });
+    });
+
+    // Função para resetar campos de pagamento parcelado
+    function resetarCamposPagamentoParcelado() {
+        $("#div-boleto").hide();
+        $("#div-cartao").hide();
+        $("#parcelasBoleto").val("");
+        $("#parcelasCartao").val("");
+        $("#PrimeiraParaBoleto").val("");
+        $("#PrimeiraParaCartao").val("");
+        $("#dataPrimeiraParcelaBoleto").val("");
+        $("#dataPrimeiraParcelaBoleto").prop("readonly", true);
+        $("#dataPrimeiraParcelaBoletoHelp").text("");
+        // Limpa opções dos selects de parcelas e destrói Select2 para forçar recálculo na próxima abertura
+        try {
+            var $pb = $("#parcelasBoleto");
+            $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+            if ($pb.hasClass('select2-hidden-accessible')) { try { $pb.select2('destroy'); } catch(e) {} }
+        } catch(e) {}
+        try {
+            var $pc = $("#parcelasCartao");
+            $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+            if ($pc.hasClass('select2-hidden-accessible')) { try { $pc.select2('destroy'); } catch(e) {} }
+        } catch(e) {}
+    }
+
+    // Ao selecionar um produto, salva o preço original
+    $('body').on('click', '.produto-item-modal', function() {
+        precoOriginalProduto = $(this).data('price');
+    });
+
+    // Valida subtotal ao alterar quantidade, desconto ou preço
+    $('body').on('keyup blur', '#item-quantity, #item-discount, #item-price', function(e) {
+        setTimeout(function() {
+            validarSubtotal();
+        }, 50);
+    });
+
+    // Carregar produtos via API ao abrir o modal
+    $('#pesquisar-produto-modal').on('show.bs.modal', function() {
+        var $tbody = $('#produtos-lista-modal tbody');
+        $tbody.empty();
+        // Adiciona spinner de loading
+        var $spinner = $('<tr id="produtos-loading-spinner"><td colspan="5" class="text-center"><span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Carregando produtos...</td></tr>');
+        $tbody.append($spinner);
+        $.get('/api/produtos', function(produtos) {
+            $tbody.empty();
+            produtos.forEach(function(prod) {
+                // Badge do status
+                var badge = '';
+                switch (prod.produto_sts) {
+                    case 'AT': badge = '<span class="badge badge-success">'+(prod.produto_sts_desc||'Ativo')+'</span>'; break;
+                    case 'IN': badge = '<span class="badge badge-warning">'+(prod.produto_sts_desc||'Inativo')+'</span>'; break;
+                    case 'BL': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Bloqueado')+'</span>'; break;
+                    case 'EX': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Excluído')+'</span>'; break;
+                    default:   badge = '<span class="badge badge-secondary">'+(prod.produto_sts_desc||'Desconhecido')+'</span>'; break;
+                }
+                $tbody.append(
+                    '<tr class="produto-item-modal" style="cursor:pointer"'
+                    +' data-id="'+prod.produto_id+'"'
+                    +' data-tipo="'+(prod.produto_tipo_desc||prod.produto_tipo)+'"'
+                    +' data-tipoid="'+prod.produto_tipo+'"'
+                    +' data-dm="'+prod.produto_dm+'"'
+                    +' data-sts="'+prod.produto_sts+'"'
+                    +' data-desc="'+prod.produto_dm+'"'
+                    +' data-price="'+prod.produto_vlr+'">'
+                    +'<td>'+prod.produto_id+'</td>'
+                    +'<td>'+(prod.produto_tipo_desc||prod.produto_tipo)+'</td>'
+                    +'<td>'+prod.produto_dm+'</td>'
+                    +'<td>'+prod.produto_vlr+'</td>'
+                    +'<td>'+badge+'</td>'
+                    +'</tr>'
+                );
+            });
+        });
+    });
+
+    // Filtrar produtos da lista conforme combo box select2
+    $('#produto_dmf').on('change', function() {
+        var filtro = '';
+        var selected = $(this).select2('data');
+        if (selected && selected.length && selected[0].text) {
+            filtro = selected[0].text.toLowerCase();
+        }
+        $('#produtos-lista-modal tbody tr').each(function() {
+            var desc = $(this).data('desc');
+            if (typeof desc === 'string') {
+                desc = desc.toLowerCase();
+            } else {
+                desc = '';
+            }
+            if (!filtro || desc.includes(filtro)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    // Transferir dados ao clicar no produto
+    $('body').on('click', '.produto-item-modal', function() {
+        var prodId = $(this).data('id');
+        var prodDesc = $(this).data('desc');
+        var prodPrice = $(this).data('price');
+        var prodTipoId = $(this).data('tipoid');
+
+        // Preencher campos na tela principal
+        $('#getProduto').val(prodId);
+        $('#desProd').html(prodDesc);
+        $('#item-price').val(prodPrice);
+        $('#item-price').trigger('keyup');
+        // Atualiza campo oculto com o id do produto selecionado
+        $('#produto_dmf_id').val(prodId);
+        $('#produto_tipo_id').val(prodTipoId);
+        // Atualiza o atributo data-id do botão inserir
+        $('#btn-adicionar-item').data('id', prodId);
+        // Fechar modal
+        $('#pesquisar-produto-modal').modal('hide');
+    });
+
+    // Sempre que trocar o tipo de pagamento, ajusta o valorCobrar se necessário
+    $('body').on('click', '.payment-box', function() {
+        var totalCarrinho = parseBRL($('.valorTotal').text());
+        var tipoPagamento = $(this).data('identificacao');
+        var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(/\./g, '').replace(',', '.')) || 0;
+
+        if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
+            // atualiza via helper para evitar disparar o handler 'input' que pode reformatar indevidamente
+            atualizarCampoValortotalacobrar(totalCarrinho);
+        }
+    });
+
+    // Sempre que abrir o modal, o campo valortotalacobrar recebe o valor total do carrinho
+    $('#checkout-modal').on('show.bs.modal', function() {
+
+        atualizarOpcoesPrimeiraParaCartao();
+        resetarCamposPagamentoParcelado();
+
+        var totalCarrinho = parseBRL($('.valorTotal').text());
+        $('#valortotalacobrar').val(formatBRL(totalCarrinho));
+        $('#valorsaldo').val(formatBRL(0));
+        $('#valortroco').val(formatBRL(0));
+        // Atualiza variável global CobrarValor com o total atual do carrinho
+        $("#checkout_subtotal").text($("#p_subtotal").text());
+        $("#checkout_desconto").text($("#p_discount").text());
+        $("#checkout_total").text($(".valorTotal").text());
+        // Se houver cashback, atualize também:
+        if ($("#p_cashback").length && $("#checkout_cashback").length) {
+            $("#checkout_cashback").text($("#p_cashback").text());
+        }
+
+    });
+
+    $('#checkout-modal').on('hide.bs.modal', function(e) {
+
+        var token = $('meta[name="csrf-token"]').attr('content');
+        var cobrar = parseBRL($("#checkout_total").text());
+
+        // Só bloqueia se houver saldo maior que 0,01 e não for confirmação do usuário
+        if (cobrar > 0.01 && !podeFecharCheckoutModal) {
+            e.preventDefault(); // Impede o fechamento imediato
+            Swal.fire({
+                icon: 'warning',
+                title: 'Ainda existe valor à cobrar!',
+                text: 'Deseja realmente descartar o valor de ' + $("#checkout_total").text() + '?',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Sim, descartar',
+                denyButtonText: 'Cancelar tudo',
+                cancelButtonText: 'Não, continuar cobrança'
+
+            }).then(function(result) {
+
+                ////////////////////////////////////////////////////
+                // Se o usuário confirmou que quer descartar o valor
+                if (result.isConfirmed) {
+                    // Limpa os campos e permite o fechamento do modal
+                    cart = [];
+                    $("#totalItens").html("0");
+                    $("#TableNo").text("");
+                    $("#TableNoCart").text("");
+                    $(".valorTotal").html("R$ 0,00");
+                    $("#CartHTML").html("");
+                    $("#p_subtotal").html("R$ 0,00");
+                    $("#p_discount").html("R$ 0,00");
+                    $(".totalPagar").html("R$ 0,00");
+                    $("#pedidoID").val("");
+                    // Produto
+                    $('#find-product').val(null).trigger('change');
+                    $('#find-product').select2('data', null);
+                    $('#getProduto').val('');
+                    $('#desProd').html('');
+                    $('#item-quantity').val('1');
+                    $('#item-discount').val('0,00');
+                    $('#item-price').val('0,00');
+                    $('#item-subtotal').val('0,00');
+                    $('#produto_dmf').val(null).trigger('change');
+                    $('#produto_dmf_id').val('');
+                    $('#produto_tipo_id').val('');
+                    // Pagamento
+                    $('#valortotalacobrar').val('0,00');
+                    $('#valorsaldo').val('0,00');
+                    $('#valortroco').val('0,00');
+                    $('#checkout_subtotal').text('R$ 0,00');
+                    $('#checkout_desconto').text('R$ 0,00');
+                    $('#checkout_pago').text('R$ 0,00');
+                    $('#checkout_descontado').text('R$ 0,00');
+                    $('#checkout_resgatado').text('0');
+                    $('#checkout_total').text('R$ 0,00');
+                    if ($("#checkout_cashback").length) {
+                        $("#checkout_cashback").text('R$ 0,00');
+                    }
+                    $('.payment-box-active').removeClass('payment-box-active');
+                    $('#id_forma_pagto').val('').trigger('change');
+                    // Feche o modal
+                    podeFecharCheckoutModal = true;
+                    $('#checkout-modal').modal('hide');
+                    podeFecharCheckoutModal = false;
+
+                    if (tituloAtual && nsu_tituloAtual) {
+
+                        $desconto_parc = arr_checkout_desconto.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
+                        $cashback_parc = arr_checkout_cashback.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
+                        $total_parc = arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0)
+
+                        // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
+                        $.get('/api/mensagens-comp', {
+                            canal_id: 4,
+                            categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
+
+                        }, function(mensagensComp) {
+
+                            var params = {
+                                empresa: {
+                                    nome: empresa.emp_nfant,
+                                    cnpj: empresa.emp_cnpj,
+                                    im: empresa.emp_im,
+                                    ie: empresa.emp_ie,
+                                    emp_id: empresa.emp_id
+                                },
+                                cliente: {
+                                    nome: window.clientName,
+                                    doc: window.clientDoc,
+                                    pontos: window.clientPontos
+                                },
+                                comprovante: {
+                                    titulo: tituloAtual,
+                                    nsu_titulo: nsu_tituloAtual,
+                                    nsu_autoriz: arr_nsu_autoriz,
+                                    data_hora: (new Date()).toLocaleString('pt-BR'),
+                                    cartao_numero: '', // preencha se necessário
+
+                                    tipo_pagamento: 'À Vista',
+                                    parcelas: 1,
+                                    pontos_concedidos: 0,
+
+
+                                    meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
+                                    checkout_subtotal: $total_parc + $desconto_parc + $cashback_parc,
+                                    checkout_troco: 0, // Não existe troco para cobrança a menor valor
+                                    checkout_desconto: $desconto_parc,
+                                    checkout_cashback: $cashback_parc,
+                                    checkout_total: $total_parc,
+
+                                },
+                                mensagens: {
+                                    cabecalho: mensagensComp.CBCPR,
+                                    multban: mensagensComp.MULTB,
+                                    rodape: mensagensComp.RPCPR
+                                },
+                                autorizacao: mensagensComp.AUTHO
+                            };
+
+                            var htmlComprovante = gerarComprovanteVenda(params);
+
+                            Swal.fire({
+                                html: htmlComprovante,
+                                showConfirmButton: false,
+                                width: 500,
+                                customClass: { popup: 'swal2-comprovante-popup' },
+                                footer: `
+                                    <div style="display:flex;justify-content:space-between;gap:8px;">
+                                        <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
+                                        <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
+                                        <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
+                                        <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
+                                    </div>
+                                `
+                            });
+
+                            // Fechar o modal ao clicar em fechar
+                            $(document).on('click', '#btnFecharComprovante', function() {
+                                Swal.close();
+                            });
+
+                            // Imprimir ao clicar em imprimir
+                            $(document).on('click', '#btnImprimirComprovante', function() {
+                                var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
+                                var printWindow = window.open('', '', 'width=800,height=600');
+                                printWindow.document.write(`
+                                    <html>
+                                    <head>
+                                        <title>Imprimir Comprovante</title>
+                                        <style>
+                                            body { background: #fdf6e3; font-family: monospace; }
+                                            #comprovante-venda { margin: 0 auto; }
+                                        </style>
+                                    </head>
+                                    <body>${comprovanteHtml}</body>
+                                    </html>
+                                `);
+
+                                printWindow.document.close();
+                                printWindow.focus();
+                                printWindow.onload = function() {
+                                    printWindow.print();
+                                };
+
+                            });
+
+                            // Envio por email - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarEmailComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
+                            });
+
+                            // Envio por whatsapp - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
+                            });
+
+                            // Resetar arrays de controle
+                            nsu_tituloAtual = null
+                            tituloAtual = null;
+                            arr_nsu_autoriz = [];
+                            arr_meiosPagtoUtilizados = [];
+                            arr_checkout_desconto = [];
+                            arr_checkout_cashback = [];
+                            arr_checkout_total = [];
+                        });
+
+                    }
+
+                ////////////////////////////////////////////////
+                // Se o usuário confirmou que quer cancelar tudo
+                } else if (result.isDenied) {
+
+                    $.post('/pdv-web/cancelar-venda', {
+                        _token: token,
+                        titulo: tituloAtual
+
+                    }, function(resp) {
+                        if (resp.success) {
+                            // Limpa os campos e permite o fechamento do modal
+                            cart = [];
+                            $("#totalItens").html("0");
+                            $("#TableNo").text("");
+                            $("#TableNoCart").text("");
+                            $(".valorTotal").html("R$ 0,00");
+                            $("#CartHTML").html("");
+                            $("#p_subtotal").html("R$ 0,00");
+                            $("#p_discount").html("R$ 0,00");
+                            $(".totalPagar").html("R$ 0,00");
+                            $("#pedidoID").val("");
+                            // Produto
+                            $('#find-product').val(null).trigger('change');
+                            $('#find-product').select2('data', null);
+                            $('#getProduto').val('');
+                            $('#desProd').html('');
+                            $('#item-quantity').val('1');
+                            $('#item-discount').val('0,00');
+                            $('#item-price').val('0,00');
+                            $('#item-subtotal').val('0,00');
+                            $('#produto_dmf').val(null).trigger('change');
+                            $('#produto_dmf_id').val('');
+                            $('#produto_tipo_id').val('');
+                            // Pagamento
+                            $('#valortotalacobrar').val('0,00');
+                            $('#valorsaldo').val('0,00');
+                            $('#valortroco').val('0,00');
+                            $('#checkout_subtotal').text('R$ 0,00');
+                            $('#checkout_desconto').text('R$ 0,00');
+                            $('#checkout_pago').text('R$ 0,00');
+                            $('#checkout_descontado').text('R$ 0,00');
+                            $('#checkout_resgatado').text('0');
+                            $('#checkout_total').text('R$ 0,00');
+                            if ($("#checkout_cashback").length) {
+                                $("#checkout_cashback").text('R$ 0,00');
+                            }
+                            $('.payment-box-active').removeClass('payment-box-active');
+                            $('#id_forma_pagto').val('').trigger('change');
+                            // Feche o modal
+                            podeFecharCheckoutModal = true;
+                            $('#checkout-modal').modal('hide');
+                            podeFecharCheckoutModal = false;
+
+                        } else {
+                            Swal.fire('Erro', resp.error || 'Não foi possível cancelar a venda.', 'error');
+                        }
+                    });
+
+                }
+                // Se cancelar, não faz nada (modal permanece aberto)
+            });
+        }
+    });
+
+    // Máscara tipo calculadora de dinheiro: transforma dígitos em centavos
+    $('#valortotalacobrar').on('input', function(e) {
+        var v = $(this).val().replace(/\D/g, ''); // só dígitos
+        if (v.length === 0) v = '0';
+        var valor = (parseInt(v, 10) / 100).toFixed(2);
+        var totalCarrinho = parseBRL($('#checkout_total').text());
+        var tipoPagamento = $('.payment-box-active').data('identificacao');
+        var valorCobrar = parseFloat(valor.replace(',', '.')) || 0;
+        // Bloqueia valorCobrar maior que totalCarrinho para tipos diferentes de Dinheiro
+        if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
+            valorCobrar = totalCarrinho;
+            valor = totalCarrinho.toFixed(2).replace('.', ',');
+        }
+        $(this).val(valor);
+        var saldo = totalCarrinho - valorCobrar;
+        if (valorCobrar > totalCarrinho) {
+            saldo = 0;
+        }
+        $('#valorsaldo').val(formatBRL(saldo));
+        var troco = 0;
+        if (tipoPagamento === 'DN' && valorCobrar > totalCarrinho) {
+            troco = valorCobrar - totalCarrinho;
+        }
+        $('#valortroco').val(formatBRL(troco));
+
+    });
+
+    // Ao sair do campo, formata o valor para padrão brasileiro
+    $('#valortotalacobrar').on('blur', function() {
+        var raw = $(this).val();
+        var valor = 0;
+        if (typeof parseBRL === 'function') {
+            valor = parseBRL(raw);
+        } else {
+            // fallback: remove currency and spaces, handle thousands and decimal separators
+            var s = (raw || '').replace(/R\$|\s/g, '').trim();
+            if (s.indexOf(',') === -1) {
+                // no comma => remove dots (thousands)
+                s = s.replace(/\./g, '');
+            } else {
+                // has comma => remove dots (thousands) and convert comma to dot for decimal
+                s = s.replace(/\./g, '').replace(',', '.');
+            }
+            valor = parseFloat(s) || 0;
+        }
+        $(this).val(formatBRL(valor));
+
+    });
+
+    // Mantém atualização dos valores do checkout quando o DOM mudar, mas evita recalcular parcelas automaticamente
+    $("body").on("DOMSubtreeModified", "#p_subtotal, #p_discount, .valorTotal", function() {
+        atualizarCheckoutValores();
+    });
+
+    // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de produto
+    $('#pesquisar-produto-modal').on('show.bs.modal', function() {
+        $('#produto_dmf').empty().trigger('change');
+        $('#produto_dmf').val(null).trigger('change');
+        $('#produto_dmf').select2('data', null);
+        $('#produto_dmf').attr('data-placeholder', 'Pesquise o Nome do Produto');
+        $('#produto_dmf_id').empty().trigger('change');
+        $('#produto_dmf_id').val(null).trigger('change');
+        $('#produto_tipo_id').empty().trigger('change');
+        $('#produto_tipo_id').val(null).trigger('change');
+    });
+
+    // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de cliente
+    $('#pesquisar-cliente-modal').on('show.bs.modal', function () {
+        $('#cliente_id').val(null).trigger('change');
+        $('#cliente_id').empty().trigger('change');
+        $('#cliente_id').select2('data', null);
+        $('#cliente_id').attr('data-placeholder', 'Pesquise o Nome ou CPF/CNPJ do Cliente');
+        $('#cliente_cadastro_id').empty().trigger('change');
+        $('#cliente_cadastro_id').val(null).trigger('change');
+    });
+
+    // Limpa o campo hidden quando o select2 é limpo
+    $('#produto_dmf').on('change', function () {
+        var val = $(this).val();
+        if (!val || val === '' || val.length === 0) {
+            $('#produto_dmf_id').val('');
+            $('#produto_tipo_id').val('');
+        }
+    });
+
+    // Limpa o campo hidden quando o select2 é limpo
+    $('#cliente_id').on('change', function () {
+        var val = $(this).val();
+        if (!val || val === '' || val.length === 0) {
+            $('#cliente_cadastro_id').val('');
+        }
+    });
+
+    // Também resetar ao fechar o modal
+    $('#checkout-modal').on('hidden.bs.modal', function() {
+        resetarCamposPagamentoParcelado();
+    });
+
+    // Resetar ao carregar a página
+    resetarCamposPagamentoParcelado();
+
+    $("#PrimeiraParaBoleto").on("change", function() {
+        var selected = $(this).val();
+        var $dataField = $("#dataPrimeiraParcelaBoleto");
+        var $help = $("#dataPrimeiraParcelaBoletoHelp");
+        if (selected === "5") {
+            $dataField.val("");
+            $dataField.prop("readonly", false);
+            $help.text("Selecione manualmente a data da primeira parcela.");
+        } else if (selected && regrasParcMap[selected] !== undefined) {
+            var dias = regrasParcMap[selected];
+            var hoje = new Date();
+            hoje.setDate(hoje.getDate() + dias);
+            var yyyy = hoje.getFullYear();
+            var mm = String(hoje.getMonth() + 1).padStart(2, '0');
+            var dd = String(hoje.getDate()).padStart(2, '0');
+            var dataFormatada = yyyy + '-' + mm + '-' + dd;
+            $dataField.val(dataFormatada);
+            $dataField.prop("readonly", true);
+            $help.text("Data calculada automaticamente: " + dd + "/" + mm + "/" + yyyy);
+        } else {
+            $dataField.val("");
+            $dataField.prop("readonly", true);
+            $help.text("");
+        }
+    });
+
+    // Ao clicar em OK no modal de cliente, preenche os campos com o cliente selecionado
+    $('#btn-find-client').on('click', function() {
+        var data = $('#cliente_id').select2('data')[0];
+        if (!data) return;
+
+        window.clientId = data.id;
+        window.clientName = data.text;
+        window.clientDoc = data.cliente_doc;
+        window.clienteDataFech = data.cliente_dt_fech;
+        window.clientPontos = data.cliente_pts;
+        window.responseCartoesCliente = data.cartoes || [];
+
+        // Verifica status de inadimplência
+        if (data.cliente_sts && data.cliente_sts === "MN") {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ATENÇÃO',
+                html: '<div>Identificamos que este cliente, nos últimos 6 meses,<br>' +
+                      'tem histórico de atraso nos pagamentos.<br><br>' +
+                      'Sugestões:<br>' +
+                      '- Solicite um valor de entrada.<br>' +
+                      '- De preferência por um meio de pagamento à vista.<br>' +
+                      '- Coloque juros nas parcelas para cobrir um possível atraso.<br><br>' +
+                      '<strong>Deseja realmente continuar?</strong></div>',
+                showCancelButton: true,
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancelar',
+                allowOutsideClick: false
+            }).then(function(result) {
+                if (!result.isConfirmed) {
+                    // Limpa seleção se cancelar
+                    $('#desCli').text('');
+                    $('#cliente_cadastro_id').val('');
+                    $('#getCliente').val('');
+                }
+            });
+        }
+
+        $('#cliente_cadastro_id').val(window.clientId).trigger('change'); // Preenche o select2 oculto
+        $('#cliente_cadastro_id').trigger('change'); // Dispara change para atualizar qualquer listener
+        // Aplica máscara ao CPF/CNPJ
+        if (window.clientDoc) {
+            var doc = window.clientDoc.replace(/\D/g, '');
+            if (doc.length === 11) {
+                $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+            } else if (doc.length === 14) {
+                $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
+            } else {
+                $('#getCliente').val(window.clientDoc);
+            }
+        } else {
+            $('#getCliente').val('');
+        }
+        $('#desCli').text(window.clientName);        // Preenche o nome do cliente
+
+        // Aplica máscara
+        if (window.clientDoc && window.clientDoc.length === 11) {
+            $('#getCliente').mask('000.000.000-00');
+        } else if (window.clientDoc && window.clientDoc.length === 14) {
+            $('#getCliente').mask('00.000.000/0000-00');
+        }
+
+    });
+
+    $("#invoiceShow").css("height", ($(window).height() - 150) + "px");
+
+    $('body').addClass('layout-navbar-fixed');
+
+    $("#taxaDeEntrega").select2({
+        data: data
+    });
+
+    $("body").on("click","#carrinhoIcon", function(){
+        $('html,body').animate({scrollTop: document.body.scrollHeight},"fast");
+    });
+
+    $("#btnPesquisarCep").on("click", function() {
+        ns.cepOnClick();
+    });
+
+    ns.comboBoxSelect("idsearchphone", "/cliente/searchphone");
+    ns.comboBoxSelect("idcidade", "/cliente/obtercidadeid");
+    ns.comboBoxSelect("idestado", "/cliente/obterestadoid");
+    ns.comboBoxSelect("find-product", "/produto/obterproduto", "id", 7, "findlist");
+
+    $('.tab-pane, .cart-table-wrap, .dataTables_scrollBody, #invoiceShow').overlayScrollbars({
+        className: 'os-theme-dark',
+        sizeAutoCapable: true,
+        scrollbars: {
+            clickScrolling: true
+        },
+        overflowBehavior: {
+            x: "hidden",
+            y: "scroll"
+        },
+    });
+
+    $("body").on("click", ".payment-box", function() {
+        $(".payment-box-active").removeClass("payment-box-active");
+        $(this).addClass("payment-box-active");
+        tipoPagamentoSelecionado = $(this).data("identificacao");
+        $("#id_forma_pagto").val(tipoPagamentoSelecionado).trigger('change');
+        // Exibe/oculta os blocos Blade conforme o tipo de pagamento
+        if (tipoPagamentoSelecionado === "BL") {
+            $("#div-boleto").show();
+            $("#div-cartao").hide();
+            $("#payment-instructions").show();
+            atualizarParcelasBoleto();
+        } else if (tipoPagamentoSelecionado === "CM") {
+            $("#div-cartao").show();
+            $("#div-boleto").hide();
+            $("#payment-instructions").show();
+            atualizarParcelasCartao();
+        } else {
+            $("#div-boleto, #div-cartao").hide();
+            $("#payment-instructions").hide();
+        }
+    });
+
+    /////////////////////////////
+    // REGRAS PARA O BOTÃO COBRAR
+    /////////////////////////////
     $("#btnCobrar").on("click", function() {
-        var tipoPagto = tipoPagamentoSelecionado || $("#id_forma_pagto").val();
+
+        //////////////////////////////////////////////////////////////////////
+        // Se nenhuma forma de pagamento estiver selecionada, alerta e retorna
+        if ($('.payment-box-active').length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Selecione uma forma de pagamento!',
+                text: 'É necessário escolher uma opção de pagamento antes de finalizar a venda.'
+            });
+            return;
+        }
+
+
+        ////////////////////////////////////////////////////
+        // VARIÁVEIS IMPORTANTES PARA O PROCESSO DE COBRANÇA
+        var token = $('meta[name="csrf-token"]').attr("content");                                   // Token CSRF para segurança
+        var cliente_id = $("#cliente_cadastro_id").val() || $("#idcliente").val();                  // ID do cliente selecionado
+
+        var tipoPagto = tipoPagamentoSelecionado || $("#id_forma_pagto").val();                     // Tipo de pagamento selecionado
+        var checkout_subtotal = parseBRL($("#checkout_subtotal").text()) || 0;                      // Valor total do carrinho antes de descontos
+        var checkout_cashback = parseBRL($("#checkout_cashback").text()) || 0;                      // Valor total de cashback aplicado
+        var checkout_desconto = parseBRL($("#checkout_desconto").text()) || 0;                      // Valor total de desconto aplicado
+
+        var checkout_pago = parseBRL($("#checkout_pago").text()) || 0;                              // Valor total pago
+        var checkout_descontado = parseBRL($("#checkout_descontado").text()) || 0;                  // Valor total descontado
+        var checkout_troco = parseBRL($("#valortroco").val()) || 0;                                // Valor do troco a ser dado
+        var checkout_resgatado = parseInt($("#checkout_resgatado").text().replace(/\D/g, '')) || 0; // Pontos de cashback resgatados
+
+        var checkout_total = parseBRL($("#checkout_total").text()) || 0;                            // Valor total a cobrar (subtotal - desconto - cashback)
+        var valortotalacobrar = parseBRL($("#valortotalacobrar").val()) || 0;                       // Valor que o usuário quer cobrar agora
+
+        // Proporção do valor cobrado em relação ao total
+        var proporcao_cobrado = 1;
+        if (valortotalacobrar < (checkout_subtotal - checkout_desconto) && (checkout_subtotal - checkout_desconto) > 0) {
+            proporcao_cobrado = valortotalacobrar / (checkout_subtotal - checkout_desconto);
+        }
+
+        // Log de verificação do carrinho original
+        // console.log("Carrinho original antes da cobrança:", cart);
+        // console.log('Valor de valortroco:', checkout_troco);
+
+        //////////////////////////////////////////
+        // Monta o carrinho para enviar ao backend
+        var carrinho = cart.map(function(item) {
+            var vlr_brt_item = (item.price * item.quantity);
+            var vlr_discount_item = (item.discountValue && parseFloat(item.discountValue) > 0) ? parseFloat(item.discountValue) : 0;
+            var vlr_liqu_item = vlr_brt_item - vlr_discount_item;
+
+            // Proporção do item sobre o total do carrinho
+            var proporcao_item_total = 1;
+            if (checkout_total > 0) {
+                proporcao_item_total = vlr_liqu_item / checkout_total;
+            }
+
+            return {
+                produto_tipo: item.produto_tipo || '',
+                proporcao_item: proporcao_item_total,
+                produto_id: item.product_id,
+                qtd_item: item.quantity,
+                vlr_unit_item: item.price,
+                vlr_brut_item: vlr_brt_item,
+                vlr_desc_item: vlr_discount_item,
+                vlr_liqu_item: vlr_brt_item - vlr_discount_item
+            };
+        });
+
+        // console.log("Carrinho enviado para o backend:", carrinho);
+
+        // Proporcionaliza desconto e cashback
+        var checkout_desconto_proporcional = checkout_desconto * proporcao_cobrado;
+        var checkout_cashback_proporcional = checkout_cashback * proporcao_cobrado;
 
         // MEIO DE PAGAMENTO CARTÃO
         if (tipoPagto === "CM") {
@@ -2034,505 +2876,276 @@ $(document).ready(function () {
                 return;
             }
 
-            // Segue fluxo normal de cobrança para boleto
-            // ...código existente...
-
         // MEIO DE PAGAMENTO DINHEIRO
         } else if (tipoPagto === "DN") {
-            // Chama backend para gravar cobrança DN
-            var token = $('meta[name="csrf-token"]').attr("content");
-            var cliente_id = $("#cliente_cadastro_id").val() || $("#idcliente").val();
-            var valortotalacobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
-            var checkout_total = parseFloat($("#checkout_total").text().replace(/\./g, '').replace(',', '.')) || 0;
-            var checkout_desconto = parseFloat($("#checkout_desconto").text().replace(/\./g, '').replace(',', '.')) || 0;
-            var checkout_cashback = typeof checkout_cashback !== 'undefined' ? checkout_cashback : 0;
-            var carrinho = cart.map(function(item) {
-                return {
-                    produto_tipo: item.produto_tipo || '',
-                    produto_id: item.product_id,
-                    qtd_item: item.quantity,
-                    vlr_unit_item: item.price,
-                    vlr_brt_item: item.subtotal ? parseFloat(item.subtotal) : (item.price * item.quantity)
-                };
-            });
-
-            $.ajax({
-                url: '/pdv-web/cobrar-dn',
-                type: 'POST',
-                headers: { 'X-CSRF-TOKEN': token },
-                data: {
-                    cliente_id: cliente_id,
-                    valortotalacobrar: valortotalacobrar,
-                    checkout_total: checkout_total,
-                    checkout_desconto: checkout_desconto,
-                    checkout_cashback: checkout_cashback,
-                    carrinho: carrinho
-                },
-                success: function(resp) {
-                    if (resp.success) {
-                        Swal.fire('Sucesso', 'Cobrança registrada!', 'success');
-                        // Limpar carrinho, atualizar tela, etc.
-                    } else {
-                        Swal.fire('Erro', 'Não foi possível registrar a cobrança.', 'error');
-                    }
-                },
-                error: function() {
-                    Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
-                }
-            });
+            // Guarda os meios de pagamento utilizados
+            arr_meiosPagtoUtilizados.push('Dinheiro');
 
         // MEIO DE PAGAMENTO PIX
         } else if (tipoPagto === "PX") {
-            // Segue fluxo normal de cobrança
-            // ...código existente...
+            // Condições específicas para PIX, se houver
 
         // MEIO DE PAGAMENTO OUTROS
         } else if (tipoPagto === "OT") {
-            // Segue fluxo normal de cobrança
-            // ...código existente...
+            // Condições específicas para Outros, se houver
 
         }
-    });
 
-    // Handler para seleção de cartão na tabela
-    $(document).on("click", ".linha-cartao-mult", function() {
-        var saldo = parseFloat($(this).data("saldo")) || 0;
-        var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
-        if (saldo < valorCobrar) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Saldo insuficiente',
-                text: 'O saldo do cartão é insuficiente para esta cobrança.',
-                confirmButtonText: 'OK',
-                allowOutsideClick: false
-            });
-            return;
-        }
-        // Fecha modal e segue com operação usando o cartão selecionado
-        $("#modalCartaoMult").modal("hide");
-        // ...código para continuar operação com o cartão selecionado...
-    });
+        ///////////////////////////////////////////////
+        // GERA A COBRANÇA CONFORME O TIPO DE PAGAMENTO
+        $.ajax({
+            url: '/pdv-web/realizar-venda',
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': token },
+            data: {
+                cliente_id: cliente_id,
+                checkout_subtotal: checkout_subtotal,
+                checkout_cashback: checkout_cashback,
+                checkout_desconto: checkout_desconto,
+                checkout_pago: checkout_pago,
+                checkout_troco: checkout_troco,
+                checkout_descontado: checkout_descontado,
+                checkout_resgatado: checkout_resgatado,
+                checkout_total: checkout_total,
+                valortotalacobrar: valortotalacobrar,
+                proporcao_cobrado: proporcao_cobrado,
 
-    // Função para formatar status do cartão
-    function formatarStatusCartao(sts) {
-        // Exemplo: pode adaptar para cores/icons conforme padrão dos produtos
-        if (sts === 'AT') return '<span class="badge badge-success">Ativo</span>';
-        if (sts === 'BL') return '<span class="badge badge-warning">Bloqueado</span>';
-        if (sts === 'IN') return '<span class="badge badge-danger">Inativo</span>';
-        if (sts === 'EX') return '<span class="badge badge-danger">Inativo</span>';
-        return sts;
-    }
+                tipoPagto: tipoPagto,
+                carrinho: carrinho,
+                titulo: tituloAtual,
+                nsu_titulo: nsu_tituloAtual
+            },
 
-    // Limpa o nome do cliente quando o campo CPF/CNPJ é limpo e aplica máscara dinâmica
-    $('#getCliente').on('input', function() {
-        var valor = $(this).val().replace(/\D/g, '');
-        if (!valor) {
-            $('#desCli').text('');
-            $(this).val('');
-            $(this).unmask();
-            $('#cliente_cadastro_id').empty().trigger('change');
-            $('#cliente_cadastro_id').val(null).trigger('change');
-            return;
-        }
-        // Aplica máscara CPF ou CNPJ
-        if (valor.length <= 11) {
-            $(this).mask('000.000.000-00');
-        } else {
-            $(this).mask('00.000.000/0000-00');
-        }
-    });
+            success: function(resp) {
+                if (resp.success) {
 
-    $(function () {
-        //Initialize Select2 Elements
-        $('.select2').select2();
-        ns.comboBoxSelectTags("produto_dmf", "/produto/obter-descricao-produto", "produto_id");
+                    // Se for a primeira cobrança, salva o título e o nsu_título
+                    if (!tituloAtual && resp.titulo) {
+                        tituloAtual = resp.titulo;
+                    }
+                    if (!nsu_tituloAtual && resp.nsu_titulo) {
+                        nsu_tituloAtual = resp.nsu_titulo;
+                    }
 
-        $('#produto_dmf').on('select2:select', function (e) {
-            var data = e.params.data;
-            $('#produto_dmf_id').val(data.id); // Aqui você utiliza o ID do produto selecionado
-        });
-    });
+                    // Atualiza arrays de controle
+                    arr_nsu_autoriz.push(resp.nsu_autoriz || '');
+                    arr_checkout_desconto.push(checkout_desconto_proporcional);
+                    arr_checkout_cashback.push(checkout_cashback_proporcional);
+                    arr_checkout_total.push(valortotalacobrar);
 
-    // Função para resetar campos de pagamento parcelado
-    function resetarCamposPagamentoParcelado() {
-        $("#div-boleto").hide();
-        $("#div-cartao").hide();
-        $("#parcelasBoleto").val("");
-        $("#parcelasCartao").val("");
-        $("#PrimeiraParaBoleto").val("");
-        $("#PrimeiraParaCartao").val("");
-        $("#dataPrimeiraParcelaBoleto").val("");
-        $("#dataPrimeiraParcelaBoleto").prop("readonly", true);
-        $("#dataPrimeiraParcelaBoletoHelp").text("");
-        // Limpa opções dos selects de parcelas e destrói Select2 para forçar recálculo na próxima abertura
-        try {
-            var $pb = $("#parcelasBoleto");
-            $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            if ($pb.hasClass('select2-hidden-accessible')) { try { $pb.select2('destroy'); } catch(e) {} }
-        } catch(e) {}
-        try {
-            var $pc = $("#parcelasCartao");
-            $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            if ($pc.hasClass('select2-hidden-accessible')) { try { $pc.select2('destroy'); } catch(e) {} }
-        } catch(e) {}
-    }
+                    // console.log(arr_checkout_desconto, arr_checkout_cashback, arr_checkout_total);
 
-    // Ao selecionar um produto, salva o preço original
-    $('body').on('click', '.produto-item-modal', function() {
-        precoOriginalProduto = $(this).data('price');
-    });
+                    // Calcula saldo remanescente
+                    var saldo = checkout_total - valortotalacobrar;
 
-    // Valida subtotal ao alterar quantidade, desconto ou preço
-    $('body').on('keyup blur', '#item-quantity, #item-discount, #item-price', function(e) {
-        setTimeout(function() {
-            validarSubtotal();
-        }, 50);
-    });
+                    if (saldo > 0.01) {
+                        Swal.fire('Parcial', 'Cobrança parcial registrada! Ainda há saldo a receber.', 'info');
+                        // Atualiza campos para o saldo remanescente
+                        $("#valortotalacobrar").val(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+                        $("#checkout_total").text(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
 
-    // Carregar produtos via API ao abrir o modal
-    $('#pesquisar-produto-modal').on('show.bs.modal', function() {
-        var $tbody = $('#produtos-lista-modal tbody');
-        $tbody.empty();
-        // Adiciona spinner de loading
-        var $spinner = $('<tr id="produtos-loading-spinner"><td colspan="5" class="text-center"><span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Carregando produtos...</td></tr>');
-        $tbody.append($spinner);
-        $.get('/api/produtos', function(produtos) {
-            $tbody.empty();
-            produtos.forEach(function(prod) {
-                // Badge do status
-                var badge = '';
-                switch (prod.produto_sts) {
-                    case 'AT': badge = '<span class="badge badge-success">'+(prod.produto_sts_desc||'Ativo')+'</span>'; break;
-                    case 'IN': badge = '<span class="badge badge-warning">'+(prod.produto_sts_desc||'Inativo')+'</span>'; break;
-                    case 'BL': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Bloqueado')+'</span>'; break;
-                    case 'EX': badge = '<span class="badge badge-danger">'+(prod.produto_sts_desc||'Excluído')+'</span>'; break;
-                    default:   badge = '<span class="badge badge-secondary">'+(prod.produto_sts_desc||'Desconhecido')+'</span>'; break;
+                        $("#checkout_pago").text((checkout_pago + valortotalacobrar).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                        $("#checkout_descontado").text((checkout_descontado + checkout_desconto_proporcional).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                        $("#checkout_resgatado").text((checkout_resgatado + checkout_cashback_proporcional).toLocaleString('pt-BR', { maximumFractionDigits: 0 }));
+
+                        // Limpa apenas campos de pagamento/modal
+                        $('.payment-box-active').removeClass('payment-box-active');
+                        $('#id_forma_pagto').val('').trigger('change');
+                        $('#valortroco').val('0,00');
+                        $("#valorsaldo").val('0,00');
+
+                    } else {
+                        Swal.fire('Sucesso', 'Cobrança registrada!', 'success').then(function() {
+                            // Limpa o título atual para a próxima venda
+                            tituloAtual = null;
+
+                            // Limpar carrinho, atualizar tela, etc.
+                            cart = [];
+                            $("#totalItens").html("0");
+                            $("#TableNo").text("");
+                            $("#TableNoCart").text("");
+                            $(".valorTotal").html("R$ 0,00");
+                            $("#CartHTML").html("");
+                            $("#p_subtotal").html("R$ 0,00");
+                            $("#p_discount").html("R$ 0,00");
+                            $(".totalPagar").html("R$ 0,00");
+                            $("#pedidoID").val("");
+                            // Produto
+                            $('#find-product').val(null).trigger('change');
+                            $('#find-product').select2('data', null);
+                            $('#getProduto').val('');
+                            $('#desProd').html('');
+                            $('#item-quantity').val('1');
+                            $('#item-discount').val('0,00');
+                            $('#item-price').val('0,00');
+                            $('#item-subtotal').val('0,00');
+                            $('#produto_dmf').val(null).trigger('change');
+                            $('#produto_dmf_id').val('');
+                            $('#produto_tipo_id').val('');
+                            // Pagamento
+                            $('#valortotalacobrar').val('0,00');
+                            $('#valorsaldo').val('0,00');
+                            $('#valortroco').val('0,00');
+                            $('#checkout_subtotal').text('R$ 0,00');
+                            $('#checkout_desconto').text('R$ 0,00');
+                            $('#checkout_pago').text('R$ 0,00');
+                            $('#checkout_descontado').text('R$ 0,00');
+                            $('#checkout_resgatado').text('0');
+                            $('#checkout_total').text('R$ 0,00');
+                            if ($("#checkout_cashback").length) {
+                                $("#checkout_cashback").text('R$ 0,00');
+                            }
+                            $('.payment-box-active').removeClass('payment-box-active');
+                            $('#id_forma_pagto').val('').trigger('change');
+                            $('#checkout-modal').modal('hide');
+
+                            ///////////////////////////////////////////////
+                            // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
+                            $.get('/api/mensagens-comp', {
+                                canal_id: 4,
+                                categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
+
+                            }, function(mensagensComp) {
+
+                                var params = {
+                                    empresa: {
+                                        nome: empresa.emp_nfant,
+                                        cnpj: empresa.emp_cnpj,
+                                        im: empresa.emp_im,
+                                        ie: empresa.emp_ie,
+                                        emp_id: empresa.emp_id
+                                    },
+
+                                    cliente: {
+                                        nome: window.clientName,
+                                        doc: window.clientDoc,
+                                        pontos: window.clientPontos
+                                    },
+
+                                    comprovante: {
+                                        titulo: resp.titulo,
+                                        nsu_titulo: resp.nsu_titulo,
+                                        nsu_autoriz: arr_nsu_autoriz,
+                                        data_hora: (new Date()).toLocaleString('pt-BR'),
+                                        cartao_numero: resp.cartao_numero,
+
+                                        tipo_pagamento: 'À Vista',
+                                        parcelas: 1,
+                                        pontos_concedidos: 0,
+
+                                        meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
+                                        checkout_subtotal: checkout_subtotal,
+                                        checkout_troco: checkout_troco,
+                                        checkout_desconto: arr_checkout_desconto.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
+                                        checkout_cashback: arr_checkout_cashback.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
+                                        checkout_total: arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0)
+                                    },
+
+                                    mensagens: {
+                                        cabecalho: mensagensComp.CBCPR,
+                                        multban: mensagensComp.MULTB,
+                                        rodape: mensagensComp.RPCPR
+                                    },
+
+                                    autorizacao: mensagensComp.AUTHO
+                                };
+
+                                // console.log("Parâmetros do comprovante:", params);
+
+                                var htmlComprovante = gerarComprovanteVenda(params);
+
+                                Swal.fire({
+                                    html: htmlComprovante,
+                                    showConfirmButton: false,
+                                    width: 500,
+                                    customClass: { popup: 'swal2-comprovante-popup' },
+                                    footer: `
+                                        <div style="display:flex;justify-content:space-between;gap:8px;">
+                                            <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
+                                            <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
+                                            <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
+                                            <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
+                                        </div>
+                                    `
+                                });
+
+                                // Fechar o modal ao clicar em fechar
+                                $(document).on('click', '#btnFecharComprovante', function() {
+                                    Swal.close();
+                                });
+
+                                // Imprimir ao clicar em imprimir
+                                $(document).on('click', '#btnImprimirComprovante', function() {
+                                    // Pega o HTML do comprovante
+                                    var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
+                                    // Abre nova janela
+                                    var printWindow = window.open('', '', 'width=800,height=600');
+                                    printWindow.document.write(`
+                                        <html>
+                                        <head>
+                                            <title>Imprimir Comprovante</title>
+                                            <style>
+                                                body { background: #fdf6e3; font-family: monospace; }
+                                                #comprovante-venda { margin: 0 auto; }
+                                            </style>
+                                        </head>
+                                        <body>${comprovanteHtml}</body>
+                                        </html>
+                                    `);
+                                    printWindow.document.close();
+                                    printWindow.focus();
+                                    // Aguarda o carregamento e imprime
+                                    printWindow.onload = function() {
+                                        printWindow.print();
+                                        // printWindow.close(); // Descomente se quiser fechar automaticamente após imprimir
+                                    };
+                                });
+
+                                // Envio por email - IMPLEMENTAR
+                                $(document).on('click', '#btnEnviarEmailComprovante', function() {
+                                    Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
+                                });
+
+                                // Envio por whatsapp - IMPLEMENTAR
+                                $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
+                                    Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
+                                });
+
+                                // Resetar arrays de controle
+                                arr_nsu_autoriz = [];
+                                arr_meiosPagtoUtilizados = [];
+                                arr_checkout_desconto = [];
+                                arr_checkout_cashback = [];
+                                arr_checkout_total = [];
+
+                            });
+
+                        });
+
+                    }
+
+                } else {
+                    var msg = resp.error || resp.message || 'Não foi possível registrar a cobrança.';
+                    Swal.fire('Erro', msg, 'error');
                 }
-                $tbody.append(
-                    '<tr class="produto-item-modal" style="cursor:pointer"'
-                    +' data-id="'+prod.produto_id+'"'
-                    +' data-tipo="'+(prod.produto_tipo_desc||prod.produto_tipo)+'"'
-                    +' data-dm="'+prod.produto_dm+'"'
-                    +' data-sts="'+prod.produto_sts+'"'
-                    +' data-desc="'+prod.produto_dm+'"'
-                    +' data-price="'+prod.produto_vlr+'">'
-                    +'<td>'+prod.produto_id+'</td>'
-                    +'<td>'+(prod.produto_tipo_desc||prod.produto_tipo)+'</td>'
-                    +'<td>'+prod.produto_dm+'</td>'
-                    +'<td>'+prod.produto_vlr+'</td>'
-                    +'<td>'+badge+'</td>'
-                    +'</tr>'
-                );
-            });
-        });
-    });
 
-    // Filtrar produtos da lista conforme combo box select2
-    $('#produto_dmf').on('change', function() {
-        var filtro = '';
-        var selected = $(this).select2('data');
-        if (selected && selected.length && selected[0].text) {
-            filtro = selected[0].text.toLowerCase();
-        }
-        $('#produtos-lista-modal tbody tr').each(function() {
-            var desc = $(this).data('desc');
-            if (typeof desc === 'string') {
-                desc = desc.toLowerCase();
-            } else {
-                desc = '';
-            }
-            if (!filtro || desc.includes(filtro)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
-
-    // Transferir dados ao clicar no produto
-    $('body').on('click', '.produto-item-modal', function() {
-        var prodId = $(this).data('id');
-        var prodDesc = $(this).data('desc');
-        var prodPrice = $(this).data('price');
-        // Preencher campos na tela principal
-        $('#getProduto').val(prodId);
-        $('#desProd').html(prodDesc);
-        $('#item-price').val(prodPrice);
-        $('#item-price').trigger('keyup');
-        // Atualiza campo oculto com o id do produto selecionado
-        $('#produto_dmf_id').val(prodId);
-        // Atualiza o atributo data-id do botão inserir
-        $('#btn-adicionar-item').data('id', prodId);
-        // Fechar modal
-        $('#pesquisar-produto-modal').modal('hide');
-    });
-
-    // Sempre que trocar o tipo de pagamento, ajusta o valorCobrar se necessário
-    $('body').on('click', '.payment-box', function() {
-        var totalCarrinho = parseBRL($('.valorTotal').text());
-        var tipoPagamento = $(this).data('identificacao');
-        var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(/\./g, '').replace(',', '.')) || 0;
-
-        if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
-            // atualiza via helper para evitar disparar o handler 'input' que pode reformatar indevidamente
-            atualizarCampoValortotalacobrar(totalCarrinho);
-        }
-    });
-
-    // Sempre que abrir o modal, o campo valortotalacobrar recebe o valor total do carrinho
-    $('#checkout-modal').on('show.bs.modal', function() {
-        var totalCarrinho = parseBRL($('.valorTotal').text());
-        $('#valortotalacobrar').val(formatBRL(totalCarrinho));
-        $('#valorsaldo').val(formatBRL(0));
-        $('#valortroco').val(formatBRL(0));
-        // Atualiza variável global CobrarValor com o total atual do carrinho
-    });
-
-    // Máscara tipo calculadora de dinheiro: transforma dígitos em centavos
-    $('#valortotalacobrar').on('input', function(e) {
-        var v = $(this).val().replace(/\D/g, ''); // só dígitos
-        if (v.length === 0) v = '0';
-        var valor = (parseInt(v, 10) / 100).toFixed(2);
-        var totalCarrinho = parseBRL($('.valorTotal').text());
-        var tipoPagamento = $('.payment-box-active').data('identificacao');
-        var valorCobrar = parseFloat(valor.replace(',', '.')) || 0;
-        // Bloqueia valorCobrar maior que totalCarrinho para tipos diferentes de Dinheiro
-        if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
-            valorCobrar = totalCarrinho;
-            valor = totalCarrinho.toFixed(2).replace('.', ',');
-        }
-        $(this).val(valor);
-        var saldo = totalCarrinho - valorCobrar;
-        if (valorCobrar > totalCarrinho) {
-            saldo = 0;
-        }
-        $('#valorsaldo').val(formatBRL(saldo));
-        var troco = 0;
-        if (tipoPagamento === 'DN' && valorCobrar > totalCarrinho) {
-            troco = valorCobrar - totalCarrinho;
-        }
-        $('#valortroco').val(formatBRL(troco));
-
-    });
-
-    // Ao sair do campo, formata o valor para padrão brasileiro
-    $('#valortotalacobrar').on('blur', function() {
-        var raw = $(this).val();
-        var valor = 0;
-        if (typeof parseBRL === 'function') {
-            valor = parseBRL(raw);
-        } else {
-            // fallback: remove currency and spaces, handle thousands and decimal separators
-            var s = (raw || '').replace(/R\$|\s/g, '').trim();
-            if (s.indexOf(',') === -1) {
-                // no comma => remove dots (thousands)
-                s = s.replace(/\./g, '');
-            } else {
-                // has comma => remove dots (thousands) and convert comma to dot for decimal
-                s = s.replace(/\./g, '').replace(',', '.');
-            }
-            valor = parseFloat(s) || 0;
-        }
-        $(this).val(formatBRL(valor));
-
-    });
-
-    // Mantém atualização dos valores do checkout quando o DOM mudar, mas evita recalcular parcelas automaticamente
-    $("body").on("DOMSubtreeModified", "#p_subtotal, #p_discount, .valorTotal", function() {
-        atualizarCheckoutValores();
-    });
-
-    // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de produto
-    $('#pesquisar-produto-modal').on('show.bs.modal', function() {
-        $('#produto_dmf').empty().trigger('change');
-        $('#produto_dmf').val(null).trigger('change');
-        $('#produto_dmf').select2('data', null);
-        $('#produto_dmf').attr('data-placeholder', 'Pesquise o Nome do Produto');
-        $('#produto_dmf_id').empty().trigger('change');
-        $('#produto_dmf_id').val(null).trigger('change');
-    });
-
-    // Limpa o select2, campo hidden e campo de busca descritiva ao abrir o modal de pesquisa de cliente
-    $('#pesquisar-cliente-modal').on('show.bs.modal', function () {
-        $('#cliente_id').val(null).trigger('change');
-        $('#cliente_id').empty().trigger('change');
-        $('#cliente_id').select2('data', null);
-        $('#cliente_id').attr('data-placeholder', 'Pesquise o Nome ou CPF/CNPJ do Cliente');
-        $('#cliente_cadastro_id').empty().trigger('change');
-        $('#cliente_cadastro_id').val(null).trigger('change');
-    });
-
-    // Limpa o campo hidden quando o select2 é limpo
-    $('#produto_dmf').on('change', function () {
-        var val = $(this).val();
-        if (!val || val === '' || val.length === 0) {
-            $('#produto_dmf_id').val('');
-        }
-    });
-
-    // Limpa o campo hidden quando o select2 é limpo
-    $('#cliente_id').on('change', function () {
-        var val = $(this).val();
-        if (!val || val === '' || val.length === 0) {
-            $('#cliente_cadastro_id').val('');
-        }
-    });
-
-    // Ao abrir o modal de checkout, resetar campos de pagamento parcelado
-    $('#checkout-modal').on('show.bs.modal', function() {
-        resetarCamposPagamentoParcelado();
-    });
-
-    // Também resetar ao fechar o modal
-    $('#checkout-modal').on('hidden.bs.modal', function() {
-        resetarCamposPagamentoParcelado();
-    });
-
-    // Resetar ao carregar a página
-    resetarCamposPagamentoParcelado();
-
-    $("#PrimeiraParaBoleto").on("change", function() {
-        var selected = $(this).val();
-        var $dataField = $("#dataPrimeiraParcelaBoleto");
-        var $help = $("#dataPrimeiraParcelaBoletoHelp");
-        if (selected === "5") {
-            $dataField.val("");
-            $dataField.prop("readonly", false);
-            $help.text("Selecione manualmente a data da primeira parcela.");
-        } else if (selected && regrasParcMap[selected] !== undefined) {
-            var dias = regrasParcMap[selected];
-            var hoje = new Date();
-            hoje.setDate(hoje.getDate() + dias);
-            var yyyy = hoje.getFullYear();
-            var mm = String(hoje.getMonth() + 1).padStart(2, '0');
-            var dd = String(hoje.getDate()).padStart(2, '0');
-            var dataFormatada = yyyy + '-' + mm + '-' + dd;
-            $dataField.val(dataFormatada);
-            $dataField.prop("readonly", true);
-            $help.text("Data calculada automaticamente: " + dd + "/" + mm + "/" + yyyy);
-        } else {
-            $dataField.val("");
-            $dataField.prop("readonly", true);
-            $help.text("");
-        }
-    });
-
-    // Ao clicar em OK no modal de cliente, preenche os campos com o cliente selecionado
-    $('#btn-find-client').on('click', function() {
-        var data = $('#cliente_id').select2('data')[0];
-        if (!data) return;
-
-        window.clientId = data.id;
-        window.clientName = data.text;
-        window.clientDoc = data.cliente_doc;
-        window.clienteDataFech = data.cliente_dt_fech;
-        window.responseCartoesCliente = data.cartoes || [];
-
-        // Verifica status de inadimplência
-        if (data.cliente_sts && data.cliente_sts === "MN") {
-            Swal.fire({
-                icon: 'warning',
-                title: 'ATENÇÃO',
-                html: '<div>Identificamos que este cliente, nos últimos 6 meses,<br>' +
-                      'tem histórico de atraso nos pagamentos.<br><br>' +
-                      'Sugestões:<br>' +
-                      '- Solicite um valor de entrada.<br>' +
-                      '- De preferência por um meio de pagamento à vista.<br>' +
-                      '- Coloque juros nas parcelas para cobrir um possível atraso.<br><br>' +
-                      '<strong>Deseja realmente continuar?</strong></div>',
-                showCancelButton: true,
-                confirmButtonText: 'OK',
-                cancelButtonText: 'Cancelar',
-                allowOutsideClick: false
-            }).then(function(result) {
-                if (!result.isConfirmed) {
-                    // Limpa seleção se cancelar
-                    $('#desCli').text('');
-                    $('#cliente_cadastro_id').val('');
-                    $('#getCliente').val('');
+            },
+            error: function(xhr) {
+                var msg = 'Falha na comunicação com o servidor.';
+                if (xhr && xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) {
+                    msg = xhr.responseJSON.error || xhr.responseJSON.message;
+                } else if (xhr && xhr.responseText) {
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        msg = json.error || json.message || msg;
+                    } catch(e) {
+                        msg = xhr.responseText;
+                    }
                 }
-            });
-        }
-
-        $('#cliente_cadastro_id').val(window.clientId).trigger('change'); // Preenche o select2 oculto
-        $('#cliente_cadastro_id').trigger('change'); // Dispara change para atualizar qualquer listener
-        // Aplica máscara ao CPF/CNPJ
-        if (window.clientDoc) {
-            var doc = window.clientDoc.replace(/\D/g, '');
-            if (doc.length === 11) {
-                $('#getCliente').val(doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
-            } else if (doc.length === 14) {
-                $('#getCliente').val(doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'));
-            } else {
-                $('#getCliente').val(window.clientDoc);
+                Swal.fire('Erro', msg, 'error');
             }
-        } else {
-            $('#getCliente').val('');
-        }
-        $('#desCli').text(window.clientName);        // Preenche o nome do cliente
+        });
 
-        // Aplica máscara
-        if (window.clientDoc && window.clientDoc.length === 11) {
-            $('#getCliente').mask('000.000.000-00');
-        } else if (window.clientDoc && window.clientDoc.length === 14) {
-            $('#getCliente').mask('00.000.000/0000-00');
-        }
-
-    });
-
-    $("#invoiceShow").css("height", ($(window).height() - 150) + "px");
-
-    $('body').addClass('layout-navbar-fixed');
-
-    $("#taxaDeEntrega").select2({
-        data: data
-    });
-
-    $("body").on("click","#carrinhoIcon", function(){
-        $('html,body').animate({scrollTop: document.body.scrollHeight},"fast");
-    });
-
-    $("#btnPesquisarCep").on("click", function() {
-        ns.cepOnClick();
-    });
-
-    ns.comboBoxSelect("idsearchphone", "/cliente/searchphone");
-    ns.comboBoxSelect("idcidade", "/cliente/obtercidadeid");
-    ns.comboBoxSelect("idestado", "/cliente/obterestadoid");
-    ns.comboBoxSelect("find-product", "/produto/obterproduto", "id", 7, "findlist");
-
-    $('.tab-pane, .cart-table-wrap, .dataTables_scrollBody, #invoiceShow').overlayScrollbars({
-        className: 'os-theme-dark',
-        sizeAutoCapable: true,
-        scrollbars: {
-            clickScrolling: true
-        },
-        overflowBehavior: {
-            x: "hidden",
-            y: "scroll"
-        },
-    });
-
-    $("body").on("click", ".payment-box", function() {
-        $(".payment-box-active").removeClass("payment-box-active");
-        $(this).addClass("payment-box-active");
-        tipoPagamentoSelecionado = $(this).data("identificacao");
-        $("#id_forma_pagto").val(tipoPagamentoSelecionado).trigger('change');
-        // Exibe/oculta os blocos Blade conforme o tipo de pagamento
-        if (tipoPagamentoSelecionado === "BL") {
-            $("#div-boleto").show();
-            $("#div-cartao").hide();
-            $("#payment-instructions").show();
-            atualizarParcelasBoleto();
-        } else if (tipoPagamentoSelecionado === "CM") {
-            $("#div-cartao").show();
-            $("#div-boleto").hide();
-            $("#payment-instructions").show();
-            atualizarParcelasCartao();
-        } else {
-            $("#div-boleto, #div-cartao").hide();
-            $("#payment-instructions").hide();
-        }
     });
 
 });

@@ -1257,6 +1257,10 @@ class DadosMestreSeeder extends Seeder
             ['langu' => 'PORT', "msg_categ" => "CBIN1", "msg_categ_desc" => "Cobrança de Inadimplente N1"],
             ['langu' => 'PORT', "msg_categ" => "CBIN2", "msg_categ_desc" => "Cobrança de Inadimplente N2"],
             ['langu' => 'PORT', "msg_categ" => "CBIN3", "msg_categ_desc" => "Cobrança de Inadimplente N3"],
+            ['langu' => 'PORT', "msg_categ" => "CBCPR", "msg_categ_desc" => "Cabeçalho do Comprovante"],
+            ['langu' => 'PORT', "msg_categ" => "MULTB", "msg_categ_desc" => "Dados da Multban"],
+            ['langu' => 'PORT', "msg_categ" => "RPCPR", "msg_categ_desc" => "Roda Pé do Comprovante"],
+            ['langu' => 'PORT', "msg_categ" => "AUTHO", "msg_categ_desc" => "Autorização de Transação"],
         ];
 
         DB::table('tbdm_msg_categ')->insert($tbdm_msg_categ);
@@ -1265,9 +1269,19 @@ class DadosMestreSeeder extends Seeder
             ['langu' => 'PORT', "canal_id" => "1", "canal_desc" => "E-mail"],
             ['langu' => 'PORT', "canal_id" => "2", "canal_desc" => "SMS"],
             ['langu' => 'PORT', "canal_id" => "3", "canal_desc" => "Whats App"],
+            ['langu' => 'PORT', "canal_id" => "4", "canal_desc" => "Comprovante de Pagamento"],
         ];
 
         DB::table('tbdm_canal_cm')->insert($tbdm_canal_cm);
+
+        $tbcf_msg_comp = [
+            ['emp_id' => 1, 'langu' => 'PORT', "canal_id" => "4", "msg_categ" => "CBCPR", 'msg_text' => "BANCO ARBI – S/A \n INSTITUICAO FINANCEIRA - REG. BACEN 54403563 \n CNPJ: 54.403.563/0001-50"],
+            ['emp_id' => 1, 'langu' => 'PORT', "canal_id" => "4", "msg_categ" => "MULTB", 'msg_text' => "MULTBAN\n SISTEMA DE PAGAMENTOS INTELIGENTES LTDA\n CNPJ: 01.179.943/0001-96"],
+            ['emp_id' => 1, 'langu' => 'PORT', "canal_id" => "4", "msg_categ" => "RPCPR", 'msg_text' => "RECONHEÇO QUE PAGUEI A IMPORTANCIA ACIMA"],
+            ['emp_id' => 1, 'langu' => 'PORT', "canal_id" => "4", "msg_categ" => "AUTHO", 'msg_text' => "ESTA TRANSAÇÃO FOI PROCESSADA EM AMBIENTE SEGURO E AUDITADO, EM CONFORMIDADE COM PADRÕES DE SEGURANÇA E AUDITORIA DO SETOR DE MEIOS DE PAGAMENTO"],
+        ];
+
+        DB::table('tbcf_msg_comp')->insert($tbcf_msg_comp);
 
         $tbdm_api_grupo = [
             ['langu' => 'PORT', "api_grupo" => "BCO", "api_grupo_desc" => "Bancária"],

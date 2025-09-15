@@ -20,6 +20,7 @@ use App\Http\Routes\CargaDadosRoute;
 use App\Http\Routes\PerfilDeAcessoRoute;
 use App\Http\Routes\RelatoriosRoute;
 use App\Http\Routes\VendasRoute;
+use App\Http\Routes\ConfiguracoesRoute;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -135,7 +136,15 @@ Route::group(['middleware' => ['auth']], function () {
      */
     RelatoriosRoute::rotas();
 
+    /**
+     * Vendas
+     */
     VendasRoute::rotas();
+
+    /**
+     * Configurações
+     */
+    ConfiguracoesRoute::rotas();
 });
 
 

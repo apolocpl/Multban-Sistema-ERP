@@ -44,7 +44,7 @@ class ProdutoController extends Controller
 
             return [
                 'produto_id' => $prod->produto_id,
-                'produto_tipo' => $prod->tipo,
+                'produto_tipo' => $prod->produto_tipo,
                 'produto_tipo_desc' => $tipoDesc,
                 'produto_dm' => $prod->produto_dm,
                 'produto_vlr' => $prod->produto_vlr,
