@@ -63,7 +63,7 @@ class CreateTbdmEmpresaParamTable extends Migration
             $table->float('tax_fid')->nullable();
             $table->string('pp_particular', 1)->nullable();
             $table->string('pp_franquia', 1)->nullable();
-            $table->string('pp_multmais', 1)->nullable();
+            $table->string('pp_mult', 1)->nullable();
             $table->string('pp_cashback', 1)->nullable();
             $table->string('antecip_ctr', 1)->nullable();
             $table->float('tax_antmult')->nullable();
@@ -112,8 +112,9 @@ class CreateTbdmEmpresaParamTable extends Migration
 
         Schema::create('tbdm_empresa_taxpos', function (Blueprint $table) {
             //PRIMARY KEY
+            $table->Id('tax_id');
             $table->foreignId('emp_id');
-            $table->string('tax_categ', 10);
+            $table->string('tax_categ', 4);
             //FIELDS
             $table->integer('parc_de')->length(5)->nullable();
             $table->integer('parc_ate')->length(5)->nullable();
@@ -123,7 +124,9 @@ class CreateTbdmEmpresaParamTable extends Migration
             $table->integer('modificador')->nullable();
             $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
-            $table->primary(['emp_id', 'tax_categ']);
+            $table->primary(['tax_id']);
+            // INDICES COMPOSTOS
+            $table->index(['emp_id', 'tax_categ']);
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
         });

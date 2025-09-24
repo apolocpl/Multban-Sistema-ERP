@@ -21,5 +21,9 @@ class TbtrfTitulos extends Model
         'data_pgto',
         'vlr_tot',
         'vlr_pgto',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 }

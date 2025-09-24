@@ -305,27 +305,6 @@
     <!---------------------------------------------->
     <!-- MODAIS ------------------------------------>
     <!---------------------------------------------->
-    <!-- MODAL - IMPRIMIR CUPOM -->
-    <div class="modal inmodal" id="impressaoModal" tabindex="-1" role="dialog" aria-hidden="true" data-keyboard="false"
-        data-backdrop="static">
-        <div class="modal-dialog">
-            <div class="modal-content animated bounceInRight">
-                <div class="modal-header">
-                    <h4 class="modal-title">Imprimir Cupom</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body text-center">
-                    <button type="button" id="imprimirCupom" class="btn btn-success btn-lg"><i class="fas fa-print"></i> Imprimir Cupom</button>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL PESQUISAR CLIENTE -->
     <div class="modal inmodal" id="pesquisar-cliente-modal">
         <div class="modal-dialog">
@@ -504,7 +483,11 @@
                                         @if(isset($RegrasParc) && count($RegrasParc) > 0)
                                             @foreach($RegrasParc as $regra)
                                                 @if(isset($regra->meio_pag) && $regra->meio_pag == 'BL')
-                                                    <option value="{{ $regra->opcao_parc }}" data-regra="{{ $regra->regra_parc }}">{{ $regra->opcao_parc_desc }}</option>
+                                                    <option value="{{ $regra->opcao_parc }}"
+                                                            data-regra="{{ $regra->regra_parc }}"
+                                                            data-tax-categ="{{ $regra->tax_categ }}">
+                                                        {{ $regra->opcao_parc_desc }}
+                                                    </option>
                                                 @endif
                                             @endforeach
                                         @endif
@@ -546,7 +529,11 @@
                                         @if(isset($RegrasParc) && count($RegrasParc) > 0)
                                             @foreach($RegrasParc as $regra)
                                                 @if(isset($regra->meio_pag) && $regra->meio_pag == 'CM')
-                                                    <option value="{{ $regra->opcao_parc }}" data-regra="{{ $regra->regra_parc }}">{{ $regra->opcao_parc_desc }}</option>
+                                                    <option value="{{ $regra->opcao_parc }}"
+                                                            data-regra="{{ $regra->regra_parc }}"
+                                                            data-tax-categ="{{ $regra->tax_categ }}">
+                                                            {{ $regra->opcao_parc_desc }}
+                                                    </option>
                                                 @endif
                                             @endforeach
                                         @endif

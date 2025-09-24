@@ -24,5 +24,9 @@ class TbtrSTitulos extends Model
         'vlr_plan',
         'perc_real',
         'vlr_real',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 }

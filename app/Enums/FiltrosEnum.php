@@ -20,5 +20,5 @@ abstract class FiltrosEnum
     const COD_FRANQUEADORA = 13;
     const EMPRESA = 14;
     const NOME_FANTASIA = 15;
-    const NOME_MULTMAIS = 16;
+    const NOME_MULTBAN = 16;
 }

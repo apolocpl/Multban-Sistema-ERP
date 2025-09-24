@@ -29,9 +29,11 @@ function gerarComprovanteVenda(params) {
     // Função para mascarar cartão (4 primeiros + 5 últimos)
     function mascaraCartao(num) {
         if (!num) return '';
-        num = String(num).replace(/\D/g, '');
-        if (num.length < 9) return num;
-        return num.substr(0, 4) + ' **** **** ' + num.substr(-5);
+        var n = String(num).replace(/\D/g, '');
+        if (n.length < 8) return n; // Não mascara se não tiver pelo menos 8 dígitos
+        var first4 = n.substr(0, 4);
+        var last4 = n.substr(-4);
+        return `${first4}.****.****.${last4}`;
     }
     // Função para formatar moeda
     function formatBRL(valor) {
@@ -87,7 +89,7 @@ function gerarComprovanteVenda(params) {
                                                    border-radius:8px;
                                                    padding:16px;
                                                    box-shadow:0 2px 8px #bfa76a33;
-                                                   font-size:14px;
+                                                   font-size:10px;
                                                    font-family:monospace;">
 
         <div style="text-align:center;font-size:13px;">
@@ -136,6 +138,11 @@ function gerarComprovanteVenda(params) {
             <span style="flex-shrink:0;">Valor do Pagamento</span>
             <span style="flex-grow:1;border-bottom:1px dotted #bfa76a;margin:0 6px;"></span>
             <b style="flex-shrink:0;">${formatBRL(params.comprovante.checkout_total)}</b>
+        </div>
+        <div style="display:flex;align-items:center;font-size:12px;">
+            <span style="flex-shrink:0;">Juros</span>
+            <span style="flex-grow:1;border-bottom:1px dotted #bfa76a;margin:0 6px;"></span>
+            <b style="flex-shrink:0;">${formatBRL(params.comprovante.jurosTotal)}</b>
         </div>
         <div style="display:flex;align-items:center;font-size:12px;">
             <span style="flex-shrink:0;">Troco</span>

@@ -45,5 +45,9 @@ class TbtrHTitulos extends Model
         'vlr_atr_m',
         'vlr_atr_j',
         'vlr_acr_mn',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 }

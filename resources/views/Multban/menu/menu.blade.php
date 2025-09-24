@@ -30,14 +30,14 @@
         <span class="brand-text">
             @if($empresa->whiteLabel)
             @if ($empresa->whiteLabel->logo_h)
-                <img src="{{asset('storage/white-label/empresa-'.$empresa->emp_id. '/logo-h.png')}}" alt="Logo multmais"
-                class="logo-multmais">
+                <img src="{{asset('storage/white-label/empresa-'.$empresa->emp_id. '/logo-h.png')}}" alt="Logo multban"
+                class="logo-multban">
             @else
-                <img src="{{asset('assets/dist/img/logo-amarela.png')}}" alt="Logo multmais" class="logo-multmais">
+                <img src="{{asset('assets/dist/img/logo-amarela.png')}}" alt="Logo multban" class="logo-multban">
             @endif
 
             @else
-            <img src="{{asset('assets/dist/img/logo-amarela.png')}}" alt="Logo multmais" class="logo-multmais">
+                <img src="{{asset('assets/dist/img/logo-amarela.png')}}" alt="Logo multban" class="logo-multban">
             @endif
         </span>
     </a>

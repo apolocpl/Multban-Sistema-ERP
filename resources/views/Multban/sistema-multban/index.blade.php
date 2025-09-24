@@ -1,5 +1,5 @@
 @extends('layouts.app-master')
-@section('page.title', 'Sistema MultMais')
+@section('page.title', 'Sistema multban')
 @push('script-head')
 <!-- Select2 -->
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/css/select2.min.css') }}">
@@ -646,7 +646,7 @@
                         <div class="form-group col-md-4">
                             <div class="custom-control custom-checkbox">
                                 <input class="custom-control-input" type="checkbox" name="emp_checkm" id="emp_checkm">
-                                <label for="emp_checkm" class="custom-control-label">Check Out Multmais:</label>
+                                <label for="emp_checkm" class="custom-control-label">Check Out multban:</label>
                                 <span id="emp_checkmError" class="text-danger text-sm"></span>
                             </div>
                         </div>
@@ -1557,7 +1557,7 @@
 <!-- bootstrap color picker -->
 <script src="{{ asset('assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js') }}"></script>
 <script src="{{ asset('assets/dist/js/app.js') }}"></script>
-<script src="{{ asset('assets/dist/js/pages/sistema-multmais/gridsistema-multmais.js') }}"></script>
+<script src="{{ asset('assets/dist/js/pages/sistema-multban/gridsistema-multban.js') }}"></script>
 
 <script type="text/javascript">
     function empresaObrigatoria(isNew = false) {

@@ -39,5 +39,9 @@ class TbtrITitulos extends Model
         'pgt_mtjr',
         'vlr_rec',
         'pts_disp',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 }

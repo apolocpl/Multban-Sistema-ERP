@@ -30,7 +30,7 @@
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
       <!--LOGO LOGIN-->
-      <img src="{{ asset('assets/dist/img/logo-multmais-completa.png')}}" alt="Logo multmais"
+      <img src="{{ asset('assets/dist/img/logo-multban-completa.png')}}" alt="Logo multban"
       style="width: 220px;
       padding: 10px;
       padding-right: 9px;

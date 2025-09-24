@@ -22,6 +22,7 @@ class CreateTbdmEmpresaGeralTable extends Migration
             //FIELDS
             $table->string('emp_wl', 1)->nullable();
             $table->integer('emp_wlde')->length(10)->nullable();
+            $table->decimal('emp_comwl', 10, 2)->nullable();
             $table->string('emp_privlbl', 1)->nullable();
             $table->string('emp_ie', 14)->nullable();
             $table->string('emp_im', 14)->nullable();

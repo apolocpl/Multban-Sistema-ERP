@@ -27,6 +27,7 @@ return new class extends Migration
             $table->uuid('nsu_autoriz');
 
             // FIELDS
+            $table->string('comp_sep', 1)->nullable();
             $table->string('check_reemb', 1)->nullable();
             $table->string('lib_ant', 1)->nullable();
             $table->decimal('vlr_brt', 10, 2)->nullable();
@@ -47,6 +48,10 @@ return new class extends Migration
             $table->decimal('vlr_atr_m', 10, 2)->nullable();
             $table->decimal('vlr_atr_j', 10, 2)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             // KEYS
             $table->primary(['titulo', 'nsu_titulo', 'nsu_autoriz']);
             // INDICES SIMPLES
@@ -101,6 +106,10 @@ return new class extends Migration
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp')->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             // KEYS
             $table->primary(['emp_id', 'user_id', 'titulo', 'nsu_titulo', 'nsu_autoriz', 'produto_tipo', 'produto_id', 'item']);
             // INDICES COMPOSTOS
@@ -115,11 +124,8 @@ return new class extends Migration
 
         Schema::create('tbtr_f_titulos', function (Blueprint $table) {
             // PRIMARY KEY
-            // $table->foreignId('emp_id');
-            // $table->foreignId('user_id');
+            $table->foreignId('emp_id');
             $table->uuid('id_fatura');
-            // $table->foreignId('titulo');
-            // $table->foreignUuid('nsu_titulo');
             $table->foreignId('cliente_id');
             $table->foreignUuid('card_uuid');
             // FIELDS
@@ -130,6 +136,10 @@ return new class extends Migration
             $table->date('data_pgto')->nullable();
             $table->decimal('vlr_tot', 10, 2)->nullable();
             $table->decimal('vlr_pgto', 10, 2)->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             // KEYS
             $table->primary(['id_fatura', 'cliente_id', 'card_uuid']);
             // INDICES SIMPLES
@@ -138,16 +148,12 @@ return new class extends Migration
             $table->index('card_uuid');
             $table->index('data_fech');
             // INDICES COMPOSTOS
-            $table->index(['id_fatura', 'cliente_id', 'fatura_sts'], 'idx_id_cliente_sts');
-            $table->index(['id_fatura', 'cliente_id', 'fatura_sts', 'data_venc'], 'idx_id_cliente_stsdt');
-            // $table->index(['emp_id', 'id_fatura', 'cliente_id'], 'idx_emp_fatura_cliente');
-            // $table->index(['emp_id', 'id_fatura', 'data_fech', 'cliente_id'], 'idx_emp_fatura_fech_cliente');
-            // $table->index(['emp_id', 'id_fatura', 'data_venc', 'cliente_id'], 'idx_emp_fatura_venc_cliente');
-            // $table->index(['emp_id', 'id_fatura', 'data_pgto', 'cliente_id'], 'idx_emp_fatura_pgto_cliente');
+            $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts'], 'idx_id_cliente_sts');
+            $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_venc'], 'idx_id_cliente_stsdt1');
+            $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_fech'], 'idx_id_cliente_stsdt2');
+            $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_pgto'], 'idx_id_cliente_stsdt3');
             //FOREIGN KEY
-            // $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            // $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
-            // $table->foreign(['titulo', 'nsu_titulo'])->references(['titulo', 'nsu_titulo'])->on('tbtr_h_titulos');
+            $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
         });
@@ -189,11 +195,14 @@ return new class extends Migration
             $table->decimal('vlr_atr_m', 10, 2)->nullable();
             $table->decimal('vlr_atr_j', 10, 2)->nullable();
             $table->string('isent_mj', 1)->nullable();
+            $table->string('protestado', 1)->nullable();
             $table->string('negociacao', 1)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();
+            $table->decimal('vlr_cst_cob', 10, 2)->nullable();
             $table->longtext('negociacao_obs')->nullable();
             $table->longtext('negociacao_file')->nullable();
             $table->date('follow_dt')->nullable();
+            $table->string('check_ant', 1)->nullable();
             $table->decimal('perct_ant', 5, 2)->nullable();
             $table->decimal('ant_desc', 10, 2)->nullable();
             $table->decimal('pgt_vlr', 10, 2)->nullable();
@@ -201,6 +210,10 @@ return new class extends Migration
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp_item')->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
             $table->primary(['emp_id', 'user_id', 'titulo','nsu_titulo' , 'nsu_autoriz', 'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
             // INDICES COMPOSTOS
@@ -253,11 +266,14 @@ return new class extends Migration
             $table->decimal('vlr_atr_m', 10, 2)->nullable();
             $table->decimal('vlr_atr_j', 10, 2)->nullable();
             $table->string('isent_mj', 1)->nullable();
+            $table->string('protestado', 1)->nullable();
             $table->string('negociacao', 1)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();
+            $table->decimal('vlr_cst_cob', 10, 2)->nullable();
             $table->longtext('negociacao_obs')->nullable();
             $table->longtext('negociacao_file')->nullable();
             $table->date('follow_dt')->nullable();
+            $table->string('check_ant', 1)->nullable();
             $table->decimal('perct_ant', 5, 2)->nullable();
             $table->decimal('ant_desc', 10, 2)->nullable();
             $table->decimal('pgt_vlr', 10, 2)->nullable();
@@ -265,6 +281,10 @@ return new class extends Migration
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
             $table->integer('pts_disp_item')->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
             $table->primary(['emp_id', 'user_id', 'titulo','nsu_titulo' , 'nsu_autoriz', 'qtd_parc', 'primeira_para', 'cnd_pag', 'meio_pag_v', 'data_mov', 'parcela', 'nid_parcela', 'data_venc', 'destvlr']);
             // INDICES COMPOSTOS
@@ -296,6 +316,10 @@ return new class extends Migration
             $table->decimal('vlr_plan', 10, 2)->nullable();
             $table->decimal('perc_real', 5, 2)->nullable();
             $table->decimal('vlr_real', 10, 2)->nullable();
+            $table->integer('criador')->nullable();
+            $table->timestamp('dthr_cr')->nullable();
+            $table->integer('modificador')->nullable();
+            $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
             $table->primary(['emp_id', 'user_id', 'titulo', 'nsu_titulo', 'nsu_autoriz', 'parcela', 'produto_id', 'lanc_tp','recebedor']);
             //FOREIGN KEY

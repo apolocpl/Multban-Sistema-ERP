@@ -532,7 +532,8 @@ class ClienteController extends Controller
                 ->where('emp_id', $emp_id)
                 ->select(
                     'card_tp', 'card_mod', 'card_categ',
-                    'card_desc', 'cliente_cardn', 'card_saldo_vlr',
+                    'card_desc', 'card_uuid', 'cliente_cardn',
+                    'cliente_cardcv', 'card_saldo_vlr',
                     'card_limite', 'card_saldo_pts','card_sts'
                 )
                 ->get()

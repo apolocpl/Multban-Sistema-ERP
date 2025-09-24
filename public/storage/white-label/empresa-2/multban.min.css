@@ -149,8 +149,8 @@ a.brand-link{
     background-color:var(--primary-multban);
     padding-bottom: 5px;
 }
-.logo-multmais{
-    width: 110px; scroll-padding-inline: 0px; margin-bottom: auto;
+.logo-multban{
+    width: 110px; scroll-padding-inline: 0px; margin-top: .45rem; margin-bottom: auto;
 }
 .sidebar{
     background-color:var(--primary-multban);
@@ -14159,7 +14159,7 @@ body:not(.layout-fixed) .main-sidebar .sidebar {
     height: 29px;
     margin-bottom: -.25rem;
     margin-left: .95rem;
-    margin-top: -.25rem
+    margin-top: -.45rem
 }
 
 .brand-link.text-sm .brand-image-xs,

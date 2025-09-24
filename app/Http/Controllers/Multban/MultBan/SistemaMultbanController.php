@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Multban\MultMais;
+namespace App\Http\Controllers\Multban\Multban;
 
 use App\Http\Controllers\Controller;
 use App\Models\Multban\DadosMestre\TbDmAPIGrupo;
@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Intervention\Image\Laravel\Facades\Image;
 
-class SistemaMultMaisController extends Controller
+class SistemaMultbanController extends Controller
 {
     private $permissions;
     private $req;
@@ -55,7 +55,7 @@ class SistemaMultMaisController extends Controller
         $tbDmCanalCm = TbDmCanalCm::all();
         $users = User::all();
 
-        return view('Multban.sistema-multmais.index', compact(
+        return view('Multban.sistema-multban.index', compact(
             'tiposDePlanoVendido',
             'empresaGeral',
             'tbdmFornecedor',
@@ -346,7 +346,7 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-emp-id="' . $row->emp_id . '" class="btn btn-primary btn-sm mr-1 btn-conexao-db" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
@@ -578,7 +578,7 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-emp-id="' . $row->emp_id . '" data-tab-name="' . $row->emp_tab_name . '"  class="btn btn-primary btn-sm mr-1 btn-alias-db" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
@@ -844,7 +844,7 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-emp-id="' . $row->emp_id . '" ';
                     $btn .= 'data-fornec="' . $row->bc_fornec . '" ';
@@ -853,7 +853,7 @@ class SistemaMultMaisController extends Controller
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-apis-db" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -1101,14 +1101,14 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-emp-id="' . $row->emp_id . '" ';
                     $btn .= 'data-tp-plano="' . $row->tp_plano . '" ';
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-tp-plano" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -1546,13 +1546,13 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-emp-id="' . $row->emp_id . '" ';
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-white-label" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -1853,14 +1853,14 @@ class SistemaMultMaisController extends Controller
 
                 $attrData = substr($attrData, 0, -4);
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" data-id="' . Crypt::encryptString($attrData)  . '" ';
                     $btn .= 'data-name="' . Crypt::encryptString($this->req->tabela_bdm) . '" ';
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-dados-mestre" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-id="' . Crypt::encryptString($attrData) . '" ';
@@ -2067,7 +2067,7 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -2076,7 +2076,7 @@ class SistemaMultMaisController extends Controller
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-padroes-de-mensagens" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -2346,7 +2346,7 @@ class SistemaMultMaisController extends Controller
             ->addColumn('action', function ($row) {
                 $btn = '';
 
-                if (in_array('config-sistema-multmais.edit', $this->permissions)) {
+                if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
                     $btn .= '<button type="button" ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
@@ -2355,7 +2355,7 @@ class SistemaMultMaisController extends Controller
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-work-flow" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                if (in_array('config-sistema-multmais.destroy', $this->permissions)) {
+                if (in_array('config-sistema-multban.destroy', $this->permissions)) {
 
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1 delete_id " ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';

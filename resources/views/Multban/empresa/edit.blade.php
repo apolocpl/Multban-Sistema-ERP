@@ -40,8 +40,8 @@
                             aria-controls="contatos" aria-selected="false">Contatos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="multmais-tab" data-toggle="pill" href="#multmais" role="tab"
-                            aria-controls="multmais" aria-selected="false">Mult+</a>
+                        <a class="nav-link" id="multban-tab" data-toggle="pill" href="#multban" role="tab"
+                            aria-controls="multban" aria-selected="false">Multban</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="antecipacao-tab" data-toggle="pill" href="#antecipacao" role="tab"
@@ -88,7 +88,6 @@
                             </div>
                         </div>
                         <div class="form-row">
-
                             <div class="form-group col-md-2">
                                 <div class="custom-control custom-checkbox">
                                     <input class="custom-control-input" {{$empresaGeral->emp_wl == 'x' ? 'checked' : ''}} type="checkbox" name="emp_wl" id="emp_wl">
@@ -105,7 +104,15 @@
                                     <span id="emp_privlblError" class="text-danger text-sm"></span>
                                 </div>
                             </div>
-
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-2" id="comissionamento-multban-group" style="display: {{ $empresaGeral->emp_wl == 'x' ? 'block' : 'none' }};">
+                                <label for='emp_comwl'>Comissão Contrato WhiteLabel:*</label>
+                                <input type="text" id='emp_comwl' name='emp_comwl'
+                                    value="{{$empresaGeral->emp_comwl}}"
+                                    class="form-control porcentagem form-control-sm" placeholder='0,00'>
+                                <span id="emp_comwlError" class="text-danger text-sm"></span>
+                            </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-3">
@@ -168,10 +175,10 @@
                                 <span id="emp_nfantError" class="text-danger text-sm"></span>
                             </div>
                             <div class="form-group col-md-3">
-                                <label for="emp_nmult">Nome multmais:*</label>
+                                <label for="emp_nmult">Nome multban:*</label>
                                 <input autocomplete="off" maxlength="15" type="text" class="form-control  form-control-sm"
                                     id="emp_nmult" name="emp_nmult" value="{{$empresaGeral->emp_nmult}}"
-                                    placeholder="Nome multmais">
+                                    placeholder="Nome multban">
                                 <span id="emp_nmultError" class="text-danger text-sm"></span>
                             </div>
 
@@ -283,7 +290,7 @@
                             <div class="form-group col-md-3">
                                 <div class="custom-control custom-checkbox">
                                     <input class="custom-control-input" {{$empresaGeral->emp_checkm == 'x' ? 'checked' : ''}} type="checkbox" name="emp_checkm" id="emp_checkm">
-                                    <label for="emp_checkm" class="custom-control-label">Check Out multmais:</label>
+                                    <label for="emp_checkm" class="custom-control-label">Check Out multban:</label>
                                     <span id="emp_checkmError" class="text-danger text-sm"></span>
                                 </div>
                             </div>
@@ -599,8 +606,8 @@
 
                     </div>
 
-                    <!-- MULTMAIS -->
-                    <div class="tab-pane fade" id="multmais" role="tabpanel" aria-labelledby="multmais-tab">
+                    <!-- multban -->
+                    <div class="tab-pane fade" id="multban" role="tabpanel" aria-labelledby="multban-tab">
 
                         <div class="card card-prinary">
                             <div class="card-body">
@@ -637,9 +644,7 @@
                                             name="emp_cdgbc" id="emp_cdgbc" data-placeholder="Selecione"
                                             style="width: 100%;">
                                             <option></option>
-
                                             @foreach($codigoDosbancos as $key => $emp_cdgbc)
-
                                                 <option {{$emp_cdgbc->cdgbc == $empresaParam->emp_cdgbc ? 'selected' : ''}} value="{{$emp_cdgbc->cdgbc}}">{{$emp_cdgbc->cdgbc}} -
                                                     {{$emp_cdgbc->cdgbc_desc}}</option>
                                             @endforeach
@@ -738,8 +743,6 @@
                             </div>
                         </div>
 
-
-
                         <div class="form-row">
                             <div class="col-md-12">
                                 <div class="card card-prinary">
@@ -789,7 +792,6 @@
                                     </div>
                                 </div>
 
-
                                 <div
                                     class="card card-outline card-primary {{$empresaParam->blt_ctr == 'x' ? '' : 'collapsed-card'}}">
                                     <div class="card-header">
@@ -817,7 +819,7 @@
                                                     class="form-control porcentagem form-control-sm" placeholder='0,00'>
                                                 <span id="tax_bltError" class="text-danger text-sm"></span>
                                             </div>
-                                            <div class="form-group col-md-2">
+                                            <div class="form-group col-md-3">
                                                 <label for='blt_parclib'>Quantidade de Parcelas liberadas:*</label>
                                                 <input type="number" id='blt_parclib' name='blt_parclib'
                                                     value="{{$empresaParam->blt_parclib}}" class="form-control form-control-sm"
@@ -1522,18 +1524,18 @@
                                             <div class="form-group col-md-3">
                                                 <div class="custom-control custom-checkbox">
                                                     <input class="custom-control-input"
-                                                        {{$empresaParam->pp_multmais == 'x' ? 'checked' : ''}}
-                                                        type="checkbox" name="pp_multmais" id="pp_multmais">
-                                                    <label for="pp_multmais" class="custom-control-label">Multmais Pontos:</label>
+                                                        {{$empresaParam->pp_mult == 'x' ? 'checked' : ''}}
+                                                        type="checkbox" name="pp_mult" id="pp_mult">
+                                                    <label for="pp_mult" class="custom-control-label">Mult Pontos:</label>
                                                 </div>
-                                                <span id="pp_multmaisError" class="text-danger text-sm"></span>
+                                                <span id="pp_multError" class="text-danger text-sm"></span>
                                             </div>
                                             <div class="form-group col-md-3">
                                                 <div class="custom-control custom-checkbox">
                                                     <input class="custom-control-input"
                                                         {{$empresaParam->pp_cashback == 'x' ? 'checked' : ''}}
                                                         type="checkbox" name="pp_cashback" id="pp_cashback">
-                                                    <label for="pp_cashback" class="custom-control-label">Multmais Valor:</label>
+                                                    <label for="pp_cashback" class="custom-control-label">Mult Valor:</label>
                                                 </div>
                                                 <span id="pp_cashbackError" class="text-danger text-sm"></span>
                                             </div>

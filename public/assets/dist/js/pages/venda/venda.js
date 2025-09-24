@@ -4,6 +4,7 @@
 // Armazena o valor original do produto selecionado
 var tituloAtual = null;
 var nsu_tituloAtual = null;
+var cartaoSelecionado = null;
 var precoOriginalProduto = 0;
 var data = [];
 var tipoPagamentoSelecionado = null;
@@ -18,6 +19,7 @@ var discountType = '%';
 var empresa = window.empresa || null;
 var empresaParam = window.empresaParam || null;
 var podeFecharCheckoutModal = false;
+var cobrar = false;
 var lastToastr = {};
 var venda_subtotal = $("#p_subtotal").text().replace("R$", "").trim();
 var venda_desconto = $("#p_discount").text().replace("R$", "").trim();
@@ -27,6 +29,11 @@ var arr_checkout_desconto = [];
 var arr_checkout_cashback = [];
 var arr_checkout_total = [];
 var arr_meiosPagtoUtilizados = [];
+var arr_checkout_juros = [];
+var arr_checkout_total = [];
+var arr_checkout_troco = [];
+var arr_checkout_desconto = [];
+var carrinho = [];
 
 //status das mesas
 var mesaStatus = {}
@@ -88,6 +95,361 @@ var calcDiscount = function(id, index) {
 // FUNÇÕES
 //////////
 
+// Realiza a cobrança (total ou parcial)
+function realizarCobranca(cobrancaDados) {
+
+    $.ajax({
+        url: '/pdv-web/realizar-venda',
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': cobrancaDados.token },
+        data: {
+            token: cobrancaDados.token,
+            cliente_id: cobrancaDados.cliente_id,
+            tipoPagto: cobrancaDados.tipoPagto,
+            checkout_subtotal: cobrancaDados.checkout_subtotal,
+            checkout_cashback: cobrancaDados.checkout_cashback,
+            checkout_desconto: cobrancaDados.checkout_desconto,
+            checkout_pago: cobrancaDados.checkout_pago,
+            checkout_descontado: cobrancaDados.checkout_descontado,
+            checkout_troco: cobrancaDados.checkout_troco,
+            checkout_resgatado: cobrancaDados.checkout_resgatado,
+            checkout_total: cobrancaDados.checkout_total,
+            valortotalacobrar: cobrancaDados.valortotalacobrar,
+            vendaSemJuros: cobrancaDados.vendaSemJuros,
+            check_reembolso: cobrancaDados.check_reembolso,
+            tax_categ: cobrancaDados.tax_categ,
+            regra_parc: cobrancaDados.regra_parc,
+            valorTotalComJuros: cobrancaDados.valorTotalComJuros,
+            valorParcelaComJuros: cobrancaDados.valorParcelaComJuros,
+            valorParcelaSemJuros: cobrancaDados.valorParcelaSemJuros,
+            jurosTotal: cobrancaDados.jurosTotal,
+            jurosTotalParcela: cobrancaDados.jurosTotalParcela,
+            parcelas: cobrancaDados.parcelas,
+            dataPrimeiraParcela: cobrancaDados.dataPrimeiraParcela,
+            proporcao_cobrado: cobrancaDados.proporcao_cobrado,
+            checkout_desconto_proporcional: cobrancaDados.checkout_desconto_proporcional,
+            checkout_cashback_proporcional: cobrancaDados.checkout_cashback_proporcional,
+            carrinho: cobrancaDados.carrinho,
+            card_tp: cobrancaDados.card_tp,
+            card_mod: cobrancaDados.card_mod,
+            card_categ: cobrancaDados.card_categ,
+            card_desc: cobrancaDados.card_desc,
+            card_uuid: cobrancaDados.card_uuid,
+            cliente_cardn: cobrancaDados.cliente_cardn,
+            cliente_cardcv: cobrancaDados.cliente_cardcv,
+            card_saldo_vlr: cobrancaDados.card_saldo_vlr,
+            card_limite: cobrancaDados.card_limite,
+            card_saldo_pts: cobrancaDados.card_saldo_pts,
+            card_sts: cobrancaDados.card_sts,
+            tituloAtual: tituloAtual,
+            nsu_tituloAtual: nsu_tituloAtual,
+        },
+
+        success: function(resp) {
+            if (resp.success) {
+
+                // Se for a primeira cobrança, salva o título e o nsu_título
+                if (!tituloAtual && resp.titulo) {
+                    tituloAtual = resp.titulo;
+                }
+                if (!nsu_tituloAtual && resp.nsu_titulo) {
+                    nsu_tituloAtual = resp.nsu_titulo;
+                }
+
+                // Atualiza arrays de controle
+                arr_nsu_autoriz.push(resp.nsu_autoriz || '');
+                arr_checkout_desconto.push(cobrancaDados.checkout_desconto_proporcional);
+                arr_checkout_cashback.push(cobrancaDados.checkout_cashback_proporcional);
+                arr_checkout_troco.push(cobrancaDados.checkout_troco);
+                arr_checkout_total.push(cobrancaDados.valortotalacobrar);
+                arr_checkout_juros.push(cobrancaDados.jurosTotal);
+
+                // Calcula saldo remanescente
+                var totaljuros = arr_checkout_juros.reduce((a, b) => Number(a) + Number(b), 0);
+                var totalCobrado = arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0);
+                var totalTroco = arr_checkout_troco.reduce((a, b) => Number(a) + Number(b), 0);
+                var totalDesconto = arr_checkout_desconto.reduce((a, b) => Number(a) + Number(b), 0);
+                var saldo = cobrancaDados.checkout_subtotal - totalCobrado - cobrancaDados.checkout_desconto;
+
+                if (saldo > 0.01) {
+
+                    // Mensagem de cobrança parcial
+                    Swal.fire('Parcial', 'Cobrança parcial registrada! Ainda há saldo a receber.', 'info');
+
+                    // Atualiza campos para o saldo remanescente
+                    $("#valortotalacobrar").val(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+                    $("#checkout_total").text(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+
+                    $("#checkout_pago").text((cobrancaDados.checkout_pago + cobrancaDados.valortotalacobrar).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                    $("#checkout_descontado").text((cobrancaDados.checkout_descontado + cobrancaDados.checkout_desconto_proporcional).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                    $("#checkout_resgatado").text((cobrancaDados.checkout_resgatado + cobrancaDados.checkout_cashback_proporcional).toLocaleString('pt-BR', { maximumFractionDigits: 0 }));
+
+                    // Limpa apenas campos de pagamento/modal
+                    $('.payment-box-active').removeClass('payment-box-active');
+                    $('#id_forma_pagto').val('').trigger('change');
+                    $('#valortroco').val('0,00');
+                    $("#valorsaldo").val('0,00');
+
+                    // Resetar campos de pagamento parcelado
+                    $("#parcelasCartao").val("").trigger("change");
+                    $("#parcelasBoleto").val("").trigger("change");
+                    $("#PrimeiraParaCartao").val("").trigger("change");
+                    $("#PrimeiraParaBoleto").val("").trigger("change");
+                    $("#dataPrimeiraParcelaCartao").val("");
+                    $("#dataPrimeiraParcelaBoleto").val("");
+
+                } else {
+                    Swal.fire('Sucesso', 'Cobrança registrada!', 'success').then(function() {
+
+                        // Limpar carrinho, atualizar tela, etc.
+                        $("#totalItens").html("0");
+                        $("#TableNo").text("");
+                        $("#TableNoCart").text("");
+                        $(".valorTotal").html("R$ 0,00");
+                        $("#CartHTML").html("");
+                        $("#p_subtotal").html("R$ 0,00");
+                        $("#p_discount").html("R$ 0,00");
+                        $(".totalPagar").html("R$ 0,00");
+                        $("#pedidoID").val("");
+                        // Produto
+                        $('#find-product').val(null).trigger('change');
+                        $('#find-product').select2('data', null);
+                        $('#getProduto').val('');
+                        $('#desProd').html('');
+                        $('#item-quantity').val('1');
+                        $('#item-discount').val('0,00');
+                        $('#item-price').val('0,00');
+                        $('#item-subtotal').val('0,00');
+                        $('#produto_dmf').val(null).trigger('change');
+                        $('#produto_dmf_id').val('');
+                        $('#produto_tipo_id').val('');
+                        // Pagamento
+                        $('#valortotalacobrar').val('0,00');
+                        $('#valorsaldo').val('0,00');
+                        $('#valortroco').val('0,00');
+                        $('#checkout_subtotal').text('R$ 0,00');
+                        $('#checkout_desconto').text('R$ 0,00');
+                        $('#checkout_pago').text('R$ 0,00');
+                        $('#checkout_descontado').text('R$ 0,00');
+                        $('#checkout_resgatado').text('0');
+                        $('#checkout_total').text('R$ 0,00');
+                        if ($("#checkout_cashback").length) {
+                            $("#checkout_cashback").text('R$ 0,00');
+                        }
+                        $('.payment-box-active').removeClass('payment-box-active');
+                        $('#id_forma_pagto').val('').trigger('change');
+                        $('#checkout-modal').modal('hide');
+
+                        ///////////////////////////////////////////////
+                        // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
+                        var tipo_pagamento = '';
+                        if (cobrancaDados.tipoPagto === 'CM') {
+                            if (cobrancaDados.parcelas > 1) {
+                                tipo_pagamento = 'Parcelado';
+                            } else  {
+                                tipo_pagamento = 'À Vista';
+                            }
+                        } else if (cobrancaDados.tipoPagto === 'BL') {
+                            if (cobrancaDados.parcelas > 1) {
+                                tipo_pagamento = 'Parcelado';
+                            } else  {
+                                tipo_pagamento = 'À Vista';
+                            }
+                        } else if (cobrancaDados.tipoPagto === 'DN') {
+                            tipo_pagamento = 'À Vista';
+                        } else if (cobrancaDados.tipoPagto === 'PX') {
+                            tipo_pagamento = 'À Vista';
+                        } else if (cobrancaDados.tipoPagto === 'OT') {
+                            tipo_pagamento = 'À Vista';
+                        }
+
+                        $.get('/api/mensagens-comp', {
+                            canal_id: 4,
+                            categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
+
+                        }, function(mensagensComp) {
+
+                            var params = {
+                                empresa: {
+                                    nome: empresa.emp_nfant,
+                                    cnpj: empresa.emp_cnpj,
+                                    im: empresa.emp_im,
+                                    ie: empresa.emp_ie,
+                                    emp_id: empresa.emp_id
+                                },
+
+                                cliente: {
+                                    nome: window.clientName,
+                                    doc: window.clientDoc,
+                                    pontos: window.clientPontos
+                                },
+
+                                comprovante: {
+                                    titulo: resp.titulo,
+                                    nsu_titulo: resp.nsu_titulo,
+                                    nsu_autoriz: arr_nsu_autoriz,
+                                    data_hora: (new Date()).toLocaleString('pt-BR'),
+                                    cartao_numero: (cobrancaDados.cliente_cardn || ''),
+
+                                    tipo_pagamento: tipo_pagamento,
+                                    parcelas: cobrancaDados.parcelas,
+                                    pontos_concedidos: 0,
+
+                                    meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
+                                    jurosTotal: totaljuros,
+                                    checkout_subtotal: cobrancaDados.checkout_subtotal,
+                                    checkout_troco: totalTroco,
+                                    checkout_desconto: totalDesconto,
+                                    checkout_cashback: cobrancaDados.checkout_cashback,
+                                    checkout_total: totalCobrado + totaljuros
+                                },
+
+                                mensagens: {
+                                    cabecalho: mensagensComp.CBCPR,
+                                    multban: mensagensComp.MULTB,
+                                    rodape: mensagensComp.RPCPR
+                                },
+
+                                autorizacao: mensagensComp.AUTHO
+                            };
+
+                            var htmlComprovante = gerarComprovanteVenda(params);
+
+                            Swal.fire({
+                                html: htmlComprovante,
+                                showConfirmButton: false,
+                                width: 500,
+                                customClass: { popup: 'swal2-comprovante-popup' },
+                                allowOutsideClick: false,
+                                footer: `
+                                    <div style="display:flex;justify-content:space-between;gap:8px;">
+                                        <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
+                                        <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
+                                        <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
+                                        <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
+                                    </div>
+                                `
+                            });
+
+                            // Fechar o modal ao clicar em fechar
+                            $(document).on('click', '#btnFecharComprovante', function() {
+                                 // Resetar arrays de controle
+                                cart = [];
+                                carrinho = [];
+                                arr_nsu_autoriz = [];
+                                arr_meiosPagtoUtilizados = [];
+                                arr_checkout_desconto = [];
+                                arr_checkout_cashback = [];
+                                arr_checkout_total = [];
+                                arr_checkout_juros = [];
+                                arr_checkout_troco = [];
+                                cartaoSelecionado = null;
+                                //window.responseCartoesCliente = [];
+                                window.cobrancaDados = [];
+                                tituloAtual = null;
+                                nsu_tituloAtual = null;
+                                Swal.close();
+                                show_cart();
+
+                            });
+
+                            // Imprimir ao clicar em imprimir
+                            $(document).on('click', '#btnImprimirComprovante', function() {
+                                // Pega o HTML do comprovante
+                                var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
+                                // Abre nova janela
+                                var printWindow = window.open('', '', 'width=800,height=600');
+                                printWindow.document.write(`
+                                    <html>
+                                    <head>
+                                        <title>Imprimir Comprovante</title>
+                                        <style>
+                                            body { background: #fdf6e3; font-family: monospace; }
+                                            #comprovante-venda { margin: 0 auto; }
+                                        </style>
+                                    </head>
+                                    <body>${comprovanteHtml}</body>
+                                    </html>
+                                `);
+                                printWindow.document.close();
+                                printWindow.focus();
+                                // Aguarda o carregamento e imprime
+                                printWindow.onload = function() {
+                                    printWindow.print();
+                                    // printWindow.close(); // Descomente se quiser fechar automaticamente após imprimir
+                                };
+                            });
+
+                            // Envio por email - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarEmailComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
+                            });
+
+                            // Envio por whatsapp - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
+                            });
+
+                        });
+
+                    });
+
+                }
+
+            } else {
+                var msg = resp.error || resp.message || 'Não foi possível registrar a cobrança.';
+                Swal.fire('Erro', msg, 'error');
+            }
+
+        },
+
+        error: function(xhr) {
+            var msg = 'Falha na comunicação com o servidor.';
+            if (xhr && xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) {
+                msg = xhr.responseJSON.error || xhr.responseJSON.message;
+            } else if (xhr && xhr.responseText) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    msg = json.error || json.message || msg;
+                } catch(e) {
+                    msg = xhr.responseText;
+                }
+            }
+            Swal.fire('Erro', msg, 'error');
+        }
+    });
+
+}
+
+// Função para abrir um select2 de forma segura (destrói se já estiver inicializado)
+function safeOpenSelect2(selector) {
+    var $el = $(selector);
+    // Destroi se já estiver inicializado
+    if ($el.hasClass('select2-hidden-accessible')) {
+        try { $el.select2('destroy'); } catch(e) {}
+    }
+    // Inicializa
+    $el.select2({
+        width: 'resolve',
+        dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
+        dropdownCssClass: 'parc-limit'
+    });
+    // Aguarda o próximo tick do JS para abrir
+    setTimeout(function() {
+        $el.select2('open');
+    }, 0);
+}
+
+// Função para mascarar número do cartão (formato: 1234.****.****.5678)
+function maskCardNumberCustom(cardNumber) {
+    if (!cardNumber) return '';
+    var n = String(cardNumber).replace(/\D/g, '');
+    if (n.length < 8) return n; // Não mascara se não tiver pelo menos 8 dígitos
+    var first4 = n.substr(0, 4);
+    var last4 = n.substr(-4);
+    return `${first4}.****.****.${last4}`;
+}
+
 // Função para formatar valor para padrão brasileiro
 function formatBRL(valor) {
     return valor.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -142,10 +504,10 @@ function atualizarCampoValortotalacobrar(valorNumero) {
 function atualizarCheckoutValores() {
     var subtotal = $("#p_subtotal").text();
     var desconto = $("#p_discount").text();
-    var total = $(".valorTotal").text();
+    var totalCobrar = $("#valortotalacobrar").val();
     $("#checkout_subtotal").text(subtotal);
     $("#checkout_desconto").text(desconto);
-    $("#checkout_total").text(total);
+    $("#checkout_total").text(totalCobrar);
 }
 
 // ATUALIZA AS PARCELAS QUE APARECEM COMO OPÇÕES NA VENDA POR BOLETO
@@ -264,6 +626,7 @@ function atualizarParcelasCartao() {
         var numParcela = i.toString().padStart(2, '0');
         select.append(`<option value="${i}" data-total-com-juros="${totalComJuros.toFixed(2)}">${numParcela} X R$ ${parcelaValorFormatado}${descricaoJuros}</option>`);
     }
+
     // Inicializa Select2 de forma segura (apenas se estiver disponível) para limitar altura do dropdown
     try {
         initParcelSelect2IfAvailable('#parcelasCartao');
@@ -407,10 +770,8 @@ function adicionarAoCarrinho(item){
         }
         cart[index].discountValue = discountTotal;
         cart[index].subtotal = Number((price * quantity) - discountTotal).toFixed(2);
-        // Não atualiza o contador de itens distintos
     }
 
-    // console.log('adicionarAoCarrinho', item)
 }
 
 function deleteItemFromCart(item) {
@@ -419,151 +780,151 @@ function deleteItemFromCart(item) {
     show_cart();
 }
 
-function gravarPedido(status, e){
-    if(status == vendaStatus.CONCLUIDA){
-        var valorpago = $("#valortotalpago").val().replace('.','').replace(',', '.');
-        var valorAPagar = $("#valorAPagar").val().replace('.','').replace(',', '.');
-        if(valorpago <= 0){
-            $("#valortotalpago").focus();
-            swal.fire('', 'Digite o valor pago', 'error');
-            return;
-        }
-        if((valorpago - valorAPagar) < 0){
-            $("#valortotalpago").focus();
-            swal.fire('', 'O valor pago é menor que o valor Total', 'error');
-            return;
-        }
-    }
+// function gravarPedido(status, e){
+//     if(status == vendaStatus.CONCLUIDA){
+//         var valorpago = $("#valortotalpago").val().replace('.','').replace(',', '.');
+//         var valorAPagar = $("#valorAPagar").val().replace('.','').replace(',', '.');
+//         if(valorpago <= 0){
+//             $("#valortotalpago").focus();
+//             swal.fire('', 'Digite o valor pago', 'error');
+//             return;
+//         }
+//         if((valorpago - valorAPagar) < 0){
+//             $("#valortotalpago").focus();
+//             swal.fire('', 'O valor pago é menor que o valor Total', 'error');
+//             return;
+//         }
+//     }
 
-    if (cart.length < 1) {
-        $("#checkout-modal").modal("hide");
-        swal.fire("", "Pedido sem itens", "error");
-        return false;
-    }
+//     if (cart.length < 1) {
+//         $("#checkout-modal").modal("hide");
+//         swal.fire("", "Pedido sem itens", "error");
+//         return false;
+//     }
 
-    var vendasituacao = status;
+//     var vendasituacao = status;
 
-    var form_data = {
-        id: $("#pedidoID").val(),
-        idempresa: $("#idempresa").val(),
-        orcamento: $("#orcamento").val(),
-        idclientevendedor: $("#idclientevendedor").val(),
-        faturar: $("#faturar").val(),
-        pdv: 1,
-        observacao: $("#observacao").val(),
-        idcliente: $("#idcliente").isNullOrEmpty() ? 1 : $("#idcliente").val(),
-        id_tipo_pagto: $("#id_forma_pagto").val(),
-        idvendatipo: $("#tipoDeVenda").val(),
-        valorsubtotal: $("#p_subtotal").html().replace("R$", "").replace('.','').replace(',', '.'),
-        valortotalpago: $("#valortotalpago").val().replace('.','').replace(',', '.'),
-        valortotal: $(".valorTotal").html().replace("R$", "").replace('.','').replace(',', '.'),
-        valortroco: $("#valortroco").val().replace('.','').replace(',', '.'),
-        descontovalor : $("#valorDesconto").val().replace('.','').replace(',', '.'),
-        descontoporcento : $("#valorDescCento").val().replace('.','').replace(',', '.'),
-        vendaitens: _.map(cart, function(cart) {
-            return {
-                idproduto: cart.product_id,
-                idcart: cart.id,
-                quantidade: cart.quantity,
-                discount: cart.discountValue,
-                valorunitario: cart.price,
-                name: cart.name,
-                valortotal: (parseInt(cart.quantity) * cart.price),
-            }
-        })
-    };
+//     var form_data = {
+//         id: $("#pedidoID").val(),
+//         idempresa: $("#idempresa").val(),
+//         orcamento: $("#orcamento").val(),
+//         idclientevendedor: $("#idclientevendedor").val(),
+//         faturar: $("#faturar").val(),
+//         pdv: 1,
+//         observacao: $("#observacao").val(),
+//         idcliente: $("#idcliente").isNullOrEmpty() ? 1 : $("#idcliente").val(),
+//         id_tipo_pagto: $("#id_forma_pagto").val(),
+//         idvendatipo: $("#tipoDeVenda").val(),
+//         valorsubtotal: $("#p_subtotal").html().replace("R$", "").replace('.','').replace(',', '.'),
+//         valortotalpago: $("#valortotalpago").val().replace('.','').replace(',', '.'),
+//         valortotal: $(".valorTotal").html().replace("R$", "").replace('.','').replace(',', '.'),
+//         valortroco: $("#valortroco").val().replace('.','').replace(',', '.'),
+//         descontovalor : $("#valorDesconto").val().replace('.','').replace(',', '.'),
+//         descontoporcento : $("#valorDescCento").val().replace('.','').replace(',', '.'),
+//         vendaitens: _.map(cart, function(cart) {
+//             return {
+//                 idproduto: cart.product_id,
+//                 idcart: cart.id,
+//                 quantidade: cart.quantity,
+//                 discount: cart.discountValue,
+//                 valorunitario: cart.price,
+//                 name: cart.name,
+//                 valortotal: (parseInt(cart.quantity) * cart.price),
+//             }
+//         })
+//     };
 
-    var total_amount = Number(localStorage.getItem("total_amount"));
-    _.map(cart, function(cart) {
-        localStorage.setItem("total_amount", total_amount + (cart.quantity * cart.price));
-    });
+//     var total_amount = Number(localStorage.getItem("total_amount"));
+//     _.map(cart, function(cart) {
+//         localStorage.setItem("total_amount", total_amount + (cart.quantity * cart.price));
+//     });
 
-    $(e).html('<i class="fa fa-spinner fa-spin" style="font-size:18px"></i> Processando...');
-    $(e).prop("disabled", true);
+//     $(e).html('<i class="fa fa-spinner fa-spin" style="font-size:18px"></i> Processando...');
+//     $(e).prop("disabled", true);
 
-    var url = '';
+//     var url = '';
 
-    if($("#pedidoID").isNullOrEmpty()){
-        url = '/pdv/inserir';
-    }else{
-        var id = $("#pedidoID").val();
-        url = '/pdv/alterar/' + id;
-    }
+//     if($("#pedidoID").isNullOrEmpty()){
+//         url = '/pdv/inserir';
+//     }else{
+//         var id = $("#pedidoID").val();
+//         url = '/pdv/alterar/' + id;
+//     }
 
-    Pace.restart();
-    Pace.track(function () {
-    $.ajax({
-        type: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        url: url,
-        data: form_data,
-        success: function(data) {
-            $(".emEspera").html(data.emespera);
-            $("#checkout-modal").modal("hide");
-            cart = [];
-            $("#TableNo").text("");
-            $("#total_pago").val("");
-            $("#valortroco").val("");
-            $("#observacao").val("");
-            $("#total_amount_modal").html("R$0,00");
-            $("#finalizarPedido").html('Finalizar');
-            $("#finalizarPedido").prop("disabled", false);
-            $("#id").val("");
+//     Pace.restart();
+//     Pace.track(function () {
+//     $.ajax({
+//         type: 'POST',
+//         headers: {
+//             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+//         },
+//         url: url,
+//         data: form_data,
+//         success: function(data) {
+//             $(".emEspera").html(data.emespera);
+//             $("#checkout-modal").modal("hide");
+//             cart = [];
+//             $("#TableNo").text("");
+//             $("#total_pago").val("");
+//             $("#valortroco").val("");
+//             $("#observacao").val("");
+//             $("#total_amount_modal").html("R$0,00");
+//             $("#finalizarPedido").html('Finalizar');
+//             $("#finalizarPedido").prop("disabled", false);
+//             $("#id").val("");
 
-            var title = 'Pedido Finalizado';
+//             var title = 'Pedido Finalizado';
 
-            if(status == vendaStatus.ABERTA){
-                title = 'Pedido em espera'
-            }
+//             if(status == vendaStatus.ABERTA){
+//                 title = 'Pedido em espera'
+//             }
 
-            toastr.success(title);
-            $('#idsearchphone').val('');
-            $('#idsearchphone').trigger('change');
-            if(status == vendaStatus.CONCLUIDA){
-                $("#pedidoID").val(data.msg);
-                $('#impressaoModal').modal('show');
-            }
+//             toastr.success(title);
+//             $('#idsearchphone').val('');
+//             $('#idsearchphone').trigger('change');
+//             if(status == vendaStatus.CONCLUIDA){
+//                 $("#pedidoID").val(data.msg);
+//                 $('#impressaoModal').modal('show');
+//             }
 
-            $("#p_subtotal").html("R$0,00");
-            $("#p_discount").html("R$0,00");
-            $("#idcliente").val("");
+//             $("#p_subtotal").html("R$0,00");
+//             $("#p_discount").html("R$0,00");
+//             $("#idcliente").val("");
 
-            show_cart();
+//             show_cart();
 
-            if(status == vendaStatus.CONCLUIDA)
-                $(e).html('Finalizar');
-            else
-                $(e).html('Pedido em espera');
+//             if(status == vendaStatus.CONCLUIDA)
+//                 $(e).html('Finalizar');
+//             else
+//                 $(e).html('Pedido em espera');
 
-            $(e).prop("disabled", false);
-        },
-        error: function(xhr, type, exception) {
-            console.log(xhr);
-            if(xhr.status == 401 || xhr.status == 419){
-                Swal.fire({
-                    title: "Erro",
-                    text: "Sua sessão expirou, é preciso fazer o login novamente.",
-                    type: "error",
-                    showCancelButton: false,
-                    allowOutsideClick: false,
-                }).then(function (result) {
-                    $.limparBloqueioSairDaTela();
-                    location.reload();
-                });
-            }else{
-                toastr.error(xhr.responseJSON.message);
-                if(status == vendaStatus.CONCLUIDA)
-                    $(e).html('Finalizar');
-                else
-                    $(e).html('Pedido em espera');
-                $(e).prop("disabled", false);
-            }
-        }
-    });
-    });
-}
+//             $(e).prop("disabled", false);
+//         },
+//         error: function(xhr, type, exception) {
+//             console.log(xhr);
+//             if(xhr.status == 401 || xhr.status == 419){
+//                 Swal.fire({
+//                     title: "Erro",
+//                     text: "Sua sessão expirou, é preciso fazer o login novamente.",
+//                     type: "error",
+//                     showCancelButton: false,
+//                     allowOutsideClick: false,
+//                 }).then(function (result) {
+//                     $.limparBloqueioSairDaTela();
+//                     location.reload();
+//                 });
+//             }else{
+//                 toastr.error(xhr.responseJSON.message);
+//                 if(status == vendaStatus.CONCLUIDA)
+//                     $(e).html('Finalizar');
+//                 else
+//                     $(e).html('Pedido em espera');
+//                 $(e).prop("disabled", false);
+//             }
+//         }
+//     });
+//     });
+// }
 
 function show_cart() {
     if (cart.length > 0) {
@@ -876,9 +1237,12 @@ $("body").on("click", "#btnPesquisarCliente", function(){
     $("#pesquisar-cliente-modal").modal('show');
 });
 
+///////////////////////////
+// AÇÃO DE FINALIZAR PEDIDO
 $("body").on("click", "#checkout", function() {
     finalizarClick = true;
 
+    ///////////////////////////////////
     // Validação de cliente selecionado
     var clienteSelecionado = $.isNotNullAndNotEmpty($("#cliente_cadastro_id").val()) || $.isNotNullAndNotEmpty($("#idcliente").val());
     if (!clienteSelecionado) {
@@ -892,8 +1256,9 @@ $("body").on("click", "#checkout", function() {
         return;
     }
 
+    ////////////////////////////////////
     // Validação de produtos selecionado
-    var total_pedido = $(".valorTotal").html().replace("R$", "");
+    // var total_pedido = $(".valorTotal").html().replace("R$", "");
     if (cart.length == 0) {
         Swal.fire({
             icon: 'error',
@@ -905,34 +1270,41 @@ $("body").on("click", "#checkout", function() {
         return;
     }
 
+    ///////////////////////////////////////////
     // Atualiza os valores do modal de checkout
     $("#checkout_subtotal").text($("#p_subtotal").text());
     $("#checkout_desconto").text($("#p_discount").text());
     $("#checkout_total").text($(".valorTotal").text());
     $("#valortotalacobrar").text($(".valorTotal").text());
 
-    var tipoDeVenda = $("#tipoDeVenda").val();
-    var data = $.isNotNullAndNotEmpty($("#idcliente").val());
+    //////////////////////////////////////////
+    // Monta o carrinho para enviar ao backend
+    carrinho = cart.map(function(item) {
+        var vlr_total = parseBRL($("#checkout_total").text()) || 0;
+        var vlr_brt_item = (item.price * item.quantity);
+        var vlr_discount_item = (item.discountValue && parseFloat(item.discountValue) > 0) ? parseFloat(item.discountValue) : 0;
+        var vlr_liqu_item = vlr_brt_item - vlr_discount_item;
 
+        if (vlr_total > 0) {
+            proporcao_item_total = vlr_liqu_item / vlr_total;
+        }
+
+        return {
+            produto_tipo: item.produto_tipo || '',
+            proporcao_item: proporcao_item_total,
+            produto_id: item.product_id,
+            qtd_item: item.quantity,
+            vlr_unit_item: item.price,
+            vlr_brut_item: vlr_brt_item,
+            vlr_desc_item: vlr_discount_item,
+            vlr_liqu_item: vlr_brt_item - vlr_discount_item
+        };
+    });
+
+    ////////////////////////////
+    // Exibe o modal de checkout
     $("#checkout-modal").modal("show");
 
-    if (tipoDeVenda == vendaTipo.ENTREGAR) {
-        if(!data){
-            $("#salvarCliente").html("Próximo");
-            $("#modalCliente").modal("show");
-        }else {
-            $("#checkout-modal").modal("show");
-        }
-        $("#motoboy_row").show();
-    }
-    if (tipoDeVenda == vendaTipo.RETIRAR) {
-        $("#motoboy_row").hide();
-        $("#checkout-modal").modal("show");
-    }
-    if (tipoDeVenda == vendaTipo.NOLOCAL) {
-        $("#motoboy_row").hide();
-        $("#checkout-modal").modal("show");
-    }
 });
 
 $("body").on("change", "#idsearchphone", function(e) {
@@ -1489,33 +1861,6 @@ $("body").on("keyup", "#getProduto", function (e) {
                 $('#desProd').html(produto.produto_dm); // Descrição do produto
                 $('#item-price').val($.toMoneySimples(produto.produto_vlr)); // Valor do produto
 
-                // // Adiciona ao carrinho
-                // var item = {
-                //     id: parseInt(response.id),
-                //     product_id: parseInt(response.id),
-                //     price: response.farvre,
-                //     name: response.fardes,
-                //     quantity: quantity,
-                //     discount: 0,
-                //     discountType: discountType,
-                //     discountValue: 0,
-                // };
-                // itens = item;
-                // adicionarAoCarrinho(item);
-                // show_cart();
-
-                // // Limpa campos do produto
-                // $('#getProduto').val("");
-                // $('#getProduto').focus();
-                // $('#item-quantity').val("1");
-                // $('#item-discount').val('0,00');
-                // $('#item-price').val('0,00');
-                // $('#item-subtotal').val('0,00');
-                // $('#find-product').select2('data', null);
-                // $('#find-product').val(null);
-                // $('#find-product').trigger('change');
-                // $('#desProd').html('');
-
             })
             .fail(function (xhr, status, error) {
                 $('#desProd').html('');
@@ -1813,7 +2158,7 @@ $(document).ready(function () {
 
     $('#parcelasCartao').on('change', function () {
         // Pegue o valor total original (exemplo: do campo #checkout_total)
-        var valorTotal = parseFloat($('#checkout_total').text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        var valorTotal = parseFloat($('#valortotalacobrar').val().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
 
         // Pegue o valor total com juros da opção selecionada (exemplo: pode estar em um data-attribute ou calculado via JS)
         // Exemplo: <option value="2" data-total-com-juros="120.00">2x</option>
@@ -1829,13 +2174,14 @@ $(document).ready(function () {
             } else {
                 // Se não houver juros, zera os campos
                 $('#checkout_juros').text('R$ 0,00');
-                $('#checkout_total').text($(".valorTotal").text());
+                $('#checkout_total').text($("#valortotalacobrar").val());
             }
 
         } else {
             $('#checkout_juros').text(' R$ 0,00');
-            $('#checkout_total').text($(".valorTotal").text());
+            $('#checkout_total').text($("#valortotalacobrar").val());
         }
+
     });
 
     // Também atualize ao marcar/desmarcar o checkbox
@@ -1940,17 +2286,6 @@ $(document).ready(function () {
         window.responseCliente = cliente;
     });
 
-    // AÇÕES COM O COMOBO BOX DE PARCELAS CARTÃO E BOLETO
-    // Recalcula parcelas apenas do bloco visível ao perder o foco
-    $("#valortotalacobrar").on("blur", function() {
-        if ($('#div-cartao').is(':visible')) {
-            atualizarParcelasCartao();
-        }
-        if ($('#div-boleto').is(':visible')) {
-            atualizarParcelasBoleto();
-        }
-    });
-
     // Garante que toda vez que clicar no comboBox de parcelas do cartão, recalcula as parcelas
     $("body").on("mousedown", "#parcelasCartao", function(e) {
         // Se não for Select2, recalcula normalmente
@@ -1965,7 +2300,7 @@ $(document).ready(function () {
         }
     });
 
-    // Garante que toda vez que clicar no comboBox de parcelas do cartão, recalcula as parcelas
+    // Garante que toda vez que clicar no comboBox de parcelas do boleto, recalcula as parcelas
     $("body").on("mousedown", "#parcelasBoleto", function(e) {
         // Se não for Select2, recalcula normalmente
         if (!$(this).hasClass('select2-hidden-accessible')) {
@@ -1981,9 +2316,22 @@ $(document).ready(function () {
 
     // Handler para seleção de cartão na tabela
     $(document).on("click", ".linha-cartao-mult", function() {
-        var saldo = parseFloat($(this).data("saldo")) || 0;
+
+        // Coleta os dados do cartão selecionado
+        window.cobrancaDados.card_tp = $(this).data("card_tp");
+        window.cobrancaDados.card_mod = $(this).data("card_mod");
+        window.cobrancaDados.card_categ = $(this).data("card_categ");
+        window.cobrancaDados.card_desc = $(this).data("card_desc");
+        window.cobrancaDados.card_uuid = $(this).data("card_uuid");
+        window.cobrancaDados.cliente_cardn = $(this).data("cliente_cardn");
+        window.cobrancaDados.cliente_cardcv = $(this).data("cliente_cardcv");
+        window.cobrancaDados.card_saldo_vlr = $(this).data("card_saldo_vlr");
+        window.cobrancaDados.card_limite = $(this).data("card_limite");
+        window.cobrancaDados.card_saldo_pts = $(this).data("card_saldo_pts");
+        window.cobrancaDados.card_sts = $(this).data("card_sts");
+
         var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
-        if (saldo < valorCobrar) {
+        if (window.cobrancaDados.card_saldo_vlr < valorCobrar) {
             Swal.fire({
                 icon: 'error',
                 title: 'Saldo insuficiente',
@@ -1991,11 +2339,17 @@ $(document).ready(function () {
                 confirmButtonText: 'OK',
                 allowOutsideClick: false
             });
+            cobrar = false;
             return;
         }
-        // Fecha modal e segue com operação usando o cartão selecionado
+
         $("#modalCartaoMult").modal("hide");
-        // ...código para continuar operação com o cartão selecionado...
+
+        // Guarda os meios de pagamento utilizados
+        arr_meiosPagtoUtilizados.push('Cartão');
+        // REALIZA A COBRANÇA
+        realizarCobranca(window.cobrancaDados);
+
     });
 
     // Função para formatar status do cartão
@@ -2190,282 +2544,34 @@ $(document).ready(function () {
 
     });
 
-    $('#checkout-modal').on('hide.bs.modal', function(e) {
-
-        var token = $('meta[name="csrf-token"]').attr('content');
-        var cobrar = parseBRL($("#checkout_total").text());
-
-        // Só bloqueia se houver saldo maior que 0,01 e não for confirmação do usuário
-        if (cobrar > 0.01 && !podeFecharCheckoutModal) {
-            e.preventDefault(); // Impede o fechamento imediato
-            Swal.fire({
-                icon: 'warning',
-                title: 'Ainda existe valor à cobrar!',
-                text: 'Deseja realmente descartar o valor de ' + $("#checkout_total").text() + '?',
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: 'Sim, descartar',
-                denyButtonText: 'Cancelar tudo',
-                cancelButtonText: 'Não, continuar cobrança'
-
-            }).then(function(result) {
-
-                ////////////////////////////////////////////////////
-                // Se o usuário confirmou que quer descartar o valor
-                if (result.isConfirmed) {
-                    // Limpa os campos e permite o fechamento do modal
-                    cart = [];
-                    $("#totalItens").html("0");
-                    $("#TableNo").text("");
-                    $("#TableNoCart").text("");
-                    $(".valorTotal").html("R$ 0,00");
-                    $("#CartHTML").html("");
-                    $("#p_subtotal").html("R$ 0,00");
-                    $("#p_discount").html("R$ 0,00");
-                    $(".totalPagar").html("R$ 0,00");
-                    $("#pedidoID").val("");
-                    // Produto
-                    $('#find-product').val(null).trigger('change');
-                    $('#find-product').select2('data', null);
-                    $('#getProduto').val('');
-                    $('#desProd').html('');
-                    $('#item-quantity').val('1');
-                    $('#item-discount').val('0,00');
-                    $('#item-price').val('0,00');
-                    $('#item-subtotal').val('0,00');
-                    $('#produto_dmf').val(null).trigger('change');
-                    $('#produto_dmf_id').val('');
-                    $('#produto_tipo_id').val('');
-                    // Pagamento
-                    $('#valortotalacobrar').val('0,00');
-                    $('#valorsaldo').val('0,00');
-                    $('#valortroco').val('0,00');
-                    $('#checkout_subtotal').text('R$ 0,00');
-                    $('#checkout_desconto').text('R$ 0,00');
-                    $('#checkout_pago').text('R$ 0,00');
-                    $('#checkout_descontado').text('R$ 0,00');
-                    $('#checkout_resgatado').text('0');
-                    $('#checkout_total').text('R$ 0,00');
-                    if ($("#checkout_cashback").length) {
-                        $("#checkout_cashback").text('R$ 0,00');
-                    }
-                    $('.payment-box-active').removeClass('payment-box-active');
-                    $('#id_forma_pagto').val('').trigger('change');
-                    // Feche o modal
-                    podeFecharCheckoutModal = true;
-                    $('#checkout-modal').modal('hide');
-                    podeFecharCheckoutModal = false;
-
-                    if (tituloAtual && nsu_tituloAtual) {
-
-                        $desconto_parc = arr_checkout_desconto.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
-                        $cashback_parc = arr_checkout_cashback.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
-                        $total_parc = arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0)
-
-                        // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
-                        $.get('/api/mensagens-comp', {
-                            canal_id: 4,
-                            categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
-
-                        }, function(mensagensComp) {
-
-                            var params = {
-                                empresa: {
-                                    nome: empresa.emp_nfant,
-                                    cnpj: empresa.emp_cnpj,
-                                    im: empresa.emp_im,
-                                    ie: empresa.emp_ie,
-                                    emp_id: empresa.emp_id
-                                },
-                                cliente: {
-                                    nome: window.clientName,
-                                    doc: window.clientDoc,
-                                    pontos: window.clientPontos
-                                },
-                                comprovante: {
-                                    titulo: tituloAtual,
-                                    nsu_titulo: nsu_tituloAtual,
-                                    nsu_autoriz: arr_nsu_autoriz,
-                                    data_hora: (new Date()).toLocaleString('pt-BR'),
-                                    cartao_numero: '', // preencha se necessário
-
-                                    tipo_pagamento: 'À Vista',
-                                    parcelas: 1,
-                                    pontos_concedidos: 0,
-
-
-                                    meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
-                                    checkout_subtotal: $total_parc + $desconto_parc + $cashback_parc,
-                                    checkout_troco: 0, // Não existe troco para cobrança a menor valor
-                                    checkout_desconto: $desconto_parc,
-                                    checkout_cashback: $cashback_parc,
-                                    checkout_total: $total_parc,
-
-                                },
-                                mensagens: {
-                                    cabecalho: mensagensComp.CBCPR,
-                                    multban: mensagensComp.MULTB,
-                                    rodape: mensagensComp.RPCPR
-                                },
-                                autorizacao: mensagensComp.AUTHO
-                            };
-
-                            var htmlComprovante = gerarComprovanteVenda(params);
-
-                            Swal.fire({
-                                html: htmlComprovante,
-                                showConfirmButton: false,
-                                width: 500,
-                                customClass: { popup: 'swal2-comprovante-popup' },
-                                footer: `
-                                    <div style="display:flex;justify-content:space-between;gap:8px;">
-                                        <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
-                                        <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
-                                        <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
-                                        <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
-                                    </div>
-                                `
-                            });
-
-                            // Fechar o modal ao clicar em fechar
-                            $(document).on('click', '#btnFecharComprovante', function() {
-                                Swal.close();
-                            });
-
-                            // Imprimir ao clicar em imprimir
-                            $(document).on('click', '#btnImprimirComprovante', function() {
-                                var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
-                                var printWindow = window.open('', '', 'width=800,height=600');
-                                printWindow.document.write(`
-                                    <html>
-                                    <head>
-                                        <title>Imprimir Comprovante</title>
-                                        <style>
-                                            body { background: #fdf6e3; font-family: monospace; }
-                                            #comprovante-venda { margin: 0 auto; }
-                                        </style>
-                                    </head>
-                                    <body>${comprovanteHtml}</body>
-                                    </html>
-                                `);
-
-                                printWindow.document.close();
-                                printWindow.focus();
-                                printWindow.onload = function() {
-                                    printWindow.print();
-                                };
-
-                            });
-
-                            // Envio por email - IMPLEMENTAR
-                            $(document).on('click', '#btnEnviarEmailComprovante', function() {
-                                Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
-                            });
-
-                            // Envio por whatsapp - IMPLEMENTAR
-                            $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
-                                Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
-                            });
-
-                            // Resetar arrays de controle
-                            nsu_tituloAtual = null
-                            tituloAtual = null;
-                            arr_nsu_autoriz = [];
-                            arr_meiosPagtoUtilizados = [];
-                            arr_checkout_desconto = [];
-                            arr_checkout_cashback = [];
-                            arr_checkout_total = [];
-                        });
-
-                    }
-
-                ////////////////////////////////////////////////
-                // Se o usuário confirmou que quer cancelar tudo
-                } else if (result.isDenied) {
-
-                    $.post('/pdv-web/cancelar-venda', {
-                        _token: token,
-                        titulo: tituloAtual
-
-                    }, function(resp) {
-                        if (resp.success) {
-                            // Limpa os campos e permite o fechamento do modal
-                            cart = [];
-                            $("#totalItens").html("0");
-                            $("#TableNo").text("");
-                            $("#TableNoCart").text("");
-                            $(".valorTotal").html("R$ 0,00");
-                            $("#CartHTML").html("");
-                            $("#p_subtotal").html("R$ 0,00");
-                            $("#p_discount").html("R$ 0,00");
-                            $(".totalPagar").html("R$ 0,00");
-                            $("#pedidoID").val("");
-                            // Produto
-                            $('#find-product').val(null).trigger('change');
-                            $('#find-product').select2('data', null);
-                            $('#getProduto').val('');
-                            $('#desProd').html('');
-                            $('#item-quantity').val('1');
-                            $('#item-discount').val('0,00');
-                            $('#item-price').val('0,00');
-                            $('#item-subtotal').val('0,00');
-                            $('#produto_dmf').val(null).trigger('change');
-                            $('#produto_dmf_id').val('');
-                            $('#produto_tipo_id').val('');
-                            // Pagamento
-                            $('#valortotalacobrar').val('0,00');
-                            $('#valorsaldo').val('0,00');
-                            $('#valortroco').val('0,00');
-                            $('#checkout_subtotal').text('R$ 0,00');
-                            $('#checkout_desconto').text('R$ 0,00');
-                            $('#checkout_pago').text('R$ 0,00');
-                            $('#checkout_descontado').text('R$ 0,00');
-                            $('#checkout_resgatado').text('0');
-                            $('#checkout_total').text('R$ 0,00');
-                            if ($("#checkout_cashback").length) {
-                                $("#checkout_cashback").text('R$ 0,00');
-                            }
-                            $('.payment-box-active').removeClass('payment-box-active');
-                            $('#id_forma_pagto').val('').trigger('change');
-                            // Feche o modal
-                            podeFecharCheckoutModal = true;
-                            $('#checkout-modal').modal('hide');
-                            podeFecharCheckoutModal = false;
-
-                        } else {
-                            Swal.fire('Erro', resp.error || 'Não foi possível cancelar a venda.', 'error');
-                        }
-                    });
-
-                }
-                // Se cancelar, não faz nada (modal permanece aberto)
-            });
-        }
-    });
-
     // Máscara tipo calculadora de dinheiro: transforma dígitos em centavos
     $('#valortotalacobrar').on('input', function(e) {
         var v = $(this).val().replace(/\D/g, ''); // só dígitos
         if (v.length === 0) v = '0';
+
         var valor = (parseInt(v, 10) / 100).toFixed(2);
         var totalCarrinho = parseBRL($('#checkout_total').text());
         var tipoPagamento = $('.payment-box-active').data('identificacao');
         var valorCobrar = parseFloat(valor.replace(',', '.')) || 0;
+
         // Bloqueia valorCobrar maior que totalCarrinho para tipos diferentes de Dinheiro
         if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
             valorCobrar = totalCarrinho;
             valor = totalCarrinho.toFixed(2).replace('.', ',');
         }
+
         $(this).val(valor);
         var saldo = totalCarrinho - valorCobrar;
         if (valorCobrar > totalCarrinho) {
             saldo = 0;
         }
+
         $('#valorsaldo').val(formatBRL(saldo));
         var troco = 0;
         if (tipoPagamento === 'DN' && valorCobrar > totalCarrinho) {
             troco = valorCobrar - totalCarrinho;
         }
+
         $('#valortroco').val(formatBRL(troco));
 
     });
@@ -2474,6 +2580,7 @@ $(document).ready(function () {
     $('#valortotalacobrar').on('blur', function() {
         var raw = $(this).val();
         var valor = 0;
+
         if (typeof parseBRL === 'function') {
             valor = parseBRL(raw);
         } else {
@@ -2488,6 +2595,17 @@ $(document).ready(function () {
             }
             valor = parseFloat(s) || 0;
         }
+
+        // Recalcula parcelas apenas do bloco visível ao perder o foco
+        if ($('#div-cartao').is(':visible')) {
+            atualizarParcelasCartao();
+            $('#parcelasCartao').trigger('change');
+        }
+        if ($('#div-boleto').is(':visible')) {
+            atualizarParcelasBoleto();
+            $('#parcelasBoleto').trigger('change');
+        }
+
         $(this).val(formatBRL(valor));
 
     });
@@ -2634,6 +2752,17 @@ $(document).ready(function () {
 
     });
 
+    $('#pesquisar-cliente-modal').on('hide.bs.modal', function() {
+        // Remove o foco de qualquer elemento dentro do modal
+        $('#pesquisar-cliente-modal').find(':focus').blur();
+    });
+
+    $('#modalCartaoMult').on('hide.bs.modal', function() {
+        // Remove o foco de qualquer elemento dentro do modal
+        document.activeElement.blur();
+        $('body').focus();
+    });
+
     $("#invoiceShow").css("height", ($(window).height() - 150) + "px");
 
     $('body').addClass('layout-navbar-fixed');
@@ -2705,12 +2834,9 @@ $(document).ready(function () {
             return;
         }
 
-
         ////////////////////////////////////////////////////
         // VARIÁVEIS IMPORTANTES PARA O PROCESSO DE COBRANÇA
-        var token = $('meta[name="csrf-token"]').attr("content");                                   // Token CSRF para segurança
         var cliente_id = $("#cliente_cadastro_id").val() || $("#idcliente").val();                  // ID do cliente selecionado
-
         var tipoPagto = tipoPagamentoSelecionado || $("#id_forma_pagto").val();                     // Tipo de pagamento selecionado
         var checkout_subtotal = parseBRL($("#checkout_subtotal").text()) || 0;                      // Valor total do carrinho antes de descontos
         var checkout_cashback = parseBRL($("#checkout_cashback").text()) || 0;                      // Valor total de cashback aplicado
@@ -2718,11 +2844,65 @@ $(document).ready(function () {
 
         var checkout_pago = parseBRL($("#checkout_pago").text()) || 0;                              // Valor total pago
         var checkout_descontado = parseBRL($("#checkout_descontado").text()) || 0;                  // Valor total descontado
-        var checkout_troco = parseBRL($("#valortroco").val()) || 0;                                // Valor do troco a ser dado
+        var checkout_troco = parseBRL($("#valortroco").val()) || 0;                                 // Valor do troco a ser dado
         var checkout_resgatado = parseInt($("#checkout_resgatado").text().replace(/\D/g, '')) || 0; // Pontos de cashback resgatados
 
         var checkout_total = parseBRL($("#checkout_total").text()) || 0;                            // Valor total a cobrar (subtotal - desconto - cashback)
         var valortotalacobrar = parseBRL($("#valortotalacobrar").val()) || 0;                       // Valor que o usuário quer cobrar agora
+        var vendaSemJuros = $('#vendaSemJurosCartao').is(':checked') ? "X" : null;                  // Indica se a venda é sem juros (X) ou não (null)
+        var check_reembolso = $('#blt_ctr').is(':checked') ? "X" : null;                            // Indica se é reembolso (X) ou não (null)
+
+        // Coleta a categoria de primeira parecela selecionada
+        var tax_categCartao = $('#PrimeiraParaCartao option:selected').data('tax-categ') || null;
+        var tax_categBoleto = $('#PrimeiraParaBoleto option:selected').data('tax-categ') || null;
+        var tax_categ = null;
+        if (tax_categCartao) {
+            tax_categ = tax_categCartao;
+        } else if (tax_categBoleto) {
+            tax_categ = tax_categBoleto;
+        }
+
+        // Coleta a categoria de primeira parecela selecionada
+        var regra_parcCartao = $('#PrimeiraParaCartao option:selected').data('regra-parc') || null;
+        var regra_parcBoleto = $('#PrimeiraParaBoleto option:selected').data('regra-parc') || null;
+        var regra_parc = null;
+        if (regra_parcCartao) {
+            regra_parc = regra_parcCartao;
+        } else if (regra_parcBoleto) {
+            regra_parc = regra_parcBoleto;
+        }
+
+        // Cálculo dos Juros por parcela
+        var totalComJuros = parseFloat($('#parcelasCartao option:selected').data('total-com-juros')) || 0;
+        var parcelasCartao = $('#parcelasCartao').val();
+        var parcelasBoleto = $('#parcelasBoleto').val();
+        var valorParcelaComJuros = 0;
+        var valorParcelaSemJuros = 0;
+        var jurosTotal = 0;
+        var jurosTotalParcela = 0;
+
+        if (parcelasCartao && totalComJuros) {
+            valorParcelaComJuros = (totalComJuros / parseInt(parcelasCartao)).toFixed(2);
+            valorParcelaSemJuros = (valortotalacobrar / parseInt(parcelasCartao)).toFixed(2);
+            jurosTotal = ((totalComJuros - valortotalacobrar)).toFixed(2);
+            jurosTotalParcela = ((totalComJuros - valortotalacobrar) / parseInt(parcelasCartao)).toFixed(2);
+        }
+
+        var parcelas = 1;
+        if (parcelasBoleto) {
+            parcelas = parcelasBoleto;
+        } else if (parcelasCartao) {
+            parcelas = parcelasCartao;
+        }
+
+        var dataPrimeiraParaCartao = $('#dataPrimeiraParcelaCartao').val();
+        var dataPrimeiraParaBoleto = $('#dataPrimeiraParcelaBoleto').val();
+        var dataPrimeiraParcela = null;
+        if (dataPrimeiraParaCartao) {
+            dataPrimeiraParcela = dataPrimeiraParaCartao;
+        } else if (dataPrimeiraParaBoleto) {
+            dataPrimeiraParcela = dataPrimeiraParaBoleto;
+        }
 
         // Proporção do valor cobrado em relação ao total
         var proporcao_cobrado = 1;
@@ -2730,48 +2910,57 @@ $(document).ready(function () {
             proporcao_cobrado = valortotalacobrar / (checkout_subtotal - checkout_desconto);
         }
 
-        // Log de verificação do carrinho original
-        // console.log("Carrinho original antes da cobrança:", cart);
-        // console.log('Valor de valortroco:', checkout_troco);
-
-        //////////////////////////////////////////
-        // Monta o carrinho para enviar ao backend
-        var carrinho = cart.map(function(item) {
-            var vlr_brt_item = (item.price * item.quantity);
-            var vlr_discount_item = (item.discountValue && parseFloat(item.discountValue) > 0) ? parseFloat(item.discountValue) : 0;
-            var vlr_liqu_item = vlr_brt_item - vlr_discount_item;
-
-            // Proporção do item sobre o total do carrinho
-            var proporcao_item_total = 1;
-            if (checkout_total > 0) {
-                proporcao_item_total = vlr_liqu_item / checkout_total;
-            }
-
-            return {
-                produto_tipo: item.produto_tipo || '',
-                proporcao_item: proporcao_item_total,
-                produto_id: item.product_id,
-                qtd_item: item.quantity,
-                vlr_unit_item: item.price,
-                vlr_brut_item: vlr_brt_item,
-                vlr_desc_item: vlr_discount_item,
-                vlr_liqu_item: vlr_brt_item - vlr_discount_item
-            };
-        });
-
-        // console.log("Carrinho enviado para o backend:", carrinho);
-
         // Proporcionaliza desconto e cashback
         var checkout_desconto_proporcional = checkout_desconto * proporcao_cobrado;
         var checkout_cashback_proporcional = checkout_cashback * proporcao_cobrado;
 
+        // ARMAZENA DADOS GLOBAIS PARA USO NA FUNÇÃO DE COBRANÇA
+        window.cobrancaDados = {
+            token: $('meta[name="csrf-token"]').attr("content"),
+            cliente_id: cliente_id,
+            tipoPagto: tipoPagto,
+            checkout_subtotal: checkout_subtotal,
+            checkout_cashback: checkout_cashback,
+            checkout_desconto: checkout_desconto,
+            checkout_pago: checkout_pago,
+            checkout_descontado: checkout_descontado,
+            checkout_troco: checkout_troco,
+            checkout_resgatado: checkout_resgatado,
+            checkout_total: checkout_total,
+            valortotalacobrar: valortotalacobrar,
+            vendaSemJuros: vendaSemJuros,
+            check_reembolso: check_reembolso,
+            tax_categ: tax_categ,
+            regra_parc: regra_parc,
+            valorTotalComJuros: totalComJuros,
+            valorParcelaComJuros: valorParcelaComJuros,
+            valorParcelaSemJuros: valorParcelaSemJuros,
+            jurosTotal: jurosTotal,
+            jurosTotalParcela: jurosTotalParcela,
+            parcelas: parcelas,
+            dataPrimeiraParcela: dataPrimeiraParcela,
+            proporcao_cobrado: proporcao_cobrado,
+            checkout_desconto_proporcional: checkout_desconto_proporcional,
+            checkout_cashback_proporcional: checkout_cashback_proporcional,
+            carrinho: carrinho,
+            card_tp: null,
+            card_mod: null,
+            card_categ: null,
+            card_desc: null,
+            card_uuid: null,
+            cliente_cardn: null,
+            cliente_cardcv: null,
+            card_saldo_vlr: null,
+            card_limite: null,
+            card_saldo_pts: null,
+            card_sts: null
+        };
+
+        ///////////////////////////
         // MEIO DE PAGAMENTO CARTÃO
         if (tipoPagto === "CM") {
 
-            var parcela = $("#parcelasCartao").val();
-            var primeiraParcela = $("#PrimeiraParaCartao").val();
-            var dataPrimeira = $("#dataPrimeiraParcelaCartao").val();
-            if (!parcela || parcela === "") {
+            if (!parcelas || parcelas === "") {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Selecione o número de parcelas!',
@@ -2781,7 +2970,7 @@ $(document).ready(function () {
                 });
                 return;
             }
-            if (!primeiraParcela || primeiraParcela === "") {
+            if (!dataPrimeiraParcela || dataPrimeiraParcela === "") {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Selecione a opção da 1ª parcela!',
@@ -2791,20 +2980,9 @@ $(document).ready(function () {
                 });
                 return;
             }
-            if (!dataPrimeira || dataPrimeira === "") {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Selecione a data da 1ª parcela!',
-                    text: 'É necessário informar a data da primeira parcela.',
-                    confirmButtonText: 'OK',
-                    allowOutsideClick: false
-                });
-                return;
-            }
 
             // Usa os cartões já carregados do cliente
-            var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
-            // Assume que responseCartoesCliente está disponível globalmente ou foi salvo ao selecionar o cliente
+            // var valorCobrar = parseFloat($("#valortotalacobrar").val().replace(/\./g, '').replace(',', '.')) || 0;
             var cartoes = window.responseCartoesCliente || [];
             if (!Array.isArray(cartoes) || cartoes.length === 0) {
                 Swal.fire("Erro", "Nenhum cartão Mult disponível para este cliente.", "error");
@@ -2825,7 +3003,19 @@ $(document).ready(function () {
                     if (isNaN(f)) return '';
                     return f.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 }
-                tbody += `<tr class="linha-cartao-mult" data-saldo="${cartao.card_saldo_vlr}" data-id="${cartao.cliente_cardn}">
+                tbody += `<tr class="linha-cartao-mult" d
+                    data-card_tp="${cartao.card_tp}"
+                    data-card_mod="${cartao.card_mod}"
+                    data-card_categ="${cartao.card_categ}"
+                    data-card_desc="${cartao.card_desc}"
+                    data-card_uuid="${cartao.card_uuid}"
+                    data-cliente_cardn="${cartao.cliente_cardn}"
+                    data-cliente_cardcv="${cartao.cliente_cardcv}"
+                    data-card_saldo_vlr="${cartao.card_saldo_vlr}"
+                    data-card_limite="${cartao.card_limite}"
+                    data-card_saldo_pts="${cartao.card_saldo_pts}"
+                    data-card_sts="${cartao.card_sts}"
+                    >
                     <td>${cartao.card_tp_desc}</td>
                     <td>${cartao.card_mod_desc}</td>
                     <td>${cartao.card_categ == null ? '' : cartao.card_categ}</td>
@@ -2839,13 +3029,17 @@ $(document).ready(function () {
             $("#tabelaCartoesMult tbody").html(tbody);
             $("#modalCartaoMult").modal("show");
 
+
+
+
+        ///////////////////////////
         // MEIO DE PAGAMENTO BOLETO
         } else if (tipoPagto === "BL") {
-
-            var parcela = $("#parcelasBoleto").val();
+            // Guarda os meios de pagamento utilizados
+            arr_meiosPagtoUtilizados.push('Boleto');
             var primeiraParcela = $("#PrimeiraParaBoleto").val();
-            var dataPrimeira = $("#dataPrimeiraParcelaBoleto").val();
-            if (!parcela || parcela === "") {
+
+            if (!parcelas || parcelas === "") {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Selecione o número de parcelas!',
@@ -2865,7 +3059,7 @@ $(document).ready(function () {
                 });
                 return;
             }
-            if (!dataPrimeira || dataPrimeira === "") {
+            if (!dataPrimeiraParcela || dataPrimeiraParcela === "") {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Selecione a data da 1ª parcela!',
@@ -2876,91 +3070,303 @@ $(document).ready(function () {
                 return;
             }
 
+            // REALIZA A COBRANÇA
+            realizarCobranca(window.cobrancaDados);
+
+
+
+
+        /////////////////////////////
         // MEIO DE PAGAMENTO DINHEIRO
         } else if (tipoPagto === "DN") {
             // Guarda os meios de pagamento utilizados
             arr_meiosPagtoUtilizados.push('Dinheiro');
 
+            // REALIZA A COBRANÇA
+            realizarCobranca(window.cobrancaDados);
+
+
+
+
+        ////////////////////////
         // MEIO DE PAGAMENTO PIX
         } else if (tipoPagto === "PX") {
-            // Condições específicas para PIX, se houver
+            // Guarda os meios de pagamento utilizados
+            arr_meiosPagtoUtilizados.push('PIX');
 
+            // REALIZA A COBRANÇA
+            realizarCobranca(window.cobrancaDados);
+
+
+
+
+        ///////////////////////////
         // MEIO DE PAGAMENTO OUTROS
         } else if (tipoPagto === "OT") {
-            // Condições específicas para Outros, se houver
+            // Guarda os meios de pagamento utilizados
+            arr_meiosPagtoUtilizados.push('Outros');
+
+            // REALIZA A COBRANÇA
+            realizarCobranca(window.cobrancaDados);
 
         }
 
-        ///////////////////////////////////////////////
-        // GERA A COBRANÇA CONFORME O TIPO DE PAGAMENTO
-        $.ajax({
-            url: '/pdv-web/realizar-venda',
-            type: 'POST',
-            headers: { 'X-CSRF-TOKEN': token },
-            data: {
-                cliente_id: cliente_id,
-                checkout_subtotal: checkout_subtotal,
-                checkout_cashback: checkout_cashback,
-                checkout_desconto: checkout_desconto,
-                checkout_pago: checkout_pago,
-                checkout_troco: checkout_troco,
-                checkout_descontado: checkout_descontado,
-                checkout_resgatado: checkout_resgatado,
-                checkout_total: checkout_total,
-                valortotalacobrar: valortotalacobrar,
-                proporcao_cobrado: proporcao_cobrado,
+    });
 
-                tipoPagto: tipoPagto,
-                carrinho: carrinho,
-                titulo: tituloAtual,
-                nsu_titulo: nsu_tituloAtual
-            },
+    //////////////////////////////////////////////////////////////////
+    // REGRA PARA ANTES DE FECHAR O MODAL E AINDA TIVER SALDO A COBRAR
+    $('#checkout-modal').on('hide.bs.modal', function(e) {
 
-            success: function(resp) {
-                if (resp.success) {
+        var cobrar = parseBRL($("#checkout_total").text());
+        // Só bloqueia se houver saldo maior que 0,01 e não for confirmação do usuário
+        if (cobrar > 0.01 && !podeFecharCheckoutModal) {
+            e.preventDefault(); // Impede o fechamento imediato
+            Swal.fire({
+                icon: 'warning',
+                title: 'Ainda existe valor à cobrar!',
+                text: 'Deseja realmente descartar o valor de ' + $("#checkout_total").text() + '?',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Sim, descartar',
+                denyButtonText: 'Cancelar tudo',
+                cancelButtonText: 'Não, continuar cobrança'
 
-                    // Se for a primeira cobrança, salva o título e o nsu_título
-                    if (!tituloAtual && resp.titulo) {
-                        tituloAtual = resp.titulo;
+            }).then(function(result) {
+
+                ////////////////////////////////////////////////////
+                // Se o usuário confirmou que quer descartar o valor
+                if (result.isConfirmed) {
+                    // Limpa os campos e permite o fechamento do modal
+                    $("#totalItens").html("0");
+                    $("#TableNo").text("");
+                    $("#TableNoCart").text("");
+                    $(".valorTotal").html("R$ 0,00");
+                    $("#CartHTML").html("");
+                    $("#p_subtotal").html("R$ 0,00");
+                    $("#p_discount").html("R$ 0,00");
+                    $(".totalPagar").html("R$ 0,00");
+                    $("#pedidoID").val("");
+                    // Produto
+                    $('#find-product').val(null).trigger('change');
+                    $('#find-product').select2('data', null);
+                    $('#getProduto').val('');
+                    $('#desProd').html('');
+                    $('#item-quantity').val('1');
+                    $('#item-discount').val('0,00');
+                    $('#item-price').val('0,00');
+                    $('#item-subtotal').val('0,00');
+                    $('#produto_dmf').val(null).trigger('change');
+                    $('#produto_dmf_id').val('');
+                    $('#produto_tipo_id').val('');
+                    // Pagamento
+                    $('#valortotalacobrar').val('0,00');
+                    $('#valorsaldo').val('0,00');
+                    $('#valortroco').val('0,00');
+                    $('#checkout_subtotal').text('R$ 0,00');
+                    $('#checkout_desconto').text('R$ 0,00');
+                    $('#checkout_pago').text('R$ 0,00');
+                    $('#checkout_descontado').text('R$ 0,00');
+                    $('#checkout_resgatado').text('0');
+                    $('#checkout_total').text('R$ 0,00');
+                    if ($("#checkout_cashback").length) {
+                        $("#checkout_cashback").text('R$ 0,00');
                     }
-                    if (!nsu_tituloAtual && resp.nsu_titulo) {
-                        nsu_tituloAtual = resp.nsu_titulo;
-                    }
+                    $('.payment-box-active').removeClass('payment-box-active');
+                    $('#id_forma_pagto').val('').trigger('change');
+                    // Feche o modal
+                    podeFecharCheckoutModal = true;
+                    $('#checkout-modal').modal('hide');
+                    podeFecharCheckoutModal = false;
 
-                    // Atualiza arrays de controle
-                    arr_nsu_autoriz.push(resp.nsu_autoriz || '');
-                    arr_checkout_desconto.push(checkout_desconto_proporcional);
-                    arr_checkout_cashback.push(checkout_cashback_proporcional);
-                    arr_checkout_total.push(valortotalacobrar);
+                    if (tituloAtual && nsu_tituloAtual) {
 
-                    // console.log(arr_checkout_desconto, arr_checkout_cashback, arr_checkout_total);
+                        // Calcula saldo remanescente
+                        var totaljuros = arr_checkout_juros.reduce((a, b) => Number(a) + Number(b), 0);
+                        var totalCobrado = arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0);
+                        var totalTroco = arr_checkout_troco.reduce((a, b) => Number(a) + Number(b), 0);
+                        var totalDesconto = arr_checkout_desconto.reduce((a, b) => Number(a) + Number(b), 0);
 
-                    // Calcula saldo remanescente
-                    var saldo = checkout_total - valortotalacobrar;
+                        ///////////////////////////////////////////////
+                        // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
+                        var tipo_pagamento = '';
+                        if (cobrancaDados.tipoPagto === 'CM') {
+                            if (cobrancaDados.parcelas > 1) {
+                                tipo_pagamento = 'Parcelado';
+                            } else  {
+                                tipo_pagamento = 'À Vista';
+                            }
+                        } else if (cobrancaDados.tipoPagto === 'BL') {
+                            if (cobrancaDados.parcelas > 1) {
+                                tipo_pagamento = 'Parcelado';
+                            } else  {
+                                tipo_pagamento = 'À Vista';
+                            }
+                        } else if (cobrancaDados.tipoPagto === 'DN') {
+                            tipo_pagamento = 'À Vista';
+                        } else if (cobrancaDados.tipoPagto === 'PX') {
+                            tipo_pagamento = 'À Vista';
+                        } else if (cobrancaDados.tipoPagto === 'OT') {
+                            tipo_pagamento = 'À Vista';
+                        }
 
-                    if (saldo > 0.01) {
-                        Swal.fire('Parcial', 'Cobrança parcial registrada! Ainda há saldo a receber.', 'info');
-                        // Atualiza campos para o saldo remanescente
-                        $("#valortotalacobrar").val(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
-                        $("#checkout_total").text(saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+                        $.get('/api/mensagens-comp', {
+                            canal_id: 4,
+                            categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
 
-                        $("#checkout_pago").text((checkout_pago + valortotalacobrar).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-                        $("#checkout_descontado").text((checkout_descontado + checkout_desconto_proporcional).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-                        $("#checkout_resgatado").text((checkout_resgatado + checkout_cashback_proporcional).toLocaleString('pt-BR', { maximumFractionDigits: 0 }));
+                        }, function(mensagensComp) {
 
-                        // Limpa apenas campos de pagamento/modal
-                        $('.payment-box-active').removeClass('payment-box-active');
-                        $('#id_forma_pagto').val('').trigger('change');
-                        $('#valortroco').val('0,00');
-                        $("#valorsaldo").val('0,00');
+                            var params = {
+                                empresa: {
+                                    nome: empresa.emp_nfant,
+                                    cnpj: empresa.emp_cnpj,
+                                    im: empresa.emp_im,
+                                    ie: empresa.emp_ie,
+                                    emp_id: empresa.emp_id
+                                },
 
-                    } else {
-                        Swal.fire('Sucesso', 'Cobrança registrada!', 'success').then(function() {
-                            // Limpa o título atual para a próxima venda
-                            tituloAtual = null;
+                                cliente: {
+                                    nome: window.clientName,
+                                    doc: window.clientDoc,
+                                    pontos: window.clientPontos
+                                },
 
-                            // Limpar carrinho, atualizar tela, etc.
+                                comprovante: {
+                                    titulo: tituloAtual,
+                                    nsu_titulo: nsu_tituloAtual,
+                                    nsu_autoriz: arr_nsu_autoriz,
+                                    data_hora: (new Date()).toLocaleString('pt-BR'),
+                                    cartao_numero: (cobrancaDados.cliente_cardn || ''),
+
+                                    tipo_pagamento: tipo_pagamento,
+                                    parcelas: cobrancaDados.parcelas,
+                                    pontos_concedidos: 0,
+
+                                    meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
+                                    jurosTotal: totaljuros,
+                                    checkout_subtotal: totalCobrado,
+                                    checkout_troco: totalTroco,
+                                    checkout_desconto: totalDesconto,
+                                    checkout_cashback: cobrancaDados.checkout_cashback,
+                                    checkout_total: totalCobrado + totaljuros
+                                },
+
+                                mensagens: {
+                                    cabecalho: mensagensComp.CBCPR,
+                                    multban: mensagensComp.MULTB,
+                                    rodape: mensagensComp.RPCPR
+                                },
+
+                                autorizacao: mensagensComp.AUTHO
+                            };
+
+                            var htmlComprovante = gerarComprovanteVenda(params);
+
+                            Swal.fire({
+                                html: htmlComprovante,
+                                showConfirmButton: false,
+                                width: 500,
+                                customClass: { popup: 'swal2-comprovante-popup' },
+                                allowOutsideClick: false,
+                                footer: `
+                                    <div style="display:flex;justify-content:space-between;gap:8px;">
+                                        <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
+                                        <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
+                                        <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
+                                        <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
+                                    </div>
+                                `
+                            });
+
+                            // Fechar o modal ao clicar em fechar
+                            $(document).on('click', '#btnFecharComprovante', function() {
+
+                                // Resetar arrays de controle
+                                cart = [];
+                                carrinho = [];
+                                arr_nsu_autoriz = [];
+                                arr_meiosPagtoUtilizados = [];
+                                arr_checkout_desconto = [];
+                                arr_checkout_cashback = [];
+                                arr_checkout_total = [];
+                                arr_checkout_juros = [];
+                                arr_checkout_troco = [];
+                                cartaoSelecionado = null;
+                                // window.responseCartoesCliente = [];
+                                window.cobrancaDados = [];
+                                tituloAtual = null;
+                                nsu_tituloAtual = null;
+                                show_cart();
+                                Swal.close();
+
+                            });
+
+                            // Imprimir ao clicar em imprimir
+                            $(document).on('click', '#btnImprimirComprovante', function() {
+                                var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
+                                var printWindow = window.open('', '', 'width=800,height=600');
+                                printWindow.document.write(`
+                                    <html>
+                                    <head>
+                                        <title>Imprimir Comprovante</title>
+                                        <style>
+                                            body { background: #fdf6e3; font-family: monospace; }
+                                            #comprovante-venda { margin: 0 auto; }
+                                        </style>
+                                    </head>
+                                    <body>${comprovanteHtml}</body>
+                                    </html>
+                                `);
+
+                                printWindow.document.close();
+                                printWindow.focus();
+                                printWindow.onload = function() {
+                                    printWindow.print();
+                                };
+
+                            });
+
+                            // Envio por email - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarEmailComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
+                            });
+
+                            // Envio por whatsapp - IMPLEMENTAR
+                            $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
+                                Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
+                            });
+
+                            // Resetar arrays de controle
                             cart = [];
+                            carrinho = [];
+                            arr_nsu_autoriz = [];
+                            arr_meiosPagtoUtilizados = [];
+                            arr_checkout_desconto = [];
+                            arr_checkout_cashback = [];
+                            arr_checkout_total = [];
+                            arr_checkout_juros = [];
+                            arr_checkout_troco = [];
+                            cartaoSelecionado = null;
+                            //window.responseCartoesCliente = [];
+                            window.cobrancaDados = [];
+                            show_cart();
+
+                        });
+
+                    }
+
+                ////////////////////////////////////////////////
+                // Se o usuário confirmou que quer cancelar tudo
+                } else if (result.isDenied) {
+
+                    var token = $('meta[name="csrf-token"]').attr('content');
+
+                    $.post('/pdv-web/cancelar-venda', {
+                        _token: token,
+                        titulo: tituloAtual
+
+                    }, function(resp) {
+                        if (resp.success) {
+                            // Limpa os campos e permite o fechamento do modal
                             $("#totalItens").html("0");
                             $("#TableNo").text("");
                             $("#TableNoCart").text("");
@@ -2997,155 +3403,38 @@ $(document).ready(function () {
                             }
                             $('.payment-box-active').removeClass('payment-box-active');
                             $('#id_forma_pagto').val('').trigger('change');
+                            // Feche o modal
+                            podeFecharCheckoutModal = true;
                             $('#checkout-modal').modal('hide');
+                            podeFecharCheckoutModal = false;
 
-                            ///////////////////////////////////////////////
-                            // MONTA OS PARÂMETROS PARA GERAR O COMPROVANTE
-                            $.get('/api/mensagens-comp', {
-                                canal_id: 4,
-                                categorias: ['CBCPR','MULTB','RPCPR', 'AUTHO']
+                            // Resetar arrays de controle
+                            cart = [];
+                            carrinho = [];
+                            arr_nsu_autoriz = [];
+                            arr_meiosPagtoUtilizados = [];
+                            arr_checkout_desconto = [];
+                            arr_checkout_cashback = [];
+                            arr_checkout_total = [];
+                            arr_checkout_juros = [];
+                            arr_checkout_troco = [];
+                            cartaoSelecionado = null;
+                            //window.responseCartoesCliente = [];
+                            window.cobrancaDados = [];
+                            tituloAtual = null;
+                            nsu_tituloAtual = null;
+                            Swal.close();
+                            show_cart();
 
-                            }, function(mensagensComp) {
+                        } else {
+                            Swal.fire('Erro', resp.error || 'Não foi possível cancelar a venda.', 'error');
+                        }
+                    });
 
-                                var params = {
-                                    empresa: {
-                                        nome: empresa.emp_nfant,
-                                        cnpj: empresa.emp_cnpj,
-                                        im: empresa.emp_im,
-                                        ie: empresa.emp_ie,
-                                        emp_id: empresa.emp_id
-                                    },
-
-                                    cliente: {
-                                        nome: window.clientName,
-                                        doc: window.clientDoc,
-                                        pontos: window.clientPontos
-                                    },
-
-                                    comprovante: {
-                                        titulo: resp.titulo,
-                                        nsu_titulo: resp.nsu_titulo,
-                                        nsu_autoriz: arr_nsu_autoriz,
-                                        data_hora: (new Date()).toLocaleString('pt-BR'),
-                                        cartao_numero: resp.cartao_numero,
-
-                                        tipo_pagamento: 'À Vista',
-                                        parcelas: 1,
-                                        pontos_concedidos: 0,
-
-                                        meio_pagamentos: arr_meiosPagtoUtilizados.join(', '),
-                                        checkout_subtotal: checkout_subtotal,
-                                        checkout_troco: checkout_troco,
-                                        checkout_desconto: arr_checkout_desconto.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
-                                        checkout_cashback: arr_checkout_cashback.reduce((a, b) => parseFloat(a) + parseFloat(b), 0),
-                                        checkout_total: arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0)
-                                    },
-
-                                    mensagens: {
-                                        cabecalho: mensagensComp.CBCPR,
-                                        multban: mensagensComp.MULTB,
-                                        rodape: mensagensComp.RPCPR
-                                    },
-
-                                    autorizacao: mensagensComp.AUTHO
-                                };
-
-                                // console.log("Parâmetros do comprovante:", params);
-
-                                var htmlComprovante = gerarComprovanteVenda(params);
-
-                                Swal.fire({
-                                    html: htmlComprovante,
-                                    showConfirmButton: false,
-                                    width: 500,
-                                    customClass: { popup: 'swal2-comprovante-popup' },
-                                    footer: `
-                                        <div style="display:flex;justify-content:space-between;gap:8px;">
-                                            <button class="btn btn-primary btn-sm" id="btnEnviarEmailComprovante">Enviar por Email</button>
-                                            <button class="btn btn-success btn-sm" id="btnEnviarWhatsAppComprovante">Enviar por WhatsApp</button>
-                                            <button class="btn btn-secundary-multban btn-sm" id="btnFecharComprovante">Fechar</button>
-                                            <button class="btn btn-primary btn-sm" id="btnImprimirComprovante">Imprimir</button>
-                                        </div>
-                                    `
-                                });
-
-                                // Fechar o modal ao clicar em fechar
-                                $(document).on('click', '#btnFecharComprovante', function() {
-                                    Swal.close();
-                                });
-
-                                // Imprimir ao clicar em imprimir
-                                $(document).on('click', '#btnImprimirComprovante', function() {
-                                    // Pega o HTML do comprovante
-                                    var comprovanteHtml = $('#comprovante-venda').prop('outerHTML');
-                                    // Abre nova janela
-                                    var printWindow = window.open('', '', 'width=800,height=600');
-                                    printWindow.document.write(`
-                                        <html>
-                                        <head>
-                                            <title>Imprimir Comprovante</title>
-                                            <style>
-                                                body { background: #fdf6e3; font-family: monospace; }
-                                                #comprovante-venda { margin: 0 auto; }
-                                            </style>
-                                        </head>
-                                        <body>${comprovanteHtml}</body>
-                                        </html>
-                                    `);
-                                    printWindow.document.close();
-                                    printWindow.focus();
-                                    // Aguarda o carregamento e imprime
-                                    printWindow.onload = function() {
-                                        printWindow.print();
-                                        // printWindow.close(); // Descomente se quiser fechar automaticamente após imprimir
-                                    };
-                                });
-
-                                // Envio por email - IMPLEMENTAR
-                                $(document).on('click', '#btnEnviarEmailComprovante', function() {
-                                    Swal.fire('Atenção', 'Funcionalidade de envio por email ainda não implementada.', 'info');
-                                });
-
-                                // Envio por whatsapp - IMPLEMENTAR
-                                $(document).on('click', '#btnEnviarWhatsAppComprovante', function() {
-                                    Swal.fire('Atenção', 'Funcionalidade de envio por WhatsApp ainda não implementada.', 'info');
-                                });
-
-                                // Resetar arrays de controle
-                                arr_nsu_autoriz = [];
-                                arr_meiosPagtoUtilizados = [];
-                                arr_checkout_desconto = [];
-                                arr_checkout_cashback = [];
-                                arr_checkout_total = [];
-
-                            });
-
-                        });
-
-                    }
-
-                } else {
-                    var msg = resp.error || resp.message || 'Não foi possível registrar a cobrança.';
-                    Swal.fire('Erro', msg, 'error');
                 }
-
-            },
-            error: function(xhr) {
-                var msg = 'Falha na comunicação com o servidor.';
-                if (xhr && xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) {
-                    msg = xhr.responseJSON.error || xhr.responseJSON.message;
-                } else if (xhr && xhr.responseText) {
-                    try {
-                        var json = JSON.parse(xhr.responseText);
-                        msg = json.error || json.message || msg;
-                    } catch(e) {
-                        msg = xhr.responseText;
-                    }
-                }
-                Swal.fire('Erro', msg, 'error');
-            }
-        });
-
+                // Se cancelar, não faz nada (modal permanece aberto)
+            });
+        }
     });
 
 });

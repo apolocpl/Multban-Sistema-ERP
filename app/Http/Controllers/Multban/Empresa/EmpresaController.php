@@ -49,7 +49,7 @@ class EmpresaController extends Controller
             FiltrosEnum::COD_FRANQUEADORA => 'Código da Franqueadora',
             FiltrosEnum::EMPRESA => 'Empresa',
             FiltrosEnum::NOME_FANTASIA => 'Nome Fantasia',
-            FiltrosEnum::NOME_MULTMAIS => 'Nome MultMais',
+            FiltrosEnum::NOME_MULTBAN => 'Nome MultBan',
             FiltrosEnum::CNPJ => 'CNPJ'
         ];
         $status = EmpresaStatus::all();
@@ -198,7 +198,7 @@ class EmpresaController extends Controller
             $input['emp_privlbl'] = $request->emp_privlbl == 'on' ? 'x' : '';
             $input['pp_particular'] = $request->pp_particular == 'on' ? 'x' : '';
             $input['pp_franquia'] = $request->pp_franquia == 'on' ? 'x' : '';
-            $input['pp_multmais'] = $request->pp_multmais == 'on' ? 'x' : '';
+            $input['pp_mult'] = $request->pp_mult == 'on' ? 'x' : '';
             $input['pp_cashback'] = $request->pp_cashback == 'on' ? 'x' : '';
             $input['cobsrv_multa'] = formatarTextoParaDecimal($request->cobsrv_multa);
             $input['cobsrv_juros'] = formatarTextoParaDecimal($request->cobsrv_juros);
@@ -333,7 +333,7 @@ class EmpresaController extends Controller
 
             $empresaParam->pp_particular = $input['pp_particular'];
             $empresaParam->pp_franquia = $input['pp_franquia'];
-            $empresaParam->pp_multmais = $input['pp_multmais'];
+            $empresaParam->pp_mult = $input['pp_mult'];
             $empresaParam->pp_cashback = $input['pp_cashback'];
             $empresaParam->ant_blktit = $input['ant_blktit'];
             $empresaParam->ant_titpdv = $input['ant_titpdv'];
@@ -346,6 +346,7 @@ class EmpresaController extends Controller
 
             $empresaGeral->emp_cnpj = removerCNPJ($request->emp_cnpj);
             $empresaGeral->emp_wl = $request->emp_wl == "on" ? "x" : "";
+            $empresaGeral->emp_comwl = formatarTextoParaDecimal($request->emp_comwl);
             $empresaGeral->emp_privlbl = $request->emp_privlbl == "on" ? "x" : "";
             $empresaGeral->emp_sts = $request->emp_sts;
             $empresaGeral->emp_ie = removerCNPJ($request->emp_ie);
@@ -708,7 +709,7 @@ class EmpresaController extends Controller
             $input['emp_privlbl'] = $request->emp_privlbl == 'on' ? 'x' : '';
             $input['pp_particular'] = $request->pp_particular == 'on' ? 'x' : '';
             $input['pp_franquia'] = $request->pp_franquia == 'on' ? 'x' : '';
-            $input['pp_multmais'] = $request->pp_multmais == 'on' ? 'x' : '';
+            $input['pp_mult'] = $request->pp_mult == 'on' ? 'x' : '';
             $input['pp_cashback'] = $request->pp_cashback == 'on' ? 'x' : '';
             $input['cobsrv_multa'] = formatarTextoParaDecimal($request->cobsrv_multa);
             $input['cobsrv_juros'] = formatarTextoParaDecimal($request->cobsrv_juros);
@@ -881,7 +882,7 @@ class EmpresaController extends Controller
 
                 $empresaParam->pp_particular = $input['pp_particular'];
                 $empresaParam->pp_franquia = $input['pp_franquia'];
-                $empresaParam->pp_multmais = $input['pp_multmais'];
+                $empresaParam->pp_mult = $input['pp_mult'];
                 $empresaParam->pp_cashback = $input['pp_cashback'];
                 $empresaParam->ant_blktit = $input['ant_blktit'];
                 $empresaParam->ant_titpdv = $input['ant_titpdv'];
@@ -894,6 +895,7 @@ class EmpresaController extends Controller
 
                 $empresaGeral->emp_cnpj = removerCNPJ($request->emp_cnpj);
                 $empresaGeral->emp_wl = $request->emp_wl == "on" ? "x" : "";
+                $empresaGeral->emp_comwl = formatarTextoParaDecimal($request->emp_comwl);
                 $empresaGeral->emp_privlbl = $request->emp_privlbl == "on" ? "x" : "";
                 $empresaGeral->emp_sts = $request->emp_sts;
                 $empresaGeral->emp_ie = removerCNPJ($request->emp_ie);
@@ -1272,23 +1274,23 @@ class EmpresaController extends Controller
                     $last = Arr::last($request->tax_categ_avista);
 
                     if (intval($request->card_posparc) != intval($last['parc_ate'])) {
-                        $error_list['message'][$value['categ']] = ['"multmais"' . 'Para a parametrização da primeira parcela à vista, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
+                        $error_list['message'][$value['categ']] = ['"multban"' . 'Para a parametrização da primeira parcela à vista, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
                         $hasError = true;
                     }
                 } else {
 
                     if (empty(formatarTextoParaDecimal($value['parc_de']))) {
-                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multmais"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multban"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['parc_ate']))) {
-                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multmais"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multban"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['taxa']))) {
-                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multmais"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multban"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
                 }
@@ -1304,22 +1306,22 @@ class EmpresaController extends Controller
                     $last = Arr::last($request->tax_categ_30);
 
                     if (intval($request->card_posparc) != intval($last['parc_ate'])) {
-                        $error_list['message'][$value['categ']] = ['"multmais"' . 'Para a parametrização da primeira parcela para 30 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
+                        $error_list['message'][$value['categ']] = ['"multban"' . 'Para a parametrização da primeira parcela para 30 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
                         $hasError = true;
                     }
                 } else {
                     if (empty(formatarTextoParaDecimal($value['parc_de']))) {
-                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multmais"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multban"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['parc_ate']))) {
-                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multmais"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multban"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['taxa']))) {
-                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multmais"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multban"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
                 }
@@ -1335,22 +1337,22 @@ class EmpresaController extends Controller
                     $last = Arr::last($request->tax_categ_60);
 
                     if (intval($request->card_posparc) != intval($last['parc_ate'])) {
-                        $error_list['message'][$value['categ']] = ['"multmais"' . 'Para a parametrização da primeira parcela para 60 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
+                        $error_list['message'][$value['categ']] = ['"multban"' . 'Para a parametrização da primeira parcela para 60 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
                         $hasError = true;
                     }
                 } else {
                     if (empty(formatarTextoParaDecimal($value['parc_de']))) {
-                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multmais"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multban"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['parc_ate']))) {
-                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multmais"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multban"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['taxa']))) {
-                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multmais"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multban"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
                 }
@@ -1366,22 +1368,22 @@ class EmpresaController extends Controller
                     $last = Arr::last($request->tax_categ_90);
 
                     if (intval($request->card_posparc) != intval($last['parc_ate'])) {
-                        $error_list['message'][$value['categ']] = ['"multmais"' . 'Para a parametrização da primeira parcela para 90 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
+                        $error_list['message'][$value['categ']] = ['"multban"' . 'Para a parametrização da primeira parcela para 90 dias, falta a taxa para a parcela de ' . $request->card_posparc . 'X'];
                         $hasError = true;
                     }
                 } else {
                     if (empty(formatarTextoParaDecimal($value['parc_de']))) {
-                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multmais"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_de'] = ['"multban"' . "O campo 'Parcela de' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['parc_ate']))) {
-                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multmais"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_parc_ate'] = ['"multban"' . "O campo 'Parcela até' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
 
                     if (empty(formatarTextoParaDecimal($value['taxa']))) {
-                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multmais"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
+                        $error_list['message'][$value['categ'] . '_taxa'] = ['"multban"' . "O campo 'Taxa' não pode ficar vazio ou zerado."];
                         $hasError = true;
                     }
                 }
@@ -1484,8 +1486,8 @@ class EmpresaController extends Controller
             $emp_id = $request->empresa_id;
         }
 
-        if (!empty($request->nome_multmais)) {
-            $emp_id_nmult = $request->nome_multmais;
+        if (!empty($request->nome_multban)) {
+            $emp_id_nmult = $request->nome_multban;
         }
 
         if (!empty($request->emp_sts)) {

@@ -11,7 +11,7 @@ use App\Http\Routes\PainelCobrancaRoute;
 use App\Http\Routes\PerfilRoute;
 use App\Http\Routes\ProdutoRoute;
 use App\Http\Routes\ProgramaPTSRoute;
-use App\Http\Routes\SistemaMultMaisRoute;
+use App\Http\Routes\SistemamultbanRoute;
 use App\Http\Routes\UsuarioRoute;
 use App\Http\Routes\WorkFlowRoute;
 use App\Http\Routes\ManutencaoTituloRoute;
@@ -97,9 +97,9 @@ Route::group(['middleware' => ['auth']], function () {
     ProgramaPTSRoute::rotas();
 
     /**
-     * Programa multmais
+     * Programa multban
      */
-    SistemaMultMaisRoute::rotas();
+    SistemamultbanRoute::rotas();
 
     /**
      * WorkFlow

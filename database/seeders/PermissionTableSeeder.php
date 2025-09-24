@@ -196,15 +196,15 @@ class PermissionTableSeeder extends Seeder
             ['description' => 'Work Flow', 'icon' => 'fas fa-project-diagram', 'name' => 'work-flow.show', 'parent_id' => $Configuracoes],
             ['description' => 'Work Flow', 'icon' => 'fas fa-project-diagram', 'name' => 'work-flow.destroy', 'parent_id' => $Configuracoes],
 
-            //CONFIGURAÇÕES / Sistema multmais
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.store', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.create', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.edit', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.update', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.copy', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.index', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.show', 'parent_id' => $Configuracoes],
-            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multmais.destroy', 'parent_id' => $Configuracoes],
+            //CONFIGURAÇÕES / Sistema multban
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.store', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.create', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.edit', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.update', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.copy', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.index', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.show', 'parent_id' => $Configuracoes],
+            ['description' => 'Sistema Mult+', 'icon' => 'fas fa-cog', 'name' => 'config-sistema-multban.destroy', 'parent_id' => $Configuracoes],
 
             //CONFIGURAÇÕES / OnBoarding Empresas
             // ['description' => 'OnBoarding Empresas', 'icon' => 'fas fa-layer-plus', 'name' => 'onboarding-empresas.store', 'parent_id' => $Configuracoes],

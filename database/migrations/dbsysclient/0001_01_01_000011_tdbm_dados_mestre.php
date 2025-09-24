@@ -321,6 +321,8 @@ return new class extends Migration
             $table->string('meio_pag', 2);
             $table->string('langu', 4);
             $table->string('opcao_parc_desc', 50);
+
+            $table->string('tax_categ', 4)->nullable();;
             $table->string('regra_parc', 50) ->nullable();
             //KEYS
             $table->primary(['opcao_parc', 'langu']);

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Models\Multban\Multmais;
+namespace App\Models\Multban\Multban;
 
 use App\Models\Multban\Traits\DbSysClientTrait;
 use Illuminate\Database\Eloquent\Model;
 
-class SistemaMultmais extends Model
+class SistemaMultban extends Model
 {
     use DbSysClientTrait;
 }

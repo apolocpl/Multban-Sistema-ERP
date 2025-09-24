@@ -1,4 +1,15 @@
 var listaTaxa = 0;
+
+$(document).ready(function () {
+    $('#emp_wl').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#comissionamento-multban-group').show();
+        } else {
+            $('#comissionamento-multban-group').hide();
+        }
+    });
+});
+
 $(function () {
 
     $("input[type='text']").trigger('keyup');

@@ -25,6 +25,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_cnpj' => '04889602000138',
                 'emp_sts' => 'AT',
                 'emp_wl' => 'x',
+                'emp_comwl' => '10.00',
                 'emp_wlde' => null,
                 'emp_privlbl' => null,
                 'emp_ie' => '654785326598',
@@ -83,6 +84,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_cnpj' => '56468651346843',
                 'emp_sts' => 'AT',
                 'emp_wl' => null,
+                'emp_comwl' => '0.00',
                 'emp_wlde' => null,
                 'emp_privlbl' => 'x',
                 'emp_ie' => '321321635416',
@@ -141,6 +143,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_cnpj' => '26489753125698',
                 'emp_sts' => 'AT',
                 'emp_wl' => null,
+                'emp_comwl' => '0.00',
                 'emp_wlde' => null,
                 'emp_privlbl' => null,
                 'emp_ie' => '598975321659',
@@ -199,6 +202,7 @@ class DadosMestreSeeder extends Seeder
                 'emp_cnpj' => '56489365784203',
                 'emp_sts' => 'AT',
                 'emp_wl' => null,
+                'emp_comwl' => '0.00',
                 'emp_wlde' => null,
                 'emp_privlbl' => null,
                 'emp_ie' => '156983647854',
@@ -297,7 +301,7 @@ class DadosMestreSeeder extends Seeder
                 'tax_fid' => '5.99',
                 'pp_particular' => 'x',
                 'pp_franquia' => 'x',
-                'pp_multmais' => 'x',
+                'pp_mult' => 'x',
                 'pp_cashback' => 'x',
                 'antecip_ctr' => 'x',
                 'tax_antmult' => '2.0',
@@ -370,7 +374,7 @@ class DadosMestreSeeder extends Seeder
                 'tax_fid' => '5.99',
                 'pp_particular' => 'x',
                 'pp_franquia' => 'x',
-                'pp_multmais' => 'x',
+                'pp_mult' => 'x',
                 'pp_cashback' => 'x',
                 'antecip_ctr' => 'x',
                 'tax_antmult' => '2.0',
@@ -443,7 +447,7 @@ class DadosMestreSeeder extends Seeder
                 'tax_fid' => '5.99',
                 'pp_particular' => 'x',
                 'pp_franquia' => 'x',
-                'pp_multmais' => 'x',
+                'pp_mult' => 'x',
                 'pp_cashback' => 'x',
                 'antecip_ctr' => 'x',
                 'tax_antmult' => '2.0',
@@ -516,7 +520,7 @@ class DadosMestreSeeder extends Seeder
                 'tax_fid' => '5.99',
                 'pp_particular' => 'x',
                 'pp_franquia' => 'x',
-                'pp_multmais' => 'x',
+                'pp_mult' => 'x',
                 'pp_cashback' => 'x',
                 'antecip_ctr' => 'x',
                 'tax_antmult' => '2.0',
@@ -549,10 +553,11 @@ class DadosMestreSeeder extends Seeder
         $tbdm_empresa_taxpos = EmpresaTaxpos::insert([
             ## EMPRESA 1
             [
+                'tax_id' => 1,
                 'emp_id' => 1,
-                'tax_categ' => 'PRM_30',
+                'tax_categ' => 'P30D',
                 'parc_de' => '1',
-                'parc_ate' => '24',
+                'parc_ate' => '12',
                 'tax' => '1.99',
                 'criador' => '1',
                 'dthr_cr' => '2025-05-28 21:17:07',
@@ -560,8 +565,21 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 2,
                 'emp_id' => 1,
-                'tax_categ' => 'PRM_60',
+                'tax_categ' => 'P30D',
+                'parc_de' => '13',
+                'parc_ate' => '24',
+                'tax' => '2.99',
+                'criador' => '1',
+                'dthr_cr' => '2025-05-28 21:17:07',
+                'dthr_ch' => '2025-05-28 21:17:07',
+            ],
+
+            [
+                'tax_id' => 3,
+                'emp_id' => 1,
+                'tax_categ' => 'P60D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '2.99',
@@ -571,8 +589,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 4,
                 'emp_id' => 1,
-                'tax_categ' => 'PRM_90',
+                'tax_categ' => 'P90D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '3.99',
@@ -582,8 +601,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 5,
                 'emp_id' => 1,
-                'tax_categ' => 'VISTA',
+                'tax_categ' => 'PVST',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -594,8 +614,9 @@ class DadosMestreSeeder extends Seeder
 
             ## EMPRESA 2
             [
+                'tax_id' => 6,
                 'emp_id' => 2,
-                'tax_categ' => 'PRM_30',
+                'tax_categ' => 'P30D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -605,8 +626,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 7,
                 'emp_id' => 2,
-                'tax_categ' => 'PRM_60',
+                'tax_categ' => 'P60D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '2.99',
@@ -616,8 +638,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 8,
                 'emp_id' => 2,
-                'tax_categ' => 'PRM_90',
+                'tax_categ' => 'P90D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '3.99',
@@ -627,8 +650,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 9,
                 'emp_id' => 2,
-                'tax_categ' => 'VISTA',
+                'tax_categ' => 'PVST',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -639,8 +663,9 @@ class DadosMestreSeeder extends Seeder
 
             ## EMPRESA 3
             [
+                'tax_id' => 10,
                 'emp_id' => 3,
-                'tax_categ' => 'PRM_30',
+                'tax_categ' => 'P30D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -650,8 +675,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 11,
                 'emp_id' => 3,
-                'tax_categ' => 'PRM_60',
+                'tax_categ' => 'P60D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '2.99',
@@ -661,8 +687,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 12,
                 'emp_id' => 3,
-                'tax_categ' => 'PRM_90',
+                'tax_categ' => 'P90D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '3.99',
@@ -672,8 +699,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 13,
                 'emp_id' => 3,
-                'tax_categ' => 'VISTA',
+                'tax_categ' => 'PVST',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -684,8 +712,9 @@ class DadosMestreSeeder extends Seeder
 
             ## EMPRESA 4
             [
+                'tax_id' => 14,
                 'emp_id' => 4,
-                'tax_categ' => 'PRM_30',
+                'tax_categ' => 'P30D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -695,8 +724,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 15,
                 'emp_id' => 4,
-                'tax_categ' => 'PRM_60',
+                'tax_categ' => 'P60D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '2.99',
@@ -706,8 +736,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 16,
                 'emp_id' => 4,
-                'tax_categ' => 'PRM_90',
+                'tax_categ' => 'P90D',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '3.99',
@@ -717,8 +748,9 @@ class DadosMestreSeeder extends Seeder
             ],
 
             [
+                'tax_id' => 17,
                 'emp_id' => 4,
-                'tax_categ' => 'VISTA',
+                'tax_categ' => 'PVST',
                 'parc_de' => '1',
                 'parc_ate' => '24',
                 'tax' => '1.99',
@@ -1336,30 +1368,27 @@ class DadosMestreSeeder extends Seeder
         DB::table('tbdm_cnd_pag')->insert($tbdm_cnd_pag);
 
         $tbdm_parcela_sts = [
-            ['langu' => 'PORT', "parcela_sts" => "ANT", "parcela_sts_desc" => "ANTECIPADO"],
-            ['langu' => 'PORT', "parcela_sts" => "ANB", "parcela_sts_desc" => "ANTECIPADO BAIXADO"],
-            ['langu' => 'PORT', "parcela_sts" => "ANI", "parcela_sts_desc" => "ANTECIPADO INADIMPLENTE"],
             ['langu' => 'PORT', "parcela_sts" => "BXD", "parcela_sts_desc" => "BAIXADO"],
-            ['langu' => 'PORT', "parcela_sts" => "BIN", "parcela_sts_desc" => "BAIXADO INADIMPLENTE"],
-            ['langu' => 'PORT', "parcela_sts" => "BPT", "parcela_sts_desc" => "BAIXADO PONTOS"],
-            ['langu' => 'PORT', "parcela_sts" => "BDI", "parcela_sts_desc" => "BAIXADO DINHEIRO"],
-            ['langu' => 'PORT', "parcela_sts" => "BPX", "parcela_sts_desc" => "BAIXADO PIX"],
+            ['langu' => 'PORT', "parcela_sts" => "BXI", "parcela_sts_desc" => "BAIXADO - INADIMPLENTE"],
             ['langu' => 'PORT', "parcela_sts" => "REG", "parcela_sts_desc" => "REGISTRADO"],
+            ['langu' => 'PORT', "parcela_sts" => "IND", "parcela_sts_desc" => "INADIMPLENTE"],
         ];
 
         DB::table('tbdm_parcela_sts')->insert($tbdm_parcela_sts);
 
         $tbdm_lanc_tp = [
-            ['langu' => 'PORT', "lanc_tp" => "COMISSAO", "lanc_tp_desc" => "Comissão Paga para Vendedores e Representantes"],
-            ['langu' => 'PORT', "lanc_tp" => "DIV_JUR", "lanc_tp_desc" => "Divisão dos Juros das Vendas Parceladas"],
-            ['langu' => 'PORT', "lanc_tp" => "DIV_MJ", "lanc_tp_desc" => "Divisão Multa e Juros por Atraso"],
-            ['langu' => 'PORT', "lanc_tp" => "PONTOS", "lanc_tp_desc" => "Pontos Utilizados para Liquidação da Venda"],
-            ['langu' => 'PORT', "lanc_tp" => "REBATE", "lanc_tp_desc" => "Rebate pago para Parceiros"],
-            ['langu' => 'PORT', "lanc_tp" => "REPASSE", "lanc_tp_desc" => "Valor da venda referente ao Estabelecimento"],
-            ['langu' => 'PORT', "lanc_tp" => "TAX_ADM", "lanc_tp_desc" => "Valor da venda referente a Taxa Administrativa"],
-            ['langu' => 'PORT', "lanc_tp" => "TAX_ATM", "lanc_tp_desc" => "Valor da Taxa de Antecipação"],
-            ['langu' => 'PORT', "lanc_tp" => "TAX_BAC", "lanc_tp_desc" => "Valor referente a taxa do Banco Central"],
-            ['langu' => 'PORT', "lanc_tp" => "ROYALTIES", "lanc_tp_desc" => "Royalties pago para Tercerios"],
+            ['langu' => 'PORT', "lanc_tp" => "VLR_CMIS", "lanc_tp_desc" => "Comissão Paga para Vendedores e Representantes"],
+            ['langu' => 'PORT', "lanc_tp" => "DIV_JURS", "lanc_tp_desc" => "Divisão dos Juros das Vendas Parceladas"],
+            ['langu' => 'PORT', "lanc_tp" => "DIV_MTJR", "lanc_tp_desc" => "Divisão Multa e Juros por Atraso"],
+            ['langu' => 'PORT', "lanc_tp" => "QTD_PNTS", "lanc_tp_desc" => "Pontos Utilizados para Liquidação da Venda"],
+            ['langu' => 'PORT', "lanc_tp" => "VLR_REBT", "lanc_tp_desc" => "Rebate pago para Parceiros"],
+            ['langu' => 'PORT', "lanc_tp" => "VLR_VNDA", "lanc_tp_desc" => "Valor da venda referente ao Estabelecimento"],
+            ['langu' => 'PORT', "lanc_tp" => "DINHEIRO", "lanc_tp_desc" => "Recebimento em Espécie"],
+            ['langu' => 'PORT', "lanc_tp" => "VLR_ANTE", "lanc_tp_desc" => "Valores Antecipados"],
+            ['langu' => 'PORT', "lanc_tp" => "TAXA_ADM", "lanc_tp_desc" => "Valor da venda referente a Taxa Administrativa"],
+            ['langu' => 'PORT', "lanc_tp" => "TAXA_ANT", "lanc_tp_desc" => "Valor da Taxa de Antecipação"],
+            ['langu' => 'PORT', "lanc_tp" => "TAXA_BAC", "lanc_tp_desc" => "Valor referente a taxa do Banco Central"],
+            ['langu' => 'PORT', "lanc_tp" => "VLR_ROTS", "lanc_tp_desc" => "Royalties pago para Tercerios"],
         ];
 
         DB::table('tbdm_lanc_tp')->insert($tbdm_lanc_tp);
@@ -1372,15 +1401,15 @@ class DadosMestreSeeder extends Seeder
         DB::table('tbdm_fatura_sts')->insert($tbdm_fatura_sts);
 
         $tbdm_regra_parc = [
-            ['langu' => 'PORT', "opcao_parc" => "1", "meio_pag" => "BL", "opcao_parc_desc" => "À Vista", "regra_parc" => "5"],
-            ['langu' => 'PORT', "opcao_parc" => "2", "meio_pag" => "BL", "opcao_parc_desc" => "30 dias", "regra_parc" => "30"],
-            ['langu' => 'PORT', "opcao_parc" => "3", "meio_pag" => "BL", "opcao_parc_desc" => "60 dias", "regra_parc" => "60"],
-            ['langu' => 'PORT', "opcao_parc" => "4", "meio_pag" => "BL", "opcao_parc_desc" => "90 dias", "regra_parc" => "90"],
-            ['langu' => 'PORT', "opcao_parc" => "5", "meio_pag" => "BL", "opcao_parc_desc" => "Personalizado", "regra_parc" => NULL],
-            ['langu' => 'PORT', "opcao_parc" => "6", "meio_pag" => "CM", "opcao_parc_desc" => "Rotativo", "regra_parc" => NULL],
-            ['langu' => 'PORT', "opcao_parc" => "7", "meio_pag" => "CM", "opcao_parc_desc" => "30 dias", "regra_parc" => "30"],
-            ['langu' => 'PORT', "opcao_parc" => "8", "meio_pag" => "CM", "opcao_parc_desc" => "60 dias", "regra_parc" => "60"],
-            ['langu' => 'PORT', "opcao_parc" => "9", "meio_pag" => "CM", "opcao_parc_desc" => "90 dias", "regra_parc" => "90"],
+            ['langu' => 'PORT', "opcao_parc" => "1", "meio_pag" => "BL", "opcao_parc_desc" => "À Vista", "tax_categ" => "PVST", "regra_parc" => "5"],
+            ['langu' => 'PORT', "opcao_parc" => "2", "meio_pag" => "BL", "opcao_parc_desc" => "30 dias", "tax_categ" => "P30D", "regra_parc" => "30"],
+            ['langu' => 'PORT', "opcao_parc" => "3", "meio_pag" => "BL", "opcao_parc_desc" => "60 dias", "tax_categ" => "P60D", "regra_parc" => "60"],
+            ['langu' => 'PORT', "opcao_parc" => "4", "meio_pag" => "BL", "opcao_parc_desc" => "90 dias", "tax_categ" => "P90D", "regra_parc" => "90"],
+            ['langu' => 'PORT', "opcao_parc" => "5", "meio_pag" => "BL", "opcao_parc_desc" => "Personalizado", "tax_categ" => NULL, "regra_parc" => NULL],
+            ['langu' => 'PORT', "opcao_parc" => "6", "meio_pag" => "CM", "opcao_parc_desc" => "Rotativo", "tax_categ" => "P30D", "regra_parc" => NULL],
+            ['langu' => 'PORT', "opcao_parc" => "7", "meio_pag" => "CM", "opcao_parc_desc" => "30 dias", "tax_categ" => "P30D", "regra_parc" => "30"],
+            ['langu' => 'PORT', "opcao_parc" => "8", "meio_pag" => "CM", "opcao_parc_desc" => "60 dias", "tax_categ" => "P60D", "regra_parc" => "60"],
+            ['langu' => 'PORT', "opcao_parc" => "9", "meio_pag" => "CM", "opcao_parc_desc" => "90 dias", "tax_categ" => "P90D", "regra_parc" => "90"],
         ];
 
         DB::table('tbdm_regra_parc')->insert($tbdm_regra_parc);

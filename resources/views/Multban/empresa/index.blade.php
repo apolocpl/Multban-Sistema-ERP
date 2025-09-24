@@ -78,12 +78,12 @@
                 <!-- SEGUNDA LINHA DO FORMULÁRIO DE PESQUISA -->
                 <div class="form-row">
 
-                    <!-- FILTRO DO NOME MULTMAIS -->
+                    <!-- FILTRO DO NOME multban -->
                     <div class="form-group col-md-3">
-                        <label for="nome_multmais">Nome MultMais:</label>
-                        <select id="nome_multmais" name="nome_multmais"
+                        <label for="nome_multban">Nome multban:</label>
+                        <select id="nome_multban" name="nome_multban"
                             class="form-control select2 select2-hidden-accessible"
-                            data-placeholder="Pesquise o Nome MultMais" style="width: 100%;" aria-hidden="true">
+                            data-placeholder="Pesquise o Nome multban" style="width: 100%;" aria-hidden="true">
                             <option></option>
                         </select>
                     </div>
@@ -155,9 +155,9 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            // Select2 AJAX para pesquisar nomes MultMais
-            $('#nome_multmais').select2({
-                placeholder: 'Pesquise o Nome MultMais',
+            // Select2 AJAX para pesquisar nomes multban
+            $('#nome_multban').select2({
+                placeholder: 'Pesquise o Nome multban',
                 minimumInputLength: 2,
                 ajax: {
                     url: '/empresa/obter-nmult', // ajuste conforme sua rota/controller

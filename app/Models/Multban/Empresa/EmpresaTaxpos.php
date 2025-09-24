@@ -31,14 +31,15 @@ class EmpresaTaxpos extends Model
      * @var list<string>
      */
     protected $fillable = [
-        "emp_id",
         "tax_id",
+        "emp_id",
         "tax_categ",
         "parc_de",
         "parc_ate",
-        "taxa",
+        "tax",
         "criador",
         "dthr_cr",
+        "modificador",
         "dthr_ch",
     ];
 

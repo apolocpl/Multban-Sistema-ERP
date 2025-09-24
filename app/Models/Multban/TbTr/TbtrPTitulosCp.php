@@ -57,5 +57,9 @@ class TbtrPTitulosCp extends Model
         'pgt_mtjr',
         'vlr_rec',
         'pts_disp_item',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 }

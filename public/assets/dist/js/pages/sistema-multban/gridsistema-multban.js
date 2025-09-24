@@ -21,7 +21,7 @@ $(document).ready(function () {
             readURLImage(this, '.brand-image');
         });
         $("#logo_h").change(function () {
-            readURLImage(this, '.logo-multmais');
+            readURLImage(this, '.logo-multban');
         });
 
         //color picker with addon
