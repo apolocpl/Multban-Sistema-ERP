@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Multban\Configuracoes;
+use App\Enums\FiltrosEnum;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Multban\TbCf\TbCfMsgComp;

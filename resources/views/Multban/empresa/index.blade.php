@@ -65,7 +65,6 @@
                             data-placeholder="Selecione" data-allow-clear="true" style="width: 100%;">
                             <option></option>
                             @foreach($status as $key => $sta)
-
                                 <option {{$sta->emp_sts == $empresaGeral->emp_sts ? 'selected' : ''}}
                                     value="{{$sta->emp_sts}}">{{$sta->emp_sts_desc}}</option>
                             @endforeach
@@ -181,6 +180,7 @@
                     cache: true
                 }
             });
+
             // Select2 AJAX para pesquisar franqueadoras
             $('#cod_franqueadora').select2({
                 placeholder: 'Pesquise a Franqueadora',
@@ -212,6 +212,7 @@
                 $("#empresa_id").val({{ Session::get('idModeloInserido') }})
                 toastr.success("{{ $message }}", "Sucesso");
             @endif
+
             @if ($message = Session::get('error'))
                 toastr.error("{{ $message }}", "Erro");
             @endif

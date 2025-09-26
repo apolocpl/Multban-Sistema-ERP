@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Models\Multban\ProgramaPts;
+namespace App\Models\Multban\DadosMestre;
 
 use App\Models\Multban\Traits\DbSysClientTrait;
 use Illuminate\Database\Eloquent\Model;
 
-class ProgramaPts extends Model
+class TbDmCardCateg extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_programa_pts";
-
-    protected $primaryKey = 'prgpts_id';
+    protected $table = "tbdm_card_categ";
 
     public $timestamps = false;
 }

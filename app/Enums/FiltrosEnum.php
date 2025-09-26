@@ -21,4 +21,5 @@ abstract class FiltrosEnum
     const EMPRESA = 14;
     const NOME_FANTASIA = 15;
     const NOME_MULTBAN = 16;
+    const CARD_CATEG = 17;
 }

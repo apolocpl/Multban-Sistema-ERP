@@ -147,10 +147,27 @@ class PdvWebController extends Controller
                 $vlr_acr_mn = 0;
 
                 // REGRA DO PROGRAMA DE PONTOS
-                // $pp_particular
-                // $pp_franquia
-                // $pp_multcard
-                // $pp_cashback
+                // se programa de pontos particular ativo
+                $emp_pp_particular = null;
+                if ($pp_particular) {
+                    $emp_pp_particular = $empresa->emp_id;
+                }
+                // se programa de pontos da franquia ativo
+                $emp_pp_franquia = null;
+                if ($pp_franquia) {
+                    $emp_pp_franquia = $empresa->emp_frqmst ?? null;
+                }
+                // se programa de pontos multban ativo
+                $emp_pp_mult = null;
+                if ($pp_mult) {
+                    $emp_pp_mult = 1;
+                }
+                // se programa de cashback multban ativo
+                $emp_pp_cashback = null;
+                if ($pp_cashback) {
+                    $emp_pp_cashback = 1;
+                }
+
 
                 // TAXA ADMINISTRATIVA
                 $tax_adm = 0;

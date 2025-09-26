@@ -135,15 +135,19 @@ class CreateTbdmClientesCardTable extends Migration
             $table->foreignid('emp_id');
             $table->id('prgpts_id');
             $table->string('card_categ', 4);
-            $table->string('prgpts_sts', 30);
+            $table->string('prgpts_sts', 2);
             //FIELDS
+            $table->decimal('prgpts_valor', 10, 2)->nullable();
             $table->decimal('prgpts_eq', 10, 2)->nullable();
+            $table->string('prgpts_sc', 1)->nullable();
             $table->integer('criador')->length()->nullable();
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->length()->nullable();
             $table->timestamp('dthr_ch')->nullable();
-            //KEYS
-            $table->primary(['prgpts_id', 'emp_id', 'card_categ', 'prgpts_sts']);
+            // PRIMARY KEY
+            $table->primary('prgpts_id');
+            // UNIQUE KEY para emp_id + card_categ
+            $table->unique(['emp_id', 'card_categ']);
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
         });

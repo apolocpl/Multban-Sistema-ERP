@@ -106,7 +106,6 @@ class ClienteController extends Controller
         DB::beginTransaction();
         try {
 
-
             $emp_id = Auth::user()->emp_id;
 
             $userRole = Auth::user()->roles->pluck('name', 'name')->all();

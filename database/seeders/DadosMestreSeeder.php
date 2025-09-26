@@ -6,6 +6,7 @@ use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Empresa\EmpresaParam;
 use App\Models\Multban\Empresa\EmpresaTaxpos;
 use App\Models\Multban\Produto\Produto;
+use App\Models\Multban\ProgramaPts\ProgramaPts;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -1611,6 +1612,54 @@ class DadosMestreSeeder extends Seeder
                 'modificador' => 1,
                 'dthr_ch' => '2025-05-28 21:17:07',
             ]
+        ]);
+
+        $tbdm_programa_pts = ProgramaPts::insert([
+            ## PROGRAMA 1
+            [
+                'emp_id' => 1,
+                'prgpts_id' => 1,
+                'card_categ' => 'BRNZ',
+                'prgpts_sts' => 'AT',
+                'prgpts_valor' => 100.00,
+                'prgpts_eq' => 15.00,
+                'prgpts_sc' => NULL,
+                'criador' => 1,
+                'dthr_cr' => '2025-05-28 21:17:07',
+                'modificador' => 1,
+                'dthr_ch' => '2025-05-28 21:17:07',
+            ],
+
+            ## PROGRAMA 2
+            [
+                'emp_id' => 1,
+                'prgpts_id' => 2,
+                'card_categ' => 'OURO',
+                'prgpts_sts' => 'AT',
+                'prgpts_valor' => 200.00,
+                'prgpts_eq' => 25.00,
+                'prgpts_sc' => NULL,
+                'criador' => 1,
+                'dthr_cr' => '2025-05-28 21:17:07',
+                'modificador' => 1,
+                'dthr_ch' => '2025-05-28 21:17:07',
+            ],
+
+            ## PROGRAMA 3
+            [
+                'emp_id' => 2,
+                'prgpts_id' => 3,
+                'card_categ' => 'OURO',
+                'prgpts_sts' => 'AT',
+                'prgpts_valor' => 200.00,
+                'prgpts_eq' => 25.00,
+                'prgpts_sc' => 'X',
+                'criador' => 1,
+                'dthr_cr' => '2025-05-28 21:17:07',
+                'modificador' => 1,
+                'dthr_ch' => '2025-05-28 21:17:07',
+            ],
+
         ]);
 
         $tbtr_agendamento = [

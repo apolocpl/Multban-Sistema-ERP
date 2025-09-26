@@ -53,29 +53,29 @@ $(document).ready(function () {
         ];
 
         var colunasconfig = [{
-            width: "auto",
-            targets: 0
-        },
-        {
-            width: "auto",
-            targets: 1
-        },
-        {
-            width: "auto",
-            targets: 2
-        },
-        {
-            width: "auto",
-            targets: 3
-        },
-        {
-            width: "auto",
-            targets: 4
-        },
-        {
-            width: "auto",
-            targets: 5
-        }
+                width: "auto",
+                targets: 0
+            },
+            {
+                width: "auto",
+                targets: 1
+            },
+            {
+                width: "auto",
+                targets: 2
+            },
+            {
+                width: "auto",
+                targets: 3
+            },
+            {
+                width: "auto",
+                targets: 4
+            },
+            {
+                width: "auto",
+                targets: 5
+            }
         ];
 
         $(document).on('click', '#delete_grid_id', function (e) {
