@@ -1,8 +1,5 @@
 ////////////
 // VARIÁVEIS
-
-
-// Armazena o valor original do produto selecionado
 var tituloAtual = null;
 var nsu_tituloAtual = null;
 var cartaoSelecionado = null;

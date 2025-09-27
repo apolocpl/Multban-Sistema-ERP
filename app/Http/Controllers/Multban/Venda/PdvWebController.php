@@ -62,6 +62,7 @@ class PdvWebController extends Controller
                 $jurosTotalParcela = $request->input('jurosTotalParcela');
                 $tax_categ = $request->input('tax_categ');
                 $regra_parc = $request->input('regra_parc');
+                $card_categ = $request->input('card_categ');
                 $card_uuid = $request->input('card_uuid');
                 $card_mod = $request->input('card_mod');
                 $card_tp = $request->input('card_tp');
@@ -167,7 +168,6 @@ class PdvWebController extends Controller
                 if ($pp_cashback) {
                     $emp_pp_cashback = 1;
                 }
-
 
                 // TAXA ADMINISTRATIVA
                 $tax_adm = 0;
