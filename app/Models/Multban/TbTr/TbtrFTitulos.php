@@ -5,6 +5,7 @@ namespace App\Models\Multban\TbTr;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Multban\Traits\DbSysClientTrait;
 
+
 class TbtrfTitulos extends Model
 {
     use DbSysClientTrait;
