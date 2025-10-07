@@ -18,6 +18,7 @@ use App\Models\Multban\TbTr\TbtrHTitulos;
 use App\Models\Multban\TbTr\TbtrITitulos;
 use App\Models\Multban\TbTr\TbtrPTitulosCp;
 use App\Models\Multban\TbTr\TbtrSTitulos;
+use App\Models\Multban\ProgramaPts\ProgramaPts;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -71,7 +72,6 @@ class PdvWebController extends Controller
                 $emp_id = $user->emp_id;
                 $empresa = Empresa::find($emp_id);
                 $empresaParam = EmpresaParam::find($emp_id);
-                $empresaTaxpos = EmpresaTaxpos::find($emp_id);
 
                 // CALCULA DIAS DE PRAZO, SE HOUVER
                 $diasPrazo = null;
@@ -146,28 +146,102 @@ class PdvWebController extends Controller
                 $vlr_atr_m = 0;
                 $vlr_atr_j = 0;
                 $vlr_acr_mn = 0;
+                $pts_disp_part = 0;
+                $pts_disp_fraq = 0;
+                $pts_disp_mult = 0;
+                $pts_disp_cash = 0;
 
-                // REGRA DO PROGRAMA DE PONTOS
-                // se programa de pontos particular ativo
-                $emp_pp_particular = null;
-                if ($pp_particular) {
-                    $emp_pp_particular = $empresa->emp_id;
-                }
-                // se programa de pontos da franquia ativo
-                $emp_pp_franquia = null;
-                if ($pp_franquia) {
-                    $emp_pp_franquia = $empresa->emp_frqmst ?? null;
-                }
-                // se programa de pontos multban ativo
-                $emp_pp_mult = null;
-                if ($pp_mult) {
-                    $emp_pp_mult = 1;
-                }
-                // se programa de cashback multban ativo
-                $emp_pp_cashback = null;
-                if ($pp_cashback) {
-                    $emp_pp_cashback = 1;
-                }
+                // // REGRA DO PROGRAMA DE PONTOS - COMENTADO NESTE MOMENTO
+                // // VÁLIDO APENAS PARA COBRANÇA, MANTEMOS AQUI APENAS PARA CONHECIMENTO
+                // if ($tipoPagto === 'CM') {
+
+                //     $emp_pp = null;
+                //     // se programa de pontos particular ativo
+                //     if ($pp_particular) {
+                //         $emp_pp = $empresa->emp_id;
+                //         if ($emp_pp) {
+                //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+                //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+                //                 ->where('card_categ', $card_categ)
+                //                 ->where('prgpts_sts', '=', 'AT')
+                //                 ->first();
+
+                //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+                //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+                //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+                //                 // Calcula o valor do cashback com base na regra
+                //                 $pts_disp_part = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+                //             }
+                //         }
+                //     }
+                //     // se programa de pontos da franquia ativo
+                //     if ($pp_franquia) {
+                //         $emp_pp = $empresa->emp_frqmst ?? null;
+                //         if ($emp_pp) {
+                //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+                //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+                //                 ->where('card_categ', $card_categ)
+                //                 ->where('prgpts_sts', '=', 'AT')
+                //                 ->first();
+
+                //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+                //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+                //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+                //                 // Calcula o valor do cashback com base na regra
+                //                 $pts_disp_fraq = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+                //             }
+                //         }
+                //     }
+                //     // se programa de pontos multban ativo
+                //     if ($pp_mult) {
+                //         $emp_pp = 1;
+                //         if ($emp_pp) {
+                //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+                //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+                //                 ->where('card_categ', $card_categ)
+                //                 ->where('prgpts_sts', '=', 'AT')
+                //                 ->first();
+
+                //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+                //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+                //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+                //                 // Calcula o valor do cashback com base na regra
+                //                 $pts_disp_mult = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+                //             }
+                //         }
+                //     }
+                //     // se programa de cashback multban ativo
+                //     if ($pp_cashback) {
+                //         $emp_pp = 1;
+                //         if ($emp_pp) {
+                //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+                //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+                //                 ->where('card_categ', $card_categ)
+                //                 ->where('prgpts_sts', '=', 'AT')
+                //                 ->first();
+
+                //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+                //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+                //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+                //                 // Calcula o valor do cashback com base na regra
+                //                 $pts_disp_cash = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+                //             }
+                //         }
+                //     }
+
+                // } else if ($tipoPagto === 'BL') {
+                //     // Se houver regras, coloque aqui
+                // } else if ($tipoPagto === 'DN') {
+                //     // Se houver regras, coloque aqui
+                // } else if ($tipoPagto === 'PX') {
+                //     // Se houver regras, coloque aqui
+                // } else if ($tipoPagto === 'OT') {
+                //     // Se houver regras, coloque aqui
+                // }
 
                 // TAXA ADMINISTRATIVA
                 $tax_adm = 0;
@@ -267,6 +341,31 @@ class PdvWebController extends Controller
 
 
 
+                /////////////////////////////////////////////////////////////
+                // GRAVA OS DADOS DAS PARCELAS NAS TABELAS
+                // TBTR_P_TITULOS_AB
+                // TBTR_P_TITULOS_CP
+                // TBTR_F_TITULOS
+                for ($parcela = 1; $parcela <= $parcelas; $parcela++) {
+                    // Monte o array de dados da parcela
+                    $dataParcela = [
+                        'emp_id' => $emp_id,
+                        'user_id' => $user_id,
+                        'titulo' => $titulo,
+                        'nsu_titulo' => (string) $nsu_titulo,
+                        'nsu_autoriz' => (string) $nsu_autoriz,
+                        'parcela' => $parcela,
+                        // ... outros campos ...
+                        'criador' => $user_id,
+                        'dthr_cr' => now(),
+                        'modificador' => $user_id,
+                        'dthr_ch' => now(),
+                    ];
+
+                    // Exemplo de salvar:
+                    // $pTituloCp = new TbtrPTitulosCp($dataParcela);
+                    // $pTituloCp->save();
+                }
 
                 ////////////////////////////////////////////////////////////////////////////////////////
                 // GRAVA OS DADOS NA TABELA TBTR_I_TITULOS E TBTR_S_TITULOS - PARA CADA ITEM DO CARRINHO
@@ -277,7 +376,6 @@ class PdvWebController extends Controller
                     $data = [];
 
                     $produto_tipo = $item['produto_tipo'];
-                    $proporcao_item = $item['proporcao_item'];
                     $produto_id = $item['produto_id'];
                     $qtd_item = $item['qtd_item'];
                     $vlr_brt_item = $item['vlr_brut_item'] * $proporcao_cobrado;
@@ -285,7 +383,7 @@ class PdvWebController extends Controller
                     $vlr_dec_item = $item['vlr_desc_item'] * $proporcao_cobrado;
                     $vlr_dec_mn = 0;
                     $vlr_base_item = $vlr_brt_item - $vlr_dec_item - $vlr_dec_mn;
-                    $perc_toti = $proporcao_item;
+                    $perc_toti = $item['proporcao_item'];
                     $qtd_pts_utlz_item = $perc_toti * $qtd_pts_utlz / 100;
                     $vlr_bpar_split_item = $vlr_base_item - $qtd_pts_utlz_item;
                     $vlr_jpar_item = $perc_toti * $jurosTotal / 100;
@@ -343,7 +441,10 @@ class PdvWebController extends Controller
                         'pgt_desc' => $pgt_desc,
                         'pgt_mtjr' => $pgt_mtjr,
                         'vlr_rec' => $vlr_rec,
-                        'pts_disp' => $pts_disp,
+                        'card_pts_part' => $pts_disp_part,
+                        'card_pts_fraq' => $pts_disp_fraq,
+                        'card_pts_mult' => $pts_disp_mult,
+                        'card_pts_cash' => $pts_disp_cash,
                         'criador' => $user_id,
                         'dthr_cr' => now(),
                         'modificador' => $user_id,

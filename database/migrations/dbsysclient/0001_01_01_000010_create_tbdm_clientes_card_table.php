@@ -30,7 +30,10 @@ class CreateTbdmClientesCardTable extends Migration
             $table->string('card_desc', 100)->nullable();
             $table->decimal('card_saldo_vlr', 10, 2);
             $table->decimal('card_limite', 10, 2);
-            $table->decimal('card_saldo_pts', 10, 2);
+            $table->decimal('card_pts_part', 10, 2);
+            $table->decimal('card_pts_fraq', 10, 2);
+            $table->decimal('card_pts_mult', 10, 2);
+            $table->decimal('card_pts_cash', 10, 2);
             $table->text('card_pass')->nullable();
             $table->integer('criador');
             $table->timestamp('dthr_cr');

@@ -74,6 +74,7 @@ class ClienteController extends Controller
         $cardCateg = CardCateg::all();
         $cliente = new Cliente();
         $convenios = TbDmConvenios::all();
+        $users = User::with('cargo')->get(); // ou sua query customizada
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -91,7 +92,8 @@ class ClienteController extends Controller
             'cardMod',
             'cardCateg',
             'canChangeStatus',
-            'convenios'
+            'convenios',
+            'users'
         ));
     }
 
@@ -533,7 +535,8 @@ class ClienteController extends Controller
                     'card_tp', 'card_mod', 'card_categ',
                     'card_desc', 'card_uuid', 'cliente_cardn',
                     'cliente_cardcv', 'card_saldo_vlr',
-                    'card_limite', 'card_saldo_pts','card_sts'
+                    'card_limite', 'card_pts_part', 'card_pts_fraq',
+                    'card_pts_mult', 'card_pts_cash', 'card_sts'
                 )
                 ->get()
                 ->map(function($cartao) {
@@ -550,9 +553,16 @@ class ClienteController extends Controller
 
             // Soma dos pontos do cliente (card_saldo_pts)
             $cliente->cliente_pts = ClienteCard::where('cliente_id', $cliente->cliente_id)
-            ->where('emp_id', $emp_id)
-            ->where('cliente_doc', $cliente->cliente_doc)
-            ->sum('card_saldo_pts');
+                ->where('emp_id', $emp_id)
+                ->where('cliente_doc', $cliente->cliente_doc)
+                ->get()
+                ->sum(function($cartao) {
+                    return
+                        floatval($cartao->card_pts_part) +
+                        floatval($cartao->card_pts_fraq) +
+                        floatval($cartao->card_pts_mult) +
+                        floatval($cartao->card_pts_cash);
+                });
 
         }
 

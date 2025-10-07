@@ -48,6 +48,11 @@ return new class extends Migration
             $table->decimal('vlr_atr_m', 10, 2)->nullable();
             $table->decimal('vlr_atr_j', 10, 2)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();
+            $table->decimal('vlr_rec', 10, 2)->nullable();
+            $table->decimal('pts_disp_part', 10, 2)->nullable();
+            $table->decimal('pts_disp_fraq', 10, 2)->nullable();
+            $table->decimal('pts_disp_mult', 10, 2)->nullable();
+            $table->decimal('pts_disp_cash', 10, 2)->nullable();
             $table->integer('criador')->nullable();
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->nullable();
@@ -105,7 +110,10 @@ return new class extends Migration
             $table->decimal('pgt_desc', 10, 2)->nullable();
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
-            $table->integer('pts_disp')->nullable();
+            $table->decimal('pts_disp_part', 10, 2)->nullable();
+            $table->decimal('pts_disp_fraq', 10, 2)->nullable();
+            $table->decimal('pts_disp_mult', 10, 2)->nullable();
+            $table->decimal('pts_disp_cash', 10, 2)->nullable();
             $table->integer('criador')->nullable();
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->nullable();
@@ -209,7 +217,10 @@ return new class extends Migration
             $table->decimal('pgt_desc', 10, 2)->nullable();
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
-            $table->integer('pts_disp_item')->nullable();
+            $table->decimal('pts_disp_part', 10, 2)->nullable();
+            $table->decimal('pts_disp_fraq', 10, 2)->nullable();
+            $table->decimal('pts_disp_mult', 10, 2)->nullable();
+            $table->decimal('pts_disp_cash', 10, 2)->nullable();
             $table->integer('criador')->nullable();
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->nullable();
@@ -280,7 +291,10 @@ return new class extends Migration
             $table->decimal('pgt_desc', 10, 2)->nullable();
             $table->decimal('pgt_mtjr', 10, 2)->nullable();
             $table->decimal('vlr_rec', 10, 2)->nullable();
-            $table->integer('pts_disp_item')->nullable();
+            $table->decimal('pts_disp_part', 10, 2)->nullable();
+            $table->decimal('pts_disp_fraq', 10, 2)->nullable();
+            $table->decimal('pts_disp_mult', 10, 2)->nullable();
+            $table->decimal('pts_disp_cash', 10, 2)->nullable();
             $table->integer('criador')->nullable();
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->nullable();

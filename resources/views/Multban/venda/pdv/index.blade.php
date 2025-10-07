@@ -383,12 +383,15 @@
     </div>
 
     <!-- MODAL - CHECKOUT -->
-    <div class="modal inmodal" id="checkout-modal" role="dialog" aria-hidden="true">
+    <div class="modal inmodal" id="checkout-modal" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
 
         <div class="modal-dialog modal-lg">
             <div class="modal-content animated bounceInDown">
                 <div class="modal-header bg-primary">
                     <h4 style="float:left;">Finalizar venda</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar" style="color: white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body clearfix">
 
@@ -399,7 +402,7 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <p class="m-0 text-bold">Forma de Pagamento: <span class="font-weight-light">Nome completo do cliente</span></p>
+                            <p class="m-0 text-bold">Cliente: <span class="font-weight-light" id="nome_cliente">Nome completo do cliente</span></p>
                             <p class="text-bold">Pontos / CashBack: <span class="text-multban-bold-secundary" id="cliente_pts">0</span></p>
                         </div>
                         <div class="col-md-6 text-right">
@@ -412,11 +415,11 @@
                         <div class="row m-0">
                                 <div class="col-md-6">
                                     <p class="m-0 text-bold">Total da Compra: <span class="float-right font-weight-light" id="checkout_subtotal">R$ 0,00</span></p>
-                                    <p class="m-0 text-bold">Total Pontos / CashBack À Resgatar: <span class="float-right font-weight-light" id="checkout_cashback">0</span></p>
+                                    <p class="m-0 text-bold">Total Pontos / CashBack À Resgatar: <span class="float-right font-weight-light" id="checkout_cashback">0,00</span></p>
                                     <p class="m-0 text-bold">Total de Desconto Concedido: <span class="float-right font-weight-light" id="checkout_desconto">R$ 0,00</span></p>
                                     <p class="m-0 text-bold">Valor Pago: <span class="float-right font-weight-light" id="checkout_pago">R$ 0,00</span></p>
                                     <p class="m-0 text-bold">Valor Descontado: <span class="float-right font-weight-light" id="checkout_descontado">R$ 0,00</span></p>
-                                    <p class="m-0 text-bold">Pontos / CashBack Resgatado: <span class="float-right font-weight-light" id="checkout_resgatado">0</span></p>
+                                    <p class="m-0 text-bold">Pontos / CashBack Resgatado: <span class="float-right font-weight-light" id="checkout_resgatado">0,00</span></p>
                                 </div>
                                 <div class="col-md-6 text-right">
                                     <p class="mr-4 text-bold m-0" >Total a Pagar</p>
@@ -595,7 +598,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalCartaoMultLabel">Cartões Registrados Para:</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -622,40 +625,45 @@
         </div>
     </div>
 
-    <!-- MODAL DE SELEÇÃO DO CARTÃO DE CRÉDITO -->
-    <div class="modal fade" id="modalCartaoMult" tabindex="-1" role="dialog" aria-labelledby="modalCartaoMultLabel" aria-hidden="true">
+    <!-- MODAL RESGATAR PONTOS/CASHBACK -->
+    <div class="modal fade" id="modalResgatarPontos" tabindex="-1" role="dialog" aria-labelledby="modalResgatarPontosLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalCartaoMultLabel">Cartões Registrados Para:</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title" id="modalResgatarPontosLabel">Resgatar Pontos/CashBack</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-bordered nowrap" id="tabelaCartoesMult">
+                    <table class="table table-striped table-bordered nowrap tabela-cartoes-menor" id="tabelaResgatePontos">
                         <thead>
                             <tr>
-                                <th>Tipo</th>
-                                <th>Modalidade</th>
-                                <th>Categoria</th>
-                                <th>Descrição</th>
-                                <th>Número</th>
-                                <th>Saldo</th>
-                                <th>Limite</th>
-                                <th>Status</th>
+                                <th></th>
+                                <th>Pontos Disponíveis</th>
+                                <th>Pontos a Utilizar</th>
+                                <th>
+                                    <span class="d-none d-md-inline">Utilizar tudo</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Linhas dos cartões serão preenchidas via JS -->
+                            <!-- Linhas preenchidas via JS -->
                         </tbody>
                     </table>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div>
+                        <strong>Total selecionado:</strong>
+                        <span id="totalPontosSelecionados">0</span>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="confirmarResgatePontos">Confirmar Resgate</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PARA CADASTRO DE NOVOS CLIENTES -->
+    {{-- <!-- MODAL PARA CADASTRO DE NOVOS CLIENTES -->
     <div class="modal inmodal" id="modalCliente" tabindex="-1" role="dialog" aria-hidden="true">
 
         <div class="modal-dialog modal-lg">
@@ -777,7 +785,7 @@
             </div>
         </div>
 
-    </div>
+    </div> --}}
 
     <!---------------------------------------------->
     <!-- SCRIPTS ----------------------------------->
@@ -864,7 +872,16 @@
             text-align: center;
             width: 100%;
         }
+        #tabelaCartoesMult tbody tr:hover {
+            background-color: #e0e7ff !important; /* Azul claro, ajuste a cor se desejar */
+            cursor: pointer;
+        }
         /* ESTILO DA TABELA DE CARTÕES */
+
+        #produtos-lista-modal tbody tr:hover {
+            background-color: #e0e7ff !important; /* Azul claro, ajuste a cor se desejar */
+            cursor: pointer;
+        }
 
         .text-multban-bold-secundary {
             font-weight: 700 !important;

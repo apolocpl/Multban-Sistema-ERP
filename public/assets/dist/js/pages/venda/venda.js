@@ -54,6 +54,8 @@ vendaTipo.ENTREGAR = 3
 var html_pedidos_by_cli = '';
 var table = null;
 
+let ultimaAcaoResgate = null;
+
 var carregaCliente = function(msg){
     var url = "/cliente/searchphone";
     var parametro = {
@@ -92,6 +94,19 @@ var calcDiscount = function(id, index) {
 //////////
 // FUNÇÕES
 //////////
+
+// Função para obter o valor total a pagar
+function getValorTotalAPagar() {
+    // return parseBRL($('#checkout_subtotal').text()) || 0;
+
+    var totalCobrar = parseBRL($("#checkout_subtotal").text());
+    var checkout_cashback = parseBRL($("#checkout_cashback").text());
+    var totalDesconto = parseBRL($("#checkout_desconto").text());
+    var totalPago = parseBRL($("#checkout_pago").text());
+
+    var totalAPagar = totalCobrar - checkout_cashback - totalDesconto - totalPago;
+    return totalAPagar > 0 ? totalAPagar : 0;
+}
 
 // Realiza a cobrança (total ou parcial)
 function realizarCobranca(cobrancaDados) {
@@ -167,7 +182,7 @@ function realizarCobranca(cobrancaDados) {
                 var totalCobrado = arr_checkout_total.reduce((a, b) => Number(a) + Number(b), 0);
                 var totalTroco = arr_checkout_troco.reduce((a, b) => Number(a) + Number(b), 0);
                 var totalDesconto = arr_checkout_desconto.reduce((a, b) => Number(a) + Number(b), 0);
-                var saldo = cobrancaDados.checkout_subtotal - totalCobrado - cobrancaDados.checkout_desconto;
+                var saldo = cobrancaDados.checkout_subtotal - cobrancaDados.checkout_cashback - cobrancaDados.checkout_desconto - totalCobrado;
 
                 if (saldo > 0.01) {
 
@@ -778,6 +793,67 @@ function deleteItemFromCart(item) {
     show_cart();
 }
 
+function atualizarTotalPontosSelecionados() {
+    let total = 0;
+    $('.pontos-utilizar').each(function() {
+        let val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+        total += val;
+    });
+
+    let valorTotalAPagar = getValorTotalAPagar();
+
+    // Se o total selecionado ultrapassar o valor a pagar
+    if (total > valorTotalAPagar) {
+        // GUARDA O TOTAL SELECIONADO ANTES DE DESFAZER
+        let totalSelecionadoParaResgatar = total;
+
+        // Desfaz a última ação
+        if (ultimaAcaoResgate) {
+            desfazerUltimaAcao();
+            // Recalcula o total após desfazer
+            total = 0;
+            $('.pontos-utilizar').each(function() {
+                total += parseBRL($(this).val()) || 0;
+            });
+        }
+
+        // Exibe mensagem de aviso
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atenção!',
+            text: `O total de pontos selecionados (${formatBRL(totalSelecionadoParaResgatar)}) não pode ser maior que o valor a pagar (${formatBRL(valorTotalAPagar)}).`,
+            confirmButtonText: 'OK',
+            showConfirmButton: true,
+            allowOutsideClick: false
+        });
+    }
+
+    $('#totalPontosSelecionados').text(total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+}
+
+// Función para desfazer a última ação
+function desfazerUltimaAcao() {
+    if (!ultimaAcaoResgate) return;
+
+    let elemento = $(ultimaAcaoResgate.elemento);
+    let tr = elemento.closest('tr');
+
+    if (ultimaAcaoResgate.tipo === 'checkbox') {
+        // Desmarca o checkbox e zera o campo
+        elemento.prop('checked', false);
+        tr.find('.pontos-utilizar').val('0,00');
+    } else if (ultimaAcaoResgate.tipo === 'input') {
+        // Restaura o valor anterior do input
+        elemento.val(formatBRL(ultimaAcaoResgate.valorAnterior));
+        // Ajusta o checkbox conforme o valor
+        let max = parseBRL(tr.find('.pontos-disponiveis').text());
+        let val = ultimaAcaoResgate.valorAnterior;
+        tr.find('.utilizar-tudo').prop('checked', val === max);
+    }
+
+    ultimaAcaoResgate = null;
+}
+
 // function gravarPedido(status, e){
 //     if(status == vendaStatus.CONCLUIDA){
 //         var valorpago = $("#valortotalpago").val().replace('.','').replace(',', '.');
@@ -1015,12 +1091,84 @@ function show_cart() {
 
 }
 
+function preencherTabelaResgate(cartoes) {
+    let tbody = $('#tabelaResgatePontos tbody');
+    tbody.empty();
+
+    cartoes.forEach(cartao => {
+        // Cabeçalho do cartão
+        tbody.append(`
+            <tr class="bg-light">
+                <td colspan="4" style="text-align:left; font-size:1em;">
+                    <span style="font-weight:bold;">CARTÃO:</span> ${cartao.numero}
+                </td>
+            </tr>
+        `);
+
+        // Linhas dos programas
+        const programas = [
+            { nome: 'Programa Particular', campo: 'pontos_part', valor: cartao.pontos_part },
+            { nome: 'Programa Franquia', campo: 'pontos_fraq', valor: cartao.pontos_fraq },
+            { nome: 'Programa Multban', campo: 'pontos_mult', valor: cartao.pontos_mult },
+            { nome: 'Cash Back', campo: 'pontos_cash', valor: cartao.pontos_cash }
+        ];
+
+        programas.forEach(prog => {
+            tbody.append(`
+                <tr data-cartao="${cartao.id}" data-programa="${prog.campo}">
+                    <td>${prog.nome}</td>
+                    <td class="pontos-disponiveis">${formatBRL(prog.valor)}</td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        <input type="text"
+                            class="form-control form-control-sm pontos-utilizar"
+                            style="width:90px; text-align:right;"
+                            data-max="${prog.valor}"
+                            value="${formatBRL(0)}">
+                    </td>
+                    <td>
+                        <input type="checkbox" class="utilizar-tudo">
+                        <span style="margin-left:8px;">Selecionar Tudo</span>
+                    </td>
+                </tr>
+            `);
+        });
+    });
+
+    atualizarTotalPontosSelecionados();
+}
+
+function maskCardNumberSimple(cardNumber) {
+    if (!cardNumber) return '';
+    var n = String(cardNumber).replace(/\D/g, '');
+    return n.replace(/(.{4})/g, '$1.').replace(/\.$/, '');
+}
+
 
 
 
 /////////////////////
 // AÇÕES DE NAVEGAÇÂO
 /////////////////////
+
+// Monta o array de cartões a partir de window.responseCartoesCliente
+$('#btn_resgatar_pts').on('click', function() {
+
+    let cartoesCliente = (window.responseCartoesCliente || []).map(cartao => {
+        let numeroCartao = maskCardNumberSimple(cartao.cliente_cardn);
+        return {
+            id: cartao.card_uuid || cartao.id,
+            numero: numeroCartao,
+            pontos_part: parseFloat(cartao.card_pts_part) || 0,
+            pontos_fraq: parseFloat(cartao.card_pts_fraq) || 0,
+            pontos_mult: parseFloat(cartao.card_pts_mult) || 0,
+            pontos_cash: parseFloat(cartao.card_pts_cash) || 0,
+        };
+    });
+
+    preencherTabelaResgate(cartoesCliente);
+    $('#modalResgatarPontos').modal('show');;
+});
+
 $('#modalCartaoMult').on('show.bs.modal', function () {
     var nomeCliente = $('#desCli').text() || '';
     $('#modalCartaoMultLabel').text('Cartões Registrados Para: ' + nomeCliente);
@@ -1556,12 +1704,14 @@ $('#impressaoModal').on('hidden.bs.modal', function() {
 });
 
 $('#checkout-modal').on('shown.bs.modal', function() {
+    $('#nome_cliente').text($('#desCli').text());
+    $('#cliente_pts').text(formatBRL(parseFloat(window.clientPontos) || 0));
     $(".payment-box-active").removeClass("payment-box-active");
     $("#valortotalpago").val("0,00");
     // $("#valorDescCento").val("0");
     // $("#valorDesconto").val("0,00");
-    var valorTotal = $("#total_amount_modal").html().replace("R$", "");
-    //$ ("#valorAPagar").val(valorTotal);
+    // var valorTotal = $("#total_amount_modal").html().replace("R$", "");
+    // $ ("#valorAPagar").val(valorTotal);
     // $("#Dinheiro").addClass("payment-box-active");
     $("#valortroco").val("0,00");
     $("#valortotalpago").habilitar();
@@ -2143,16 +2293,125 @@ shortcut.add("ESC", function (e) {
 ////////////////////////////////////////////////////////////////////////
 // FUNÇOES EXECUTADAS SOMENTE DEPOIS QUE TODO A PÁGINA ESTIVER CARREGADA
 ////////////////////////////////////////////////////////////////////////
-
-// Recalcula parcelas do cartão ao alterar o checkbox "vendaSemJurosCartao"
-$(document).on('change', '#vendaSemJurosCartao', function() {
-    atualizarParcelasCartao();
-});
-
 $(document).ready(function () {
 
     // Atualiza os valores visíveis do checkout ao mudar as parcelas
     atualizarCheckoutValores();
+
+    // Checkbox "Utilizar tudo"
+    $(document).on('change', '.utilizar-tudo', function() {
+        let tr = $(this).closest('tr');
+        let max = parseBRL(tr.find('.pontos-disponiveis').text());
+        let input = tr.find('.pontos-utilizar');
+        let valorAnterior = parseBRL(input.val()) || 0;
+
+        // Armazena a ação atual
+        ultimaAcaoResgate = {
+            tipo: 'checkbox',
+            elemento: this,
+            valorAnterior: valorAnterior,
+            checked: !$(this).is(':checked') // valor anterior do checkbox
+        };
+
+        if ($(this).is(':checked')) {
+            input.val(formatBRL(max));
+        } else {
+            input.val('0,00');
+        }
+
+        atualizarTotalPontosSelecionados();
+    });
+
+    $(document).on('input', '.pontos-utilizar', function() {
+        let tr = $(this).closest('tr');
+        let max = parseFloat(tr.find('.pontos-disponiveis').text().replace(/\./g, '').replace(',', '.')) || 0;
+        let valorAnterior = parseBRL($(this).data('valor-anterior')) || 0;
+
+        // Armazena a ação atual para desfazer se necessário
+        if (!ultimaAcaoResgate || ultimaAcaoResgate.elemento !== this) {
+            ultimaAcaoResgate = {
+                tipo: 'input',
+                elemento: this,
+                valorAnterior: valorAnterior
+            };
+        }
+
+        // Aplicar formatação de calculadora de dinheiro
+        let v = $(this).val().replace(/\D/g, '');
+        if (v.length === 0) v = '0';
+        while (v.length < 3) v = '0' + v;
+        let intPart = v.slice(0, -2);
+        let decPart = v.slice(-2);
+        let formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ',' + decPart;
+        // Remove zeros à esquerda
+        formatted = formatted.replace(/^0+(?=\d)/, '');
+
+        // Validação: não pode ser maior que o máximo
+        let val = parseFloat(formatted.replace(/\./g, '').replace(',', '.')) || 0;
+        if (val > max) {
+            val = max;
+            formatted = val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        $(this).val(formatted);
+
+        // Atualiza checkbox conforme o valor
+        tr.find('.utilizar-tudo').prop('checked', val === max);
+
+        // Atualiza o total selecionado
+        atualizarTotalPontosSelecionados();
+    });
+
+    // Ao focar no input, armazena o valor atual como valor anterior
+    $(document).on('focus', '.pontos-utilizar', function() {
+        let valorAtual = parseBRL($(this).val()) || 0;
+        $(this).data('valor-anterior', valorAtual);
+    });
+
+    // Recalcula parcelas do cartão ao alterar o checkbox "vendaSemJurosCartao"
+    $(document).on('change', '#vendaSemJurosCartao', function() {
+        atualizarParcelasCartao();
+    });
+
+    $('#modalResgatarPontos').on('shown.bs.modal', function() {
+        $('.pontos-utilizar').mask('000.000.000.000.000,00', {reverse: true});
+    });
+
+    $('#confirmarResgatePontos').on('click', function() {
+        // Pega o valor total selecionado (já formatado)
+        let totalResgatado = $('#totalPontosSelecionados').text();
+
+        // Atualiza o campo de cashback e o campo de resgatado no modal checkout
+        $('#checkout_cashback').text(totalResgatado);
+
+        // Recalcula o total do checkout
+        var totalCobrar = parseBRL($("#checkout_subtotal").text());
+        var checkout_cashback = parseBRL($("#checkout_cashback").text());
+        var totalDesconto = parseBRL($("#checkout_desconto").text());
+        var totalPago = parseBRL($("#checkout_pago").text());
+
+        console.log(totalCobrar, checkout_cashback, totalDesconto);
+        $("#checkout_total").text(formatBRL(totalCobrar - checkout_cashback - totalDesconto - totalPago));
+        $("#valortotalacobrar").val(formatBRL(totalCobrar - checkout_cashback - totalDesconto - totalPago));
+
+        // Recalcula o total a pagar
+        atualizarCheckoutValores();
+
+        // Fecha o modal de resgate
+        $('#modalResgatarPontos').modal('hide');
+    });
+
+    $(document).on('keyup blur', '.pontos-utilizar', function() {
+        let tr = $(this).closest('tr');
+        let max = parseFloat(tr.find('.pontos-disponiveis').text().replace(/\./g, '').replace(',', '.')) || 0;
+        let val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+        if (val > max) {
+            $(this).val(max.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            val = max;
+        }
+        tr.find('.utilizar-tudo').prop('checked', val === max);
+        atualizarTotalPontosSelecionados();
+    });
 
     $('#parcelasCartao').on('change', function () {
         // Pegue o valor total original (exemplo: do campo #checkout_total)
@@ -2904,8 +3163,8 @@ $(document).ready(function () {
 
         // Proporção do valor cobrado em relação ao total
         var proporcao_cobrado = 1;
-        if (valortotalacobrar < (checkout_subtotal - checkout_desconto) && (checkout_subtotal - checkout_desconto) > 0) {
-            proporcao_cobrado = valortotalacobrar / (checkout_subtotal - checkout_desconto);
+        if (valortotalacobrar < (checkout_subtotal - checkout_desconto - checkout_cashback) && (checkout_subtotal - checkout_desconto - checkout_cashback) > 0) {
+            proporcao_cobrado = valortotalacobrar / (checkout_subtotal - checkout_desconto - checkout_cashback);
         }
 
         // Proporcionaliza desconto e cashback
