@@ -47,13 +47,13 @@ class CreateAdminUserSeeder extends Seeder
         //     'dthr_cr' => date_create()
         // ]);
 
-        $conexão = ConexoesBcEmp::create([
+        $conexao = ConexoesBcEmp::create([
             'emp_id' => $user->emp_id,
-            'bc_emp_host' => Crypt::encryptString('localhost'),
-            'bc_emp_porta' => Crypt::encryptString('3306'),
-            'bc_emp_nome' => Crypt::encryptString('db_sys_client'),
-            'bc_emp_user' => Crypt::encryptString('root'),
-            'bc_emp_pass' => Crypt::encryptString('eliton01'),
+            'bc_emp_host' => Crypt::encryptString(env('DBSYSCLIENT_HOST', '127.0.0.1')),
+            'bc_emp_porta' => Crypt::encryptString(env('DBSYSCLIENT_PORT', '3306')),
+            'bc_emp_nome' => Crypt::encryptString(env('DBSYSCLIENT_DATABASE', 'db_sys_client')),
+            'bc_emp_user' => Crypt::encryptString(env('DBSYSCLIENT_USERNAME', 'root')),
+            'bc_emp_pass' => Crypt::encryptString(env('DBSYSCLIENT_PASSWORD', 'secret')),
             'bc_fornec' => 'DGO'
         ]);
 
