@@ -1,32 +1,54 @@
-# Dependencies
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+/vendor/
+/node_modules/
 
-# Environment variables
+/public/hot
+/public/storage
+/storage/*.key
+/storage/app/public
+/storage/debugbar
+/storage/framework/cache/data
+/storage/framework/sessions
+/storage/framework/views
+/storage/logs/*.log
+
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+
 .env
-.env.local
+.env.backup
 .env.*.local
+.env.testing
 
-# Build output
-dist/
-build/
+Homestead.yaml
+Homestead.json
 
-# IDE and editor files
-.idea/
-.vscode/
+.phpunit.result.cache
+.phpunit.cache
+/.phpunit.cache
+/.phpunit.result.cache
+/_ide_helper.php
+/_ide_helper_models.php
+.php_cs
+.php_cs.cache
+.php_cs.dist
+/.php_cs
+/.php_cs.cache
+
+/.idea
+/.vscode
+/.fleet
+.phpstorm.meta.php
+.PhpStorm.meta.php
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-node_modules
-node_modules
-node_modules
+database/database.sqlite
