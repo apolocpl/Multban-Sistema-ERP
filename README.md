@@ -70,6 +70,8 @@ O Multban e uma plataforma ERP desenvolvida em Laravel voltada para a gestao int
 - `npm run build`: gera os assets otimizados para producao.
 - `php artisan migrate:fresh --seed`: recria o banco com dados iniciais.
 - `php artisan test`: executa a suite de testes (inclui testes Livewire e de autenticacao).
+- `composer lint`: roda o Laravel Pint em modo de validacao.
+- `composer format`: aplica as correcoes automáticas do Laravel Pint.
 
 ### Rotinas especificas de dados
 - `php artisan migrate:fresh --seed`: reinicializa o banco principal.
