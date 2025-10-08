@@ -15,7 +15,7 @@ class CreateTbsyUserTable extends Migration
     {
         Schema::create('tbsy_user', function (Blueprint $table) {
             //PRIMARY KEY
-            $table->id('user_id');
+            $table->id('user_id')->unique();
             $table->string('user_logon', 20)->unique();
             $table->string('user_sts', 2);
             $table->foreignId('emp_id');

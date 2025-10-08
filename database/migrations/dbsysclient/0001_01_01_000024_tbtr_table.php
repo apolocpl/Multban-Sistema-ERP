@@ -133,7 +133,7 @@ return new class extends Migration
         Schema::create('tbtr_f_titulos', function (Blueprint $table) {
             // PRIMARY KEY
             $table->foreignId('emp_id');
-            $table->uuid('id_fatura');
+            $table->uuid('id_fatura')->unique();
             $table->foreignId('cliente_id');
             $table->foreignUuid('card_uuid');
             // FIELDS
