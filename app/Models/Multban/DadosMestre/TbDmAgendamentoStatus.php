@@ -9,7 +9,7 @@ class TbDmAgendamentoStatus extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_agendamento_sts";
+    protected $table = 'tbdm_agendamento_sts';
 
     public $timestamps = false;
 }

@@ -11,7 +11,7 @@ class TbCfMsgComp extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbcf_msg_comp";
+    protected $table = 'tbcf_msg_comp';
 
     public $timestamps = false;
 

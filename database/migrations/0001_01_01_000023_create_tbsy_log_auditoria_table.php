@@ -12,18 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbsy_log_auditoria', function (Blueprint $table) {
-            //PRIMARY KEY   
+            // PRIMARY KEY
             $table->id();
-            //FIELDS
+            // FIELDS
             $table->dateTime('auddat')->nullable();
-	        $table->string('audusu', 50)->nullable();
-	        $table->string('audtar', 100)->nullable();
-	        $table->string('audarq', 50)->nullable();
-	        $table->integer('audlan')->nullable();
-	        $table->string('audant', 100)->nullable();
-	        $table->string('auddep', 100)->nullable();
-	        $table->string('audnip', 20)->nullable();
-            //KEYS
+            $table->string('audusu', 50)->nullable();
+            $table->string('audtar', 100)->nullable();
+            $table->string('audarq', 50)->nullable();
+            $table->integer('audlan')->nullable();
+            $table->string('audant', 100)->nullable();
+            $table->string('auddep', 100)->nullable();
+            $table->string('audnip', 20)->nullable();
+            // KEYS
             $table->primary('id');
         });
     }

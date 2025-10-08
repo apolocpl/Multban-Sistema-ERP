@@ -18,7 +18,7 @@ class CreateTbdmClientesCardTable extends Migration
             $table->foreignId('emp_id');
             $table->foreignId('cliente_id');
             $table->string('cliente_doc', 14);
-            $table->uuid('card_uuid');
+            $table->uuid('card_uuid')->unique();
             $table->string('cliente_cardn', 16);
             $table->string('cliente_cardcv', 3);
             //FIELDS

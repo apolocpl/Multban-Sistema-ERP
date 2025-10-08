@@ -15,7 +15,6 @@ class CreateTbdmEmpresaGeralTable extends Migration
     {
        // DB::statement('SET SESSION sql_require_primary_key=0');
         Schema::create('tbdm_empresa_geral', function (Blueprint $table) {
-            //PRIMARY KEY
             $table->id('emp_id');
             $table->string('emp_cnpj', 14)->unique();
             $table->string('emp_sts', 2);
@@ -73,7 +72,6 @@ class CreateTbdmEmpresaGeralTable extends Migration
             $table->integer('modificador')->nullable();
             $table->timestamp('dthr_ch')->useCurrent();
             //KEYS
-            $table->primary(['emp_id', 'emp_cnpj', 'emp_sts']);
         });
     }
 

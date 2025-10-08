@@ -16,7 +16,7 @@ class CreateTbdmProdutosGeralTable extends Migration
         Schema::create('tbdm_produtos_geral', function (Blueprint $table) {
             //PRIMARY KEY
             $table->foreignId('emp_id');
-            $table->id('produto_id');
+            $table->id('produto_id')->unique();
             $table->string('produto_sts', 2);
             $table->integer('produto_tipo')->length(2);
             //FIELDS
@@ -42,8 +42,6 @@ class CreateTbdmProdutosGeralTable extends Migration
             $table->timestamp('dthr_cr');
             $table->integer('modificador');
             $table->timestamp('dthr_ch')->useCurrent();;
-            //KEYS
-            $table->primary(['produto_id', 'emp_id', 'produto_sts', 'produto_tipo']);
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
         });

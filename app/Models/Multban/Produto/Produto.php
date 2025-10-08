@@ -35,15 +35,16 @@ class Produto extends Model
         'modificador',
         'dthr_ch',
     ];
+
     use DbSysClientTrait;
 
-    protected $table = "tbdm_produtos_geral";
+    protected $table = 'tbdm_produtos_geral';
 
     public $timestamps = false;
 
     public function getKeyName()
     {
-        return "produto_id";
+        return 'produto_id';
     }
 
     protected $primaryKey = 'produto_id';

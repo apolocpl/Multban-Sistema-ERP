@@ -8,29 +8,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Estados extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
-    protected $table = "tbdm_estados";
+    protected $table = 'tbdm_estados';
 
     public function getKeyName()
     {
-        return "estado";
+        return 'estado';
     }
 
     public $incrementing = false;
 
     protected $primaryKey = 'estado';
 
-    protected $fillable =   [
+    protected $fillable = [
         'estado_pais',
         'estado',
         'langu',
-        'estado_desc'
-        ];
+        'estado_desc',
+    ];
 
-    public function pais(){
+    public function pais()
+    {
         return $this->belongsTo(Pais::class, 'estado_pais', 'pais');
     }
-
-
 }

@@ -13,7 +13,7 @@ class ConexoesAPI extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbcf_conexoes_api_emp";
+    protected $table = 'tbcf_conexoes_api_emp';
 
     public $timestamps = false;
 

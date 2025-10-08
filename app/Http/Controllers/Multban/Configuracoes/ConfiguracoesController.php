@@ -1,15 +1,11 @@
 <?php
 
 namespace App\Http\Controllers\Multban\Configuracoes;
-use App\Enums\FiltrosEnum;
+
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Multban\TbCf\TbCfMsgComp;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use App\Models\Multban\Traits\DbSysClientTrait;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ConfiguracoesController extends Controller
 {
@@ -18,7 +14,7 @@ class ConfiguracoesController extends Controller
         $emp_id = Auth::user()->emp_id;
         $canal_id = $request->input('canal_id');
         $categorias = $request->input('categorias');
-        if (!is_array($categorias)) {
+        if (! is_array($categorias)) {
             $categorias = explode(',', $categorias);
         }
 

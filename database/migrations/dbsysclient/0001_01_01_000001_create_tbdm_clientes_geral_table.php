@@ -16,9 +16,9 @@ class CreateTbdmClientesGeralTable extends Migration
         Schema::create('tbdm_clientes_geral', function (Blueprint $table) {
             //PRIMARY KEY
             $table->id('cliente_id');
-            $table->uuid('cliente_uuid');
+            $table->uuid('cliente_uuid')->unique();
             $table->integer('cliente_tipo')->length(2);
-            $table->string('cliente_doc', 14);
+            $table->string('cliente_doc', 14)->unique();
             $table->string('cliente_pasprt', 15)->nullable();
             $table->string('cliente_sts', 2);
             //FIELDS
@@ -60,8 +60,6 @@ class CreateTbdmClientesGeralTable extends Migration
             $table->timestamp('dthr_cr');
             $table->integer('modificador');
             $table->timestamp('dthr_ch')->useCurrent();
-            //KEYS
-            $table->primary(['cliente_id', 'cliente_uuid', 'cliente_tipo', 'cliente_doc', 'cliente_sts']);
         });
     }
 

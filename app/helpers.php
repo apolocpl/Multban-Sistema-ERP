@@ -4,7 +4,7 @@ use Carbon\Carbon;
 
 function tirarAcentos($string)
 {
-    return preg_replace(array("/(ç)/", "/(Ç)/", "/(á|à|ã|â|ä)/", "/(Á|À|Ã|Â|Ä)/", "/(é|è|ê|ë)/", "/(É|È|Ê|Ë)/", "/(í|ì|î|ï)/", "/(Í|Ì|Î|Ï)/", "/(ó|ò|õ|ô|ö)/", "/(Ó|Ò|Õ|Ô|Ö)/", "/(ú|ù|û|ü)/", "/(Ú|Ù|Û|Ü)/", "/(ñ)/", "/(Ñ)/"), explode(" ", "c C a A e E i I o O u U n N"), $string);
+    return preg_replace(['/(ç)/', '/(Ç)/', '/(á|à|ã|â|ä)/', '/(Á|À|Ã|Â|Ä)/', '/(é|è|ê|ë)/', '/(É|È|Ê|Ë)/', '/(í|ì|î|ï)/', '/(Í|Ì|Î|Ï)/', '/(ó|ò|õ|ô|ö)/', '/(Ó|Ò|Õ|Ô|Ö)/', '/(ú|ù|û|ü)/', '/(Ú|Ù|Û|Ü)/', '/(ñ)/', '/(Ñ)/'], explode(' ', 'c C a A e E i I o O u U n N'), $string);
 }
 
 function replicate($expressao, $quantidade)
@@ -13,18 +13,22 @@ function replicate($expressao, $quantidade)
     for ($i = 1; $i < $quantidade; $i++) {
         $result .= $expressao;
     }
+
     return $result;
 }
 
 function in_array_r($array, $field, $find)
 {
     foreach ($array as $item) {
-        if ($item[$field] == $find) return true;
+        if ($item[$field] == $find) {
+            return true;
+        }
     }
+
     return false;
 }
 
-function in($valor, $comparador = array())
+function in($valor, $comparador = [])
 {
     return in_array($valor, $comparador);
 }
@@ -44,19 +48,19 @@ function formatarDecimalParaTexto($valor)
 }
 function formatarTextoParaDecimal($valor)
 {
-    $valor = str_replace(["%", "R$", ".", ","], ["", "", "", "."], $valor);
+    $valor = str_replace(['%', 'R$', '.', ','], ['', '', '', '.'], $valor);
 
-    return $valor > 0 ? number_format((float)$valor, 2, '.', '') : null;
+    return $valor > 0 ? number_format((float) $valor, 2, '.', '') : null;
 }
 
 function formatarMoneyToDecimal($valor)
 {
-    return str_replace(["R$", ","], ["", "."], str_replace(".", "", $valor));
+    return str_replace(['R$', ','], ['', '.'], str_replace('.', '', $valor));
 }
 
 function removerVirgulaPorPonto($valor)
 {
-    return str_replace(",", ".",  $valor);
+    return str_replace(',', '.', $valor);
 }
 
 function numero($valor)
@@ -71,30 +75,31 @@ function formatarParaMoedaDecimal($valor)
 
 function adicionarCodigoEDescricao($model, $idCampo = 'id', $campo = 'descricao')
 {
-    $retorno = "";
+    $retorno = '';
     if ($model != null) {
-        if ($model != null && $model[$idCampo])
-            $retorno =  $model[$idCampo] . ' - ' . strtoupper($model[$campo]);
-        else if ($model['descricao'])
-            $retorno =  $model['id'] . ' - ' . strtoupper($model['descricao']);
-        else
-            $retorno =  $model['id'] . ' - ' . strtoupper($model['razaosocial']);
+        if ($model != null && $model[$idCampo]) {
+            $retorno = $model[$idCampo] . ' - ' . strtoupper($model[$campo]);
+        } elseif ($model['descricao']) {
+            $retorno = $model['id'] . ' - ' . strtoupper($model['descricao']);
+        } else {
+            $retorno = $model['id'] . ' - ' . strtoupper($model['razaosocial']);
+        }
     }
-
 
     return $retorno;
 }
 
 function codigoEDescricaoCliente($model)
 {
-    $retorno = "";
-    if ($model != null && $model['id'])
-        $retorno =  $model['id'] . ' - ' . strtoupper($model['razaosocial']);
+    $retorno = '';
+    if ($model != null && $model['id']) {
+        $retorno = $model['id'] . ' - ' . strtoupper($model['razaosocial']);
+    }
 
     return $retorno;
 }
 
-function formatarData($data, $formatoData = "Y-m-d H:i:s", $formato = "d/m/Y")
+function formatarData($data, $formatoData = 'Y-m-d H:i:s', $formato = 'd/m/Y')
 {
     return Carbon::createFromFormat($formatoData, $data)->format($formato);
 }
@@ -111,7 +116,7 @@ function formatarDataDes($data, $formato = 'd M Y H:m')
 
 function stringZero($string, $valorStr = 6)
 {
-    return str_pad("" . $string, $valorStr, "0", STR_PAD_LEFT);
+    return str_pad('' . $string, $valorStr, '0', STR_PAD_LEFT);
 }
 
 function mascaraGenerica($val, $mask)
@@ -120,60 +125,65 @@ function mascaraGenerica($val, $mask)
     $k = 0;
     for ($i = 0; $i <= strlen($mask) - 1; $i++) {
         if ($mask[$i] == '#') {
-            if (isset($val[$k]))
+            if (isset($val[$k])) {
                 $maskared .= $val[$k++];
+            }
         } else {
-            if (isset($mask[$i]))
+            if (isset($mask[$i])) {
                 $maskared .= $mask[$i];
+            }
         }
     }
+
     return $maskared;
 }
 
 function removerCNPJ($cnpj)
 {
-    return preg_replace("/\D+/", "", $cnpj);
+    return preg_replace("/\D+/", '', $cnpj);
 }
 
 function removerMascaraIE($ie)
 {
-    return preg_replace("/\D+/", "", $ie);
+    return preg_replace("/\D+/", '', $ie);
 }
 
 function removerMascaraCEP($cep)
 {
-    return str_replace("-", "", $cep);
+    return str_replace('-', '', $cep);
 }
 
 function removerMascaraTelefone($telefone)
 {
-    return preg_replace("/[\(\)\.\s-]+/", "", $telefone);
+    return preg_replace("/[\(\)\.\s-]+/", '', $telefone);
 }
 
 function formatarCNPJCPF($cnpj_cpf)
 {
     $cnpj_cpf = removerMascaraTelefone($cnpj_cpf);
-    return strlen($cnpj_cpf) == 11 ? mascaraGenerica($cnpj_cpf, "###.###.###-##") : mascaraGenerica($cnpj_cpf, "##.###.###/####-##") ;
+
+    return strlen($cnpj_cpf) == 11 ? mascaraGenerica($cnpj_cpf, '###.###.###-##') : mascaraGenerica($cnpj_cpf, '##.###.###/####-##');
 }
 
 function formatarCNPJ($cnpj)
 {
-    return mascaraGenerica($cnpj, "##.###.###/####-##");
+    return mascaraGenerica($cnpj, '##.###.###/####-##');
 }
 function formatarCartaoCredito($card)
 {
-    return mascaraGenerica($card, "#### #### #### ####");
+    return mascaraGenerica($card, '#### #### #### ####');
 }
 
 function formatarTelefone($phone)
 {
     $phone = removerMascaraTelefone($phone);
-    return strlen($phone) == 11 ? mascaraGenerica($phone, "(##) #####-####") : mascaraGenerica($phone, "(##) ####-####");
+
+    return strlen($phone) == 11 ? mascaraGenerica($phone, '(##) #####-####') : mascaraGenerica($phone, '(##) ####-####');
 }
 
 function formatarCPF($cpf)
 {
-    return mascaraGenerica($cpf, "###.###.###-##");
+    return mascaraGenerica($cpf, '###.###.###-##');
 }
 
 function valida_cnpj($cnpj)
@@ -181,12 +191,14 @@ function valida_cnpj($cnpj)
     $cnpj = preg_replace('/[^0-9]/', '', (string) $cnpj);
 
     // Valida tamanho
-    if (strlen($cnpj) != 14)
+    if (strlen($cnpj) != 14) {
         return false;
+    }
 
     // Verifica se todos os digitos são iguais
-    if (preg_match('/(\d)\1{13}/', $cnpj))
+    if (preg_match('/(\d)\1{13}/', $cnpj)) {
         return false;
+    }
 
     // Valida primeiro dígito verificador
     for ($i = 0, $j = 5, $soma = 0; $i < 12; $i++) {
@@ -196,8 +208,9 @@ function valida_cnpj($cnpj)
 
     $resto = $soma % 11;
 
-    if ($cnpj[12] != ($resto < 2 ? 0 : 11 - $resto))
+    if ($cnpj[12] != ($resto < 2 ? 0 : 11 - $resto)) {
         return false;
+    }
 
     // Valida segundo dígito verificador
     for ($i = 0, $j = 6, $soma = 0; $i < 13; $i++) {
@@ -236,17 +249,18 @@ function valida_cpf($cpf)
             return false;
         }
     }
+
     return true;
 }
 
 function selectItens($Lista = [], $Campo = '', $Dig = 0)
 {
-    $Ret = "";
-    for ($i = 0; $i < count((array)$Lista); $i++) {
+    $Ret = '';
+    for ($i = 0; $i < count((array) $Lista); $i++) {
 
         if (empty($Lista[$i])) {
             if (empty($Ret)) {
-                $Ret .= " AND " . $Campo . " in('" . $Lista[$i] . "',";
+                $Ret .= ' AND ' . $Campo . " in('" . $Lista[$i] . "',";
             } else {
                 $Ret .= $Lista[$i] . "',";
             }
@@ -259,7 +273,7 @@ function selectItens($Lista = [], $Campo = '', $Dig = 0)
                 }
             } else {
                 if (empty($Ret)) {
-                    $Ret .=  $Campo . " in('" . $Lista[$i] . "',";
+                    $Ret .= $Campo . " in('" . $Lista[$i] . "',";
                 } else {
                     $Ret .= "'" . $Lista[$i] . "',";
                 }
@@ -268,7 +282,7 @@ function selectItens($Lista = [], $Campo = '', $Dig = 0)
     }
 
     if (empty($Ret)) {
-        $Ret = "AND " . $Campo . " in('')";
+        $Ret = 'AND ' . $Campo . " in('')";
     } else {
         $Ret = substr($Ret, 0, strlen($Ret) - 3) . "')";
     }
@@ -278,22 +292,25 @@ function selectItens($Lista = [], $Campo = '', $Dig = 0)
 
 function xml_attribute($object, $attribute)
 {
-    if (isset($object[$attribute]))
+    if (isset($object[$attribute])) {
         return (string) $object[$attribute];
+    }
 }
 
 function returnZero($number)
 {
-    if ($number < 0)
+    if ($number < 0) {
         return 0;
+    }
+
     return $number;
 }
 
 function space($qtd)
 {
-    $string = "";
+    $string = '';
     for ($i = 0; $i < intval($qtd); $i++) {
-        $string .= " ";
+        $string .= ' ';
     }
 
     return $string;

@@ -9,13 +9,13 @@ class EmpresaTaxpos extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_empresa_taxpos";
+    protected $table = 'tbdm_empresa_taxpos';
 
     public $timestamps = false;
 
     public function getKeyName()
     {
-        return "tax_id";
+        return 'tax_id';
     }
 
     protected $primaryKey = 'tax_id';
@@ -31,16 +31,16 @@ class EmpresaTaxpos extends Model
      * @var list<string>
      */
     protected $fillable = [
-        "tax_id",
-        "emp_id",
-        "tax_categ",
-        "parc_de",
-        "parc_ate",
-        "tax",
-        "criador",
-        "dthr_cr",
-        "modificador",
-        "dthr_ch",
+        'tax_id',
+        'emp_id',
+        'tax_categ',
+        'parc_de',
+        'parc_ate',
+        'tax',
+        'criador',
+        'dthr_cr',
+        'modificador',
+        'dthr_ch',
     ];
 
     /**
@@ -50,5 +50,4 @@ class EmpresaTaxpos extends Model
      */
     protected $hidden = [
     ];
-
 }

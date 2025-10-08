@@ -8,12 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cidade extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
     protected $table = 'tbdm_cidade';
 
-    public function estado(){
+    public function estado()
+    {
         return $this->belongsTo(Estados::class, 'cidade_est');
     }
-
 }

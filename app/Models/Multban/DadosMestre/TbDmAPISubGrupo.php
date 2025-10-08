@@ -9,7 +9,7 @@ class TbDmAPISubGrupo extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_api_subgrp";
+    protected $table = 'tbdm_api_subgrp';
 
     public $timestamps = false;
 }

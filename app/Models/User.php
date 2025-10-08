@@ -17,7 +17,8 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
+
     protected $connection = 'mysql';
 
     protected $table = 'tbsy_user';
@@ -26,7 +27,7 @@ class User extends Authenticatable
 
     public function getKeyName()
     {
-        return "user_id";
+        return 'user_id';
     }
 
     protected $primaryKey = 'user_id';
@@ -65,73 +66,74 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'user_pass' => 'hashed',
+            'user_pass'         => 'hashed',
         ];
     }
 
     public function rules($id = '')
     {
         return [
-            //Dados Gerais
-            'emp_id'    => 'required',
-            'user_logon' => 'required|unique:tbsy_user,user_logon,' . $id . ',user_id',
-            'user_cpf' => 'required|unique:tbsy_user,user_cpf,' . $id . ',user_id',
-            'user_sts' => 'required',
-            'user_name' => 'required',
-            'user_func' => 'required',
-            'user_email' => 'required|email|unique:tbsy_user,user_email,' . $id . ',user_id',
+            // Dados Gerais
+            'emp_id'           => 'required',
+            'user_logon'       => 'required|unique:tbsy_user,user_logon,' . $id . ',user_id',
+            'user_cpf'         => 'required|unique:tbsy_user,user_cpf,' . $id . ',user_id',
+            'user_sts'         => 'required',
+            'user_name'        => 'required',
+            'user_func'        => 'required',
+            'user_email'       => 'required|email|unique:tbsy_user,user_email,' . $id . ',user_id',
             'confirm_password' => 'same:user_pass',
-            'user_role' => 'required',
-            'user_screen' => 'required',
-            'user_cel' => 'required',
-            'user_agbc' => 'required_with:user_cdgbc|max:20',
-            'user_ccbc' => 'required_with:user_cdgbc|max:20',
-            'user_pix' => 'required_with:user_cdgbc|max:20',
-            'user_seller' => 'required_with:user_cdgbc|max:20',
+            'user_role'        => 'required',
+            'user_screen'      => 'required',
+            'user_cel'         => 'required',
+            'user_agbc'        => 'required_with:user_cdgbc|max:20',
+            'user_ccbc'        => 'required_with:user_cdgbc|max:20',
+            'user_pix'         => 'required_with:user_cdgbc|max:20',
+            'user_seller'      => 'required_with:user_cdgbc|max:20',
         ];
     }
+
     public function rulesCreate()
     {
         return [
-            //Dados Gerais
-            'emp_id'    => 'required',
-            'user_logon' => 'required|unique:tbsy_user,user_logon',
-            'user_cpf' => 'required|unique:tbsy_user,user_cpf',
-            'user_sts' => 'required',
-            'user_name' => 'required',
-            'user_func' => 'required',
-            'user_pass' => 'required',
-            'user_email' => 'required|email|unique:tbsy_user,user_email',
+            // Dados Gerais
+            'emp_id'           => 'required',
+            'user_logon'       => 'required|unique:tbsy_user,user_logon',
+            'user_cpf'         => 'required|unique:tbsy_user,user_cpf',
+            'user_sts'         => 'required',
+            'user_name'        => 'required',
+            'user_func'        => 'required',
+            'user_pass'        => 'required',
+            'user_email'       => 'required|email|unique:tbsy_user,user_email',
             'confirm_password' => 'required|same:user_pass',
-            'user_role' => 'required',
-            'user_screen' => 'required',
-            'user_cel' => 'required',
-            'user_agbc' => 'required_with:user_cdgbc|max:20',
-            'user_ccbc' => 'required_with:user_cdgbc|max:20',
-            'user_pix' => 'required_with:user_cdgbc|max:20',
-            'user_seller' => 'required_with:user_cdgbc|max:20',
+            'user_role'        => 'required',
+            'user_screen'      => 'required',
+            'user_cel'         => 'required',
+            'user_agbc'        => 'required_with:user_cdgbc|max:20',
+            'user_ccbc'        => 'required_with:user_cdgbc|max:20',
+            'user_pix'         => 'required_with:user_cdgbc|max:20',
+            'user_seller'      => 'required_with:user_cdgbc|max:20',
         ];
     }
 
     public function attributes()
     {
         return [
-            'emp_id' => '"Dados Gerais"Empresa',
-            'user_name' => '"Dados Gerais"Nome Completo',
-            'user_sts' => '"Dados Gerais"Status',
-            'user_logon' => '"Dados Gerais"Usuário de Logon',
-            'user_crm' => 'CRM do Usuário',
-            'user_email' => '"Dados Gerais"E-mail',
-            'user_func' => '"Dados Gerais"Cargo',
-            'user_cpf' => '"Dados Gerais"CPF',
-            'user_pass' => '"Senhas"Senha do Usuário',
+            'emp_id'           => '"Dados Gerais"Empresa',
+            'user_name'        => '"Dados Gerais"Nome Completo',
+            'user_sts'         => '"Dados Gerais"Status',
+            'user_logon'       => '"Dados Gerais"Usuário de Logon',
+            'user_crm'         => 'CRM do Usuário',
+            'user_email'       => '"Dados Gerais"E-mail',
+            'user_func'        => '"Dados Gerais"Cargo',
+            'user_cpf'         => '"Dados Gerais"CPF',
+            'user_pass'        => '"Senhas"Senha do Usuário',
             'confirm_password' => '"Senhas"Repetir Senha',
-            'user_role' => '"Dados Gerais"Permissões',
-            'user_cdgbc' => '"Dados Adicionais"Banco Principal',
-            'user_agbc' => '"Dados Adicionais"Agência',
-            'user_ccbc' => '"Dados Adicionais"Conta Corrente',
-            'user_pix' => '"Dados Adicionais"Chave PIX',
-            'user_seller' => '"Dados Adicionais"Seller',
+            'user_role'        => '"Dados Gerais"Permissões',
+            'user_cdgbc'       => '"Dados Adicionais"Banco Principal',
+            'user_agbc'        => '"Dados Adicionais"Agência',
+            'user_ccbc'        => '"Dados Adicionais"Conta Corrente',
+            'user_pix'         => '"Dados Adicionais"Chave PIX',
+            'user_seller'      => '"Dados Adicionais"Seller',
         ];
     }
 
@@ -160,7 +162,7 @@ class User extends Authenticatable
     {
         return Str::of($this->name)
             ->explode(' ')
-            ->map(fn(string $name) => Str::of($name)->substr(0, 1))
+            ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
     }
 

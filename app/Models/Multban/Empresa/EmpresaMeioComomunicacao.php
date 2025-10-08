@@ -9,7 +9,7 @@ class EmpresaMeioComomunicacao extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_meiocom";
+    protected $table = 'tbdm_meiocom';
 
     public $timestamps = false;
 }

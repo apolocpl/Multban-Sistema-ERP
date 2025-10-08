@@ -3,16 +3,17 @@
 namespace App\Providers;
 
 use App\Models\Multban\Empresa\Empresa;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Str;
-use Spatie\Menu\Laravel\Menu;
-use Spatie\Menu\Laravel\Link;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Spatie\Menu\Laravel\Link;
+use Spatie\Menu\Laravel\Menu;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -30,8 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(190);
 
-        if(env('APP_ENV') === 'production')
-        {
+        if (env('APP_ENV') === 'production') {
             URL::forceScheme('https');
         }
 
@@ -39,8 +39,8 @@ class AppServiceProvider extends ServiceProvider
             if (Auth::check()) {
                 $user = Auth::user();
                 $empresa = Empresa::where('emp_id', $user->emp_id)->first();
-                if (!$empresa) {
-                    $empresa = new Empresa();
+                if (! $empresa) {
+                    $empresa = new Empresa;
                 }
 
                 $permissionsForEach = Auth::user()->getAllPermissions();
@@ -88,16 +88,16 @@ class AppServiceProvider extends ServiceProvider
 
                 $view->with(
                     [
-                        'permissions' => in_array('auditoria.index', $permissions),
-                        'create_config' => in_array('config.store', $permissions),
-                        'dataInicial' => '',
-                        'dataFinal' => '',
-                        'empresa' => $empresa,
-                        'minimizarMenu' => false,
+                        'permissions'         => in_array('auditoria.index', $permissions),
+                        'create_config'       => in_array('config.store', $permissions),
+                        'dataInicial'         => '',
+                        'dataFinal'           => '',
+                        'empresa'             => $empresa,
+                        'minimizarMenu'       => false,
                         'notificacaoContador' => 2,
-                        'menus' => $menus,
-                        'route' => request()->segment(1),
-                        'routeAction' => Str::contains(Route::currentRouteName(), 'edit'),
+                        'menus'               => $menus,
+                        'route'               => request()->segment(1),
+                        'routeAction'         => Str::contains(Route::currentRouteName(), 'edit'),
                     ]
                 );
             }

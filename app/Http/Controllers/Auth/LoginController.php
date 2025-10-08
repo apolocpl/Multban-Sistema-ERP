@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 
 class LoginController extends Controller
 {
@@ -44,7 +43,7 @@ class LoginController extends Controller
     {
         $request->validate([
             $this->username() => 'required|email',
-            'user_pass' => 'required|string',
+            'user_pass'       => 'required|string',
         ]);
     }
 
@@ -52,7 +51,8 @@ class LoginController extends Controller
     {
         $input = $request->all();
 
-        $request['password'] =  $input['user_pass'];
+        $request['password'] = $input['user_pass'];
+
         return $request->only($this->username(), 'password');
     }
 
@@ -61,10 +61,9 @@ class LoginController extends Controller
         return 'user_email';
     }
 
-     /**
+    /**
      * The user has been authenticated.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $user
      * @return mixed
      */
@@ -72,9 +71,8 @@ class LoginController extends Controller
     {
 
         // Chama o método para definir as variáveis globais
-       // $empresaController = new \App\Http\Controllers\Multban\Empresa\EmpresaController();
-        //$empresaController->definirVariaveisGlobais($user->user_id);
+        // $empresaController = new \App\Http\Controllers\Multban\Empresa\EmpresaController();
+        // $empresaController->definirVariaveisGlobais($user->user_id);
 
     }
-
 }

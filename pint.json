@@ -1,0 +1,22 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "binary_operator_spaces": {
+            "operators": {
+                "=>" : "align"
+            }
+        },
+        "concat_space": {
+            "spacing": "one"
+        },
+        "ordered_imports": {
+            "sort_algorithm": "alpha"
+        }
+    },
+    "exclude": [
+        "bootstrap",
+        "database/migrations/dbsysclient",
+        "storage",
+        "vendor"
+    ]
+}

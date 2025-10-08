@@ -14,21 +14,21 @@ class CreateTbsyGeneralConfigTable extends Migration
     public function up()
     {
         Schema::create('tbsy_tab_alias', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->foreignId('emp_id');
             $table->char('emp_tab_name', 100);
-            //FIELDS
+            // FIELDS
             $table->char('emp_tab_alias', 100)->nullable();
-            //KEYS
+            // KEYS
             $table->primary(['emp_id', 'emp_tab_name']);
-            //FOREIGN KEY
-            //$table->foreign('emp_id')->references('emp_id')->on('db_sys_client.tbdm_empresa_geral');
+            // FOREIGN KEY
+            // $table->foreign('emp_id')->references('emp_id')->on('db_sys_client.tbdm_empresa_geral');
         });
 
         Schema::create('tbsy_conexoes_bc_emp', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->foreignid('emp_id');
-            //FIELDS
+            // FIELDS
             $table->string('bc_fornec', 100)->nullable();
             $table->string('bc_emp_ident', 100)->nullable();
             $table->string('bc_emp_host', 255)->nullable();
@@ -50,10 +50,10 @@ class CreateTbsyGeneralConfigTable extends Migration
             $table->string('bc_emp_keepalv', 100)->nullable();
             $table->string('bc_emp_compress', 100)->nullable();
             $table->string('bc_emp_readonly', 100)->nullable();
-            //KEYS
+            // KEYS
             $table->primary(['emp_id']);
-            //FOREIGN KEY
-            //$table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
+            // FOREIGN KEY
+            // $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
         });
 
     }

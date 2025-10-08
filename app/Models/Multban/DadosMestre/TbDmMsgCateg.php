@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class TbDmMsgCateg extends Model
 {
-   use DbSysClientTrait;
+    use DbSysClientTrait;
 
-    protected $table = "tbdm_msg_categ";
+    protected $table = 'tbdm_msg_categ';
 
     public $timestamps = false;
 }

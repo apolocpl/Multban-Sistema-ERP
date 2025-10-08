@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class TbDmLangu extends Model
 {
-   use DbSysClientTrait;
+    use DbSysClientTrait;
 
-    protected $table = "tbdm_langu";
+    protected $table = 'tbdm_langu';
 
     public $timestamps = false;
 }

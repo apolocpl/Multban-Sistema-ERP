@@ -8,22 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pais extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
-    protected $table = "tbdm_pais";
+    protected $table = 'tbdm_pais';
 
     public function getKeyName()
     {
-        return "pais";
+        return 'pais';
     }
 
     public $incrementing = false;
 
     protected $primaryKey = 'pais';
 
-    protected $fillable =   [
+    protected $fillable = [
         'pais',
         'langu',
-        'pais_desc'
-        ];
+        'pais_desc',
+    ];
 }

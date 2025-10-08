@@ -7,11 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class DestinoDosValores extends Model
 {
-
     use DbSysClientTrait;
 
-    protected $table = "tbdm_destvlr";
+    protected $table = 'tbdm_destvlr';
 
     public $timestamps = false;
-
 }

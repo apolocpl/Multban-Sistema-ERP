@@ -10,14 +10,13 @@ use App\Models\Multban\DadosMestre\TbDmAgendamentoTipo;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Exception;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class AgendamentoController extends Controller
 {
@@ -33,7 +32,7 @@ class AgendamentoController extends Controller
     {
         try {
             $data = Agendamento::whereDate('start', '>=', $request->start)
-                ->whereDate('end',   '<=', $request->end)
+                ->whereDate('end', '<=', $request->end)
                 ->get(['id', 'title', 'start', 'end', 'description', 'class_name as classNames', 'status', 'cliente_id', 'user_id', 'date', 'observacao', 'agendamento_tipo']);
 
             foreach ($data as $item) {
@@ -101,10 +100,10 @@ class AgendamentoController extends Controller
                     . '<br>Data: ' . Carbon::createFromFormat('Y-m-d', $item->date)->format('d/m/Y') . ' <br> Horário: ' . Carbon::createFromFormat('Y-m-d H:i:s', $item->start)->format('H:i') . ' - ' . Carbon::createFromFormat('Y-m-d H:i:s', $item->end)->format('H:i') . ' <br> Tipo: <span class="' . $tipoClass . '">' . $agendamentoTipo->agendamento_tipo_desc . '</span> <br> Status consulta: <span class="' . $statusClassAg . '">' . $status . '</span> <p>Observação: ' . $item->observacao . '</p>';
             }
 
-
             return response()->json($data);
-        } catch (Exception | \Throwable $e) {
+        } catch (Exception|\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage(),
             ], 500);
@@ -116,7 +115,7 @@ class AgendamentoController extends Controller
      */
     public function create()
     {
-        $agendamento = new Agendamento();
+        $agendamento = new Agendamento;
 
         $status = TbDmAgendamentoStatus::all();
         $tipos = TbDmAgendamentoTipo::all();
@@ -140,14 +139,14 @@ class AgendamentoController extends Controller
             $emp_id = Auth::user()->emp_id;
             $emp_id = Auth::user()->emp_id;
 
-            $agendamento = new Agendamento();
-            //dd($request->all());
+            $agendamento = new Agendamento;
+            // dd($request->all());
 
             $validator = Validator::make($request->all(), $agendamento->rules(), $agendamento->messages(), $agendamento->attributes());
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => $validator->errors(),
+                    'message'      => $validator->errors(),
                     'message_type' => 'Verifique os campos obrigatórios e tente novamente.',
 
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -178,9 +177,9 @@ class AgendamentoController extends Controller
             $agendamento->date = $request->date;
             $cliente = Cliente::find($request->cliente_id);
 
-            if (!$cliente) {
+            if (! $cliente) {
 
-                $cliente = new Cliente();
+                $cliente = new Cliente;
                 $input = $request->all();
 
                 $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
@@ -192,7 +191,7 @@ class AgendamentoController extends Controller
                 if ($clienteChk) {
                     return response()->json([
                         'message_type' => 'Já existe um cliente cadastrado com esse CPF/CNPJ.',
-                        'message' => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
+                        'message'      => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
@@ -200,7 +199,7 @@ class AgendamentoController extends Controller
                 if ($clienteChkEmail) {
                     return response()->json([
                         'message_type' => 'Já existe um cliente cadastrado com esse e-mail.',
-                        'message' => ['cliente_email' => ['Já existe um cliente cadastrado com esse e-mail.']],
+                        'message'      => ['cliente_email' => ['Já existe um cliente cadastrado com esse e-mail.']],
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
@@ -213,39 +212,39 @@ class AgendamentoController extends Controller
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $cliente->cliente_tipo       = 1;
-                $cliente->convenio_id        = $request->convenio_id;
-                $cliente->carteirinha        = $request->nro_carteirinha;
-                $cliente->cliente_rendam        = 0;
-                $cliente->cliente_dt_fech        = 0;
-                $cliente->cliente_dt_nasc    = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
-                $cliente->cliente_doc        = removerCNPJ($request->cliente_doc);
-                $cliente->cliente_rg         = removerCNPJ($request->cliente_rg);
-                $cliente->cliente_sts        = 'NA'; /*Cliente nasce com o status "Em Análise"*/
-                $cliente->cliente_uuid       = Str::uuid()->toString();
-                $cliente->cliente_nome       = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
-                $cliente->cliente_email      = $request->cliente_email;
-                $cliente->cliente_cel        = removerMascaraTelefone($request->cliente_cel);
-                $cliente->cliente_telfixo    = removerMascaraTelefone($request->cliente_telfixo);
-                $cliente->criador            = Auth::user()->user_id;
-                $cliente->modificador        = Auth::user()->user_id;
-                $cliente->dthr_cr            = Carbon::now();
-                $cliente->dthr_ch            = Carbon::now();
+                $cliente->cliente_tipo = 1;
+                $cliente->convenio_id = $request->convenio_id;
+                $cliente->carteirinha = $request->nro_carteirinha;
+                $cliente->cliente_rendam = 0;
+                $cliente->cliente_dt_fech = 0;
+                $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
+                $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
+                $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
+                $cliente->cliente_sts = 'NA'; /* Cliente nasce com o status "Em Análise" */
+                $cliente->cliente_uuid = Str::uuid()->toString();
+                $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
+                $cliente->cliente_email = $request->cliente_email;
+                $cliente->cliente_cel = removerMascaraTelefone($request->cliente_cel);
+                $cliente->cliente_telfixo = removerMascaraTelefone($request->cliente_telfixo);
+                $cliente->criador = Auth::user()->user_id;
+                $cliente->modificador = Auth::user()->user_id;
+                $cliente->dthr_cr = Carbon::now();
+                $cliente->dthr_ch = Carbon::now();
 
                 $cliente->save();
                 $agendamento->cliente_id = $cliente->cliente_id;
 
                 $tbdm_clientes_emp = DB::connection('dbsysclient')->table('tbdm_clientes_emp')->insert([
-                    'emp_id' => $emp_id,
-                    'cliente_id' => $cliente->cliente_id,
-                    'cliente_uuid' => $cliente->cliente_uuid,
-                    'cliente_doc' => removerCNPJ($cliente->cliente_doc),
+                    'emp_id'         => $emp_id,
+                    'cliente_id'     => $cliente->cliente_id,
+                    'cliente_uuid'   => $cliente->cliente_uuid,
+                    'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
-                    'cad_liberado' => '',
-                    'criador' => Auth::user()->user_id,
-                    'dthr_cr' => Carbon::now(),
-                    'modificador' => Auth::user()->user_id,
-                    'dthr_ch' => Carbon::now(),
+                    'cad_liberado'   => '',
+                    'criador'        => Auth::user()->user_id,
+                    'dthr_cr'        => Carbon::now(),
+                    'modificador'    => Auth::user()->user_id,
+                    'dthr_ch'        => Carbon::now(),
                 ]);
             }
 
@@ -264,11 +263,12 @@ class AgendamentoController extends Controller
             DB::commit();
 
             return response()->json([
-                'message'   => "Agendamento criado com sucesso.",
-                'redirect' => route('agendamento.index'),
+                'message'   => 'Agendamento criado com sucesso.',
+                'redirect'  => route('agendamento.index'),
             ]);
-        } catch (Exception | \Throwable $e) {
+        } catch (Exception|\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage() . ' - ' . $e->getLine() . ' - ' . $e->getFile(),
             ], 500);
@@ -290,7 +290,7 @@ class AgendamentoController extends Controller
     {
         $agendamento = Agendamento::find($id);
 
-        if (!$agendamento) {
+        if (! $agendamento) {
             return redirect()->route('agendamento.index')
                 ->with('error', 'Agendamento não encontrado.');
         }
@@ -304,7 +304,7 @@ class AgendamentoController extends Controller
 
         $convenios = TbDmConvenios::all();
 
-        //$agendamento->date = Carbon::createFromFormat('Y-m-d', $agendamento->date)->format('d/m/Y');
+        // $agendamento->date = Carbon::createFromFormat('Y-m-d', $agendamento->date)->format('d/m/Y');
         $agendamento->start = Carbon::createFromFormat('Y-m-d H:i:s', $agendamento->start)->format('H:i');
         $agendamento->end = Carbon::createFromFormat('Y-m-d H:i:s', $agendamento->end)->format('H:i');
 
@@ -322,13 +322,13 @@ class AgendamentoController extends Controller
             $emp_id = Auth::user()->emp_id;
 
             $agendamento = Agendamento::find($id);
-            //dd($request->all());
+            // dd($request->all());
 
             $validator = Validator::make($request->all(), $agendamento->rules(), $agendamento->messages(), $agendamento->attributes());
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message' => $validator->errors(),
+                    'message'      => $validator->errors(),
                     'message_type' => 'Verifique os campos obrigatórios e tente novamente.',
 
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -359,9 +359,9 @@ class AgendamentoController extends Controller
             $agendamento->date = $request->date;
             $cliente = Cliente::find($request->cliente_id);
 
-            if (!$cliente) {
+            if (! $cliente) {
 
-                $cliente = new Cliente();
+                $cliente = new Cliente;
                 $input = $request->all();
 
                 $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
@@ -373,7 +373,7 @@ class AgendamentoController extends Controller
                 if ($clienteChk) {
                     return response()->json([
                         'message_type' => 'Já existe um cliente cadastrado com esse CPF/CNPJ.',
-                        'message' => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
+                        'message'      => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
@@ -381,7 +381,7 @@ class AgendamentoController extends Controller
                 if ($clienteChkEmail) {
                     return response()->json([
                         'message_type' => 'Já existe um cliente cadastrado com esse e-mail.',
-                        'message' => ['cliente_email' => ['Já existe um cliente cadastrado com esse e-mail.']],
+                        'message'      => ['cliente_email' => ['Já existe um cliente cadastrado com esse e-mail.']],
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
@@ -394,39 +394,39 @@ class AgendamentoController extends Controller
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $cliente->cliente_tipo       = 1;
-                $cliente->convenio_id        = $request->convenio_id;
-                $cliente->carteirinha        = $request->nro_carteirinha;
-                $cliente->cliente_rendam        = 0;
-                $cliente->cliente_dt_fech        = 0;
-                $cliente->cliente_dt_nasc    = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
-                $cliente->cliente_doc        = removerCNPJ($request->cliente_doc);
-                $cliente->cliente_rg         = removerCNPJ($request->cliente_rg);
-                $cliente->cliente_sts        = 'NA'; /*Cliente nasce com o status "Em Análise"*/
-                $cliente->cliente_uuid       = Str::uuid()->toString();
-                $cliente->cliente_nome       = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
-                $cliente->cliente_email      = $request->cliente_email;
-                $cliente->cliente_cel        = removerMascaraTelefone($request->cliente_cel);
-                $cliente->cliente_telfixo    = removerMascaraTelefone($request->cliente_telfixo);
-                $cliente->criador            = Auth::user()->user_id;
-                $cliente->modificador        = Auth::user()->user_id;
-                $cliente->dthr_cr            = Carbon::now();
-                $cliente->dthr_ch            = Carbon::now();
+                $cliente->cliente_tipo = 1;
+                $cliente->convenio_id = $request->convenio_id;
+                $cliente->carteirinha = $request->nro_carteirinha;
+                $cliente->cliente_rendam = 0;
+                $cliente->cliente_dt_fech = 0;
+                $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
+                $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
+                $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
+                $cliente->cliente_sts = 'NA'; /* Cliente nasce com o status "Em Análise" */
+                $cliente->cliente_uuid = Str::uuid()->toString();
+                $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
+                $cliente->cliente_email = $request->cliente_email;
+                $cliente->cliente_cel = removerMascaraTelefone($request->cliente_cel);
+                $cliente->cliente_telfixo = removerMascaraTelefone($request->cliente_telfixo);
+                $cliente->criador = Auth::user()->user_id;
+                $cliente->modificador = Auth::user()->user_id;
+                $cliente->dthr_cr = Carbon::now();
+                $cliente->dthr_ch = Carbon::now();
 
                 $cliente->save();
                 $agendamento->cliente_id = $cliente->cliente_id;
 
                 $tbdm_clientes_emp = DB::connection('dbsysclient')->table('tbdm_clientes_emp')->insert([
-                    'emp_id' => $emp_id,
-                    'cliente_id' => $cliente->cliente_id,
-                    'cliente_uuid' => $cliente->cliente_uuid,
-                    'cliente_doc' => removerCNPJ($cliente->cliente_doc),
+                    'emp_id'         => $emp_id,
+                    'cliente_id'     => $cliente->cliente_id,
+                    'cliente_uuid'   => $cliente->cliente_uuid,
+                    'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
-                    'cad_liberado' => '',
-                    'criador' => Auth::user()->user_id,
-                    'dthr_cr' => Carbon::now(),
-                    'modificador' => Auth::user()->user_id,
-                    'dthr_ch' => Carbon::now(),
+                    'cad_liberado'   => '',
+                    'criador'        => Auth::user()->user_id,
+                    'dthr_cr'        => Carbon::now(),
+                    'modificador'    => Auth::user()->user_id,
+                    'dthr_ch'        => Carbon::now(),
                 ]);
             }
 
@@ -444,11 +444,12 @@ class AgendamentoController extends Controller
             DB::commit();
 
             return response()->json([
-                'message'   => "Agendamento atualizado com sucesso.",
-                'redirect' => route('agendamento.index'),
+                'message'   => 'Agendamento atualizado com sucesso.',
+                'redirect'  => route('agendamento.index'),
             ]);
-        } catch (Exception | \Throwable $e) {
+        } catch (Exception|\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage(),
             ], 500);
@@ -472,7 +473,7 @@ class AgendamentoController extends Controller
             return [];
         }
 
-        if (!empty($request->campo)) {
+        if (! empty($request->campo)) {
             $campo = $request->campo;
         }
 

@@ -24,23 +24,20 @@ class ForgotPasswordController extends Controller
     /**
      * Validate the email for the given request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return void
      */
     protected function validateEmail(Request $request)
     {
         $request->validate([
-            $this->username() => 'required|email'
+            $this->username() => 'required|email',
         ]);
     }
 
     /**
      * Get the needed authentication credentials from the request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-
     protected function credentials(Request $request)
     {
         return $request->only($this->username());

@@ -9,7 +9,7 @@ class ClienteProntuarioTipo extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_prt_tp";
+    protected $table = 'tbdm_prt_tp';
 
     public $timestamps = false;
 

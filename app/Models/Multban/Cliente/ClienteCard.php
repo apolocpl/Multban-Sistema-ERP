@@ -9,7 +9,7 @@ class ClienteCard extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_clientes_card";
+    protected $table = 'tbdm_clientes_card';
 
     public $timestamps = false;
 }

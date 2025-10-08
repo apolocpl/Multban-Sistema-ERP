@@ -20,6 +20,7 @@ class PerfilController extends Controller
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $usuario->roles->pluck('name', 'name')->all();
         $filtros = [FiltrosEnum::ID => 'CÓDIGO', FiltrosEnum::NAME => 'NOME', FiltrosEnum::EMAIL => 'E-MAIL', FiltrosEnum::USERNAME => 'USERNAME'];
+
         return response(view('Multban.perfil.edit', compact('filtros', 'usuario', 'roles', 'userRole')));
     }
 
@@ -36,7 +37,6 @@ class PerfilController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -70,7 +70,6 @@ class PerfilController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */

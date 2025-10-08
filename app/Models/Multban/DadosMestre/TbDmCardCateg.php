@@ -9,7 +9,7 @@ class TbDmCardCateg extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_card_categ";
+    protected $table = 'tbdm_card_categ';
 
     public $timestamps = false;
 }

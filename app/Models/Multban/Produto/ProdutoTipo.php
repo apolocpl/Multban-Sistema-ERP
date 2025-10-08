@@ -9,7 +9,7 @@ class ProdutoTipo extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_produto_tp";
+    protected $table = 'tbdm_produto_tp';
 
     public $timestamps = false;
 }

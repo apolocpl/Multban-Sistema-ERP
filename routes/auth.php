@@ -11,7 +11,7 @@ Route::middleware('guest')->group(function () {
     // Handle login
     Route::post('/login', [LoginController::class, 'login']);
 
-   // Route::get('login', Login::class)->name('login');
+    // Route::get('login', Login::class)->name('login');
     Route::get('register', [LoginController::class, 'showRegisterForm'])->name('register');
 });
 
@@ -22,4 +22,3 @@ Route::middleware('auth')->group(function () {
         ->name('verification.verify');
 
 });
-

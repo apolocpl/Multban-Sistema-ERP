@@ -9,7 +9,7 @@ class TbdmFornecedor extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_fornec";
+    protected $table = 'tbdm_fornec';
 
     public $timestamps = false;
 }

@@ -9,7 +9,7 @@ class ClienteEmp extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_clientes_emp";
+    protected $table = 'tbdm_clientes_emp';
 
     public $timestamps = false;
 }

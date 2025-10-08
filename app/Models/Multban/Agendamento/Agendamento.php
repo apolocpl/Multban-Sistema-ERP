@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 class Agendamento extends Model
 {
     use DbSysClientTrait;
-    protected $table = "tbtr_agendamento";
+
+    protected $table = 'tbtr_agendamento';
 
     public $timestamps = false;
 
@@ -35,10 +36,10 @@ class Agendamento extends Model
         'criador',
         'dthr_cr',
         'modificador',
-        'dthr_ch'
+        'dthr_ch',
     ];
 
-     public function cliente()
+    public function cliente()
     {
         return $this->belongsTo(Cliente::class, 'cliente_id', 'cliente_id');
     }
@@ -51,32 +52,32 @@ class Agendamento extends Model
     public function rules($id = '')
     {
         return [
-            'cliente_id' => 'required',
-            'cliente_doc' => 'min:11|max:14|string|required',
-            'status' => 'required',
-            'cliente_dt_nasc' => 'required',
-            'cliente_email' => 'required|email',
-            'cliente_cel' => 'required',
-            'user_id' => 'required',
-            'date' => 'required',
-            'start' => 'required',
-            'end' => 'required',
+            'cliente_id'       => 'required',
+            'cliente_doc'      => 'min:11|max:14|string|required',
+            'status'           => 'required',
+            'cliente_dt_nasc'  => 'required',
+            'cliente_email'    => 'required|email',
+            'cliente_cel'      => 'required',
+            'user_id'          => 'required',
+            'date'             => 'required',
+            'start'            => 'required',
+            'end'              => 'required',
             'agendamento_tipo' => 'required',
-            'observacao' => 'max:500',
+            'observacao'       => 'max:500',
         ];
     }
 
     public function attributes()
     {
         return [
-            'cliente_tipo' =>    'Tipo de Cliente',
-            'cliente_sts' =>     'Status do Cliente',
-            'cliente_doc' =>     'CPF/CNPJ',
-            'cliente_pasprt' =>  'Número do Passaporte',
-            'cliente_nome' =>    'Nome',
-            'cliente_email' =>   'E-mail',
-            'cliente_cel' =>     'Celular',
-            'cliente_rendam' =>  'Renda Mensal Aprox.',
+            'cliente_tipo'    => 'Tipo de Cliente',
+            'cliente_sts'     => 'Status do Cliente',
+            'cliente_doc'     => 'CPF/CNPJ',
+            'cliente_pasprt'  => 'Número do Passaporte',
+            'cliente_nome'    => 'Nome',
+            'cliente_email'   => 'E-mail',
+            'cliente_cel'     => 'Celular',
+            'cliente_rendam'  => 'Renda Mensal Aprox.',
             'cliente_dt_fech' => 'Dia para Fech.',
         ];
     }
@@ -84,10 +85,8 @@ class Agendamento extends Model
     public function messages()
     {
         return [
-             'cliente_doc.unique' => 'Já existe um Cliente cadastrado com esse CPF/CNPJ.',
+            'cliente_doc.unique' => 'Já existe um Cliente cadastrado com esse CPF/CNPJ.',
 
         ];
     }
-
-
 }

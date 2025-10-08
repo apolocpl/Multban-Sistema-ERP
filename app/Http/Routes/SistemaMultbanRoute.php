@@ -25,42 +25,42 @@ class SistemaMultbanRoute
         Route::post('config-sistema-multban/update-conexoes-bc-emp', [SistemaMultbanController::class, 'updateConexoesBcEmp']);
         Route::post('config-sistema-multban/store-conexoes-bc-emp', [SistemaMultbanController::class, 'storeConexoesBcEmp']);
 
-        //Alias
+        // Alias
         Route::post('config-sistema-multban/obtergridpesquisa-alias', [SistemaMultbanController::class, 'getObterGridPesquisaAlias']);
         Route::get('config-sistema-multban/edit-alias/{emp_id}', [SistemaMultbanController::class, 'editAlias']);
         Route::post('config-sistema-multban/store-alias', [SistemaMultbanController::class, 'storeAlias']);
         Route::post('config-sistema-multban/update-alias', [SistemaMultbanController::class, 'updateAlias']);
         Route::delete('config-sistema-multban/destroy-alias/{emp_id}', [SistemaMultbanController::class, 'destroyAlias']);
 
-        //API
+        // API
         Route::post('config-sistema-multban/obtergridpesquisa-apis', [SistemaMultbanController::class, 'getObterGridPesquisaApis']);
         Route::get('config-sistema-multban/edit-apis/{emp_id}', [SistemaMultbanController::class, 'editApis']);
         Route::post('config-sistema-multban/store-apis', [SistemaMultbanController::class, 'storeApis']);
         Route::post('config-sistema-multban/update-apis', [SistemaMultbanController::class, 'updateApis']);
         Route::delete('config-sistema-multban/destroy-apis/{emp_id}', [SistemaMultbanController::class, 'destroyApis']);
 
-        //Padrões dos Planos
+        // Padrões dos Planos
         Route::post('config-sistema-multban/obtergridpesquisa-padroes-de-planos', [SistemaMultbanController::class, 'getObterGridPesquisaPdPlan']);
         Route::get('config-sistema-multban/edit-padroes-de-planos/{emp_id}', [SistemaMultbanController::class, 'editPdPlan']);
         Route::post('config-sistema-multban/store-padroes-de-planos', [SistemaMultbanController::class, 'storePdPlan']);
         Route::post('config-sistema-multban/update-padroes-de-planos', [SistemaMultbanController::class, 'updatePdPlan']);
         Route::delete('config-sistema-multban/destroy-padroes-de-planos/{emp_id}', [SistemaMultbanController::class, 'destroyPdPlan']);
 
-        //White Label
+        // White Label
         Route::post('config-sistema-multban/obtergridpesquisa-white-label', [SistemaMultbanController::class, 'getObterGridPesquisaWhiteLabel']);
         Route::get('config-sistema-multban/edit-white-label/{emp_id}', [SistemaMultbanController::class, 'editWhiteLabel']);
         Route::post('config-sistema-multban/store-white-label', [SistemaMultbanController::class, 'storeWhiteLabel']);
         Route::post('config-sistema-multban/update-white-label', [SistemaMultbanController::class, 'updateWhiteLabel']);
         Route::delete('config-sistema-multban/destroy-white-label/{emp_id}', [SistemaMultbanController::class, 'destroyWhiteLabel']);
 
-        //Padrões de Mensagens
+        // Padrões de Mensagens
         Route::post('config-sistema-multban/obtergridpesquisa-padroes-de-mensagens', [SistemaMultbanController::class, 'getObterGridPesquisaPdMsg']);
         Route::get('config-sistema-multban/edit-padroes-de-mensagens/{emp_id}', [SistemaMultbanController::class, 'editPdMsg']);
         Route::post('config-sistema-multban/store-padroes-de-mensagens', [SistemaMultbanController::class, 'storePdMsg']);
         Route::post('config-sistema-multban/update-padroes-de-mensagens', [SistemaMultbanController::class, 'updatePdMsg']);
         Route::delete('config-sistema-multban/destroy-padroes-de-mensagens/{emp_id}', [SistemaMultbanController::class, 'destroyPdMsg']);
 
-        //Work Flow
+        // Work Flow
         Route::post('config-sistema-multban/obtergridpesquisa-work-flow', [SistemaMultbanController::class, 'getObterGridPesquisaWf']);
         Route::get('config-sistema-multban/get-columns-from-table/{table}', [SistemaMultbanController::class, 'getColumnsFromTable']);
         Route::get('config-sistema-multban/edit-work-flow/{emp_id}', [SistemaMultbanController::class, 'editWf']);
@@ -68,7 +68,7 @@ class SistemaMultbanRoute
         Route::post('config-sistema-multban/update-work-flow', [SistemaMultbanController::class, 'updateWf']);
         Route::delete('config-sistema-multban/destroy-work-flow/{emp_id}', [SistemaMultbanController::class, 'destroyWf']);
 
-        //Dados Mestre
+        // Dados Mestre
         Route::post('config-sistema-multban/obtergridpesquisa-dados-mestre', [SistemaMultbanController::class, 'getObterGridPesquisaDm']);
         Route::get('config-sistema-multban/edit-dados-mestre', [SistemaMultbanController::class, 'editDm']);
         Route::get('config-sistema-multban/create-dados-mestre', [SistemaMultbanController::class, 'createDm']);

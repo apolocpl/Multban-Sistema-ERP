@@ -12,23 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbsy_jobs', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->id();
             $table->string('queue');
-            //FIELDS
+            // FIELDS
             $table->longText('payload');
             $table->unsignedTinyInteger('attempts');
             $table->unsignedInteger('reserved_at')->nullable();
             $table->unsignedInteger('available_at');
             $table->unsignedInteger('created_at');
-            //KEYS
+            // KEYS
             $table->primary(['id', 'queue']);
         });
 
         Schema::create('tbsy_job_batches', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->string('id');
-            //FIELDS
+            // FIELDS
             $table->string('name');
             $table->integer('total_jobs');
             $table->integer('pending_jobs');
@@ -38,21 +38,21 @@ return new class extends Migration
             $table->integer('cancelled_at')->nullable();
             $table->integer('created_at');
             $table->integer('finished_at')->nullable();
-            //KEYS
+            // KEYS
             $table->primary('id');
         });
 
         Schema::create('tbsy_failed_jobs', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->id();
-            //FIELDS
+            // FIELDS
             $table->string('uuid')->unique();
             $table->text('connection');
             $table->text('queue');
             $table->longText('payload');
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
-            //KEYS
+            // KEYS
             $table->primary('id');
         });
     }

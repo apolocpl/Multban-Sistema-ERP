@@ -9,7 +9,7 @@ class ClienteScore extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_clientes_score";
+    protected $table = 'tbdm_clientes_score';
 
     public $timestamps = false;
 }
