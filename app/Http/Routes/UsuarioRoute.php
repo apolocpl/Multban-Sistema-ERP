@@ -20,9 +20,8 @@ class UsuarioRoute
         Route::get('usuario/get-users-from-espresa/{emp_id}', [UsuarioController::class, 'getUsersFromRspresa']);
         Route::delete('usuario/{id}', [UsuarioController::class, 'destroy'])->name('usuario.destroy');
         Route::post('usuario/send-reset-link-email', [UsuarioController::class, 'sendResetLinkEmail']);
-        Route::post('usuario/active/{id}', [UsuarioController::class, 'active']); //->middleware('permission:empresa.active')->name('empresa.active');
-        Route::post('usuario/inactive/{id}', [UsuarioController::class, 'inactive']); //->middleware('permission:empresa.inactive')->name('empresa.inactive');
-
+        Route::post('usuario/active/{id}', [UsuarioController::class, 'active']); // ->middleware('permission:empresa.active')->name('empresa.active');
+        Route::post('usuario/inactive/{id}', [UsuarioController::class, 'inactive']); // ->middleware('permission:empresa.inactive')->name('empresa.inactive');
 
         Route::post('usuario/obtergridpesquisa', [UsuarioController::class, 'postObterGridPesquisa']);
     }

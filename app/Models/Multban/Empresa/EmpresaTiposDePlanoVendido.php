@@ -9,7 +9,7 @@ class EmpresaTiposDePlanoVendido extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_tpplanovd";
+    protected $table = 'tbdm_tpplanovd';
 
     public $timestamps = false;
 }

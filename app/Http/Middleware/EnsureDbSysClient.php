@@ -26,8 +26,8 @@ class EnsureDbSysClient
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'type' => 'error',
-                    'message' => 'CSRF token mismatch.'
+                    'type'    => 'error',
+                    'message' => 'CSRF token mismatch.',
                 ], Response::HTTP_UNAUTHORIZED);
             } else {
                 return redirect('/login')->with('error', 'Sua sessão expirou, é preciso fazer o login novamente.');

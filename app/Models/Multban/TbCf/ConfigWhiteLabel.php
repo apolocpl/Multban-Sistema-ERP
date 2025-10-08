@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConfigWhiteLabel extends Model
 {
-    protected $table = "tbcf_config_wl";
+    protected $table = 'tbcf_config_wl';
 
     public $timestamps = false;
 

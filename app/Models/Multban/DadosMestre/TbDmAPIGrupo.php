@@ -9,8 +9,7 @@ class TbDmAPIGrupo extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_api_grupo";
+    protected $table = 'tbdm_api_grupo';
 
     public $timestamps = false;
-
 }

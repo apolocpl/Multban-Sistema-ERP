@@ -9,7 +9,7 @@ class EmpresaTipoDeAdquirentes extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_adquirentes";
+    protected $table = 'tbdm_adquirentes';
 
     public $timestamps = false;
 }

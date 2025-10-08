@@ -2,17 +2,21 @@
 
 namespace App\Models\Multban\TbTr;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Multban\Traits\DbSysClientTrait;
-
+use Illuminate\Database\Eloquent\Model;
 
 class TbtrHTitulos extends Model
 {
     use DbSysClientTrait;
+
     protected $table = 'tbtr_h_titulos';
+
     protected $primaryKey = 'titulo';
+
     protected $keyType = 'int';
+
     public $timestamps = false;
+
     protected $fillable = [
         'emp_id',
         'user_id',

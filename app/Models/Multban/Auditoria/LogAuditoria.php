@@ -2,7 +2,6 @@
 
 namespace App\Models\Multban\Auditoria;
 
-use App\Models\Multban\Traits\DbSysClientTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

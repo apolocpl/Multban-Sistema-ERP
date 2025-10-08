@@ -9,7 +9,7 @@ class ProgramaPts extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_programa_pts";
+    protected $table = 'tbdm_programa_pts';
 
     protected $primaryKey = 'prgpts_id';
 

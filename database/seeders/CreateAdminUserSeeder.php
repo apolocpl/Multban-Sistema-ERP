@@ -2,18 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Enums\EmpresaStatusEnum;
-use App\Models\Multban\Empresa\Empresa;
-use App\Models\Multban\Empresa\EmpresaParam;
-use App\Models\Multban\Empresa\EmpresaTaxpos;
 use App\Models\Multban\TbCf\ConexoesBcEmp;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class CreateAdminUserSeeder extends Seeder
 {
@@ -25,14 +20,14 @@ class CreateAdminUserSeeder extends Seeder
     public function run()
     {
         $user = User::create([
-            'user_name' => 'Admin',
+            'user_name'  => 'Admin',
             'user_email' => 'admin@admin.com',
             'user_logon' => 'admin',
-            'emp_id' => 1,
-            'user_cpf' => '00000000000',
-            'user_sts' => 'AT',
-            'user_pass' => Hash::make('12345678'),
-            'dthr_cr' => date_create()
+            'emp_id'     => 1,
+            'user_cpf'   => '00000000000',
+            'user_sts'   => 'AT',
+            'user_pass'  => Hash::make('12345678'),
+            'dthr_cr'    => date_create(),
         ]);
 
         // $user = User::create([
@@ -48,13 +43,13 @@ class CreateAdminUserSeeder extends Seeder
         // ]);
 
         $conexao = ConexoesBcEmp::create([
-            'emp_id' => $user->emp_id,
-            'bc_emp_host' => Crypt::encryptString(env('DBSYSCLIENT_HOST', '127.0.0.1')),
+            'emp_id'       => $user->emp_id,
+            'bc_emp_host'  => Crypt::encryptString(env('DBSYSCLIENT_HOST', '127.0.0.1')),
             'bc_emp_porta' => Crypt::encryptString(env('DBSYSCLIENT_PORT', '3306')),
-            'bc_emp_nome' => Crypt::encryptString(env('DBSYSCLIENT_DATABASE', 'db_sys_client')),
-            'bc_emp_user' => Crypt::encryptString(env('DBSYSCLIENT_USERNAME', 'root')),
-            'bc_emp_pass' => Crypt::encryptString(env('DBSYSCLIENT_PASSWORD', 'secret')),
-            'bc_fornec' => 'DGO'
+            'bc_emp_nome'  => Crypt::encryptString(env('DBSYSCLIENT_DATABASE', 'db_sys_client')),
+            'bc_emp_user'  => Crypt::encryptString(env('DBSYSCLIENT_USERNAME', 'root')),
+            'bc_emp_pass'  => Crypt::encryptString(env('DBSYSCLIENT_PASSWORD', 'secret')),
+            'bc_fornec'    => 'DGO',
         ]);
 
         $role = Role::create(['name' => 'admin', 'emp_id' => 1]);

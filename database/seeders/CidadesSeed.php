@@ -208,7 +208,7 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '1501956', 'cidade_est' => 'PA', 'cidade_desc' => 'CACHOEIRA DO PIRIÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '1502004', 'cidade_est' => 'PA', 'cidade_desc' => 'CACHOEIRA DO ARARI'],
             ['langu' => 'PORT', 'cidade_ibge' => '1502103', 'cidade_est' => 'PA', 'cidade_desc' => 'CAMETÁ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '1502152', 'cidade_est' => 'PA', 'cidade_desc' => 'CANAÃ DOS CARAJÁS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '1502152', 'cidade_est' => 'PA', 'cidade_desc' => 'CANAÃ DOS CARAJÁS'], ];
 
         DB::table('tbdm_cidade')->insert($cidades);
 
@@ -305,11 +305,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '1507474', 'cidade_est' => 'PA', 'cidade_desc' => 'SÃO JOÃO DE PIRABAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '1507508', 'cidade_est' => 'PA', 'cidade_desc' => 'SÃO JOÃO DO ARAGUAIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '1507607', 'cidade_est' => 'PA', 'cidade_desc' => 'SÃO MIGUEL DO GUAMÁ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '1507706', 'cidade_est' => 'PA', 'cidade_desc' => 'SÃO SEBASTIÃO DA BOA VISTA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '1507706', 'cidade_est' => 'PA', 'cidade_desc' => 'SÃO SEBASTIÃO DA BOA VISTA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '1507755', 'cidade_est' => 'PA', 'cidade_desc' => 'SAPUCAIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '1507805', 'cidade_est' => 'PA', 'cidade_desc' => 'SENADOR JOSÉ PORFÍRIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '1507904', 'cidade_est' => 'PA', 'cidade_desc' => 'SOURE'],
@@ -420,11 +420,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '1712702', 'cidade_est' => 'TO', 'cidade_desc' => 'MATEIROS'],
             ['langu' => 'PORT', 'cidade_ibge' => '1712801', 'cidade_est' => 'TO', 'cidade_desc' => 'MAURILÂNDIA DO TOCANTINS'],
             ['langu' => 'PORT', 'cidade_ibge' => '1713205', 'cidade_est' => 'TO', 'cidade_desc' => 'MIRACEMA DO TOCANTINS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '1713304', 'cidade_est' => 'TO', 'cidade_desc' => 'MIRANORTE'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '1713304', 'cidade_est' => 'TO', 'cidade_desc' => 'MIRANORTE'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '1713601', 'cidade_est' => 'TO', 'cidade_desc' => 'MONTE DO CARMO'],
             ['langu' => 'PORT', 'cidade_ibge' => '1713700', 'cidade_est' => 'TO', 'cidade_desc' => 'MONTE SANTO DO TOCANTINS'],
             ['langu' => 'PORT', 'cidade_ibge' => '1713809', 'cidade_est' => 'TO', 'cidade_desc' => 'PALMEIRAS DO TOCANTINS'],
@@ -570,11 +570,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2104602', 'cidade_est' => 'MA', 'cidade_desc' => 'GOVERNADOR EUGÊNIO BARROS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2104628', 'cidade_est' => 'MA', 'cidade_desc' => 'GOVERNADOR LUIZ ROCHA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2104651', 'cidade_est' => 'MA', 'cidade_desc' => 'GOVERNADOR NEWTON BELLO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2104677', 'cidade_est' => 'MA', 'cidade_desc' => 'GOVERNADOR NUNES FREIRE'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2104677', 'cidade_est' => 'MA', 'cidade_desc' => 'GOVERNADOR NUNES FREIRE'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2104701', 'cidade_est' => 'MA', 'cidade_desc' => 'GRAÇA ARANHA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2104800', 'cidade_est' => 'MA', 'cidade_desc' => 'GRAJAÚ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2104909', 'cidade_est' => 'MA', 'cidade_desc' => 'GUIMARÃES'],
@@ -707,11 +707,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '5201207', 'cidade_est' => 'GO', 'cidade_desc' => 'ANHANGUERA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5210109', 'cidade_est' => 'GO', 'cidade_desc' => 'IPAMERI'],
             ['langu' => 'PORT', 'cidade_ibge' => '5005608', 'cidade_est' => 'MS', 'cidade_desc' => 'MIRANDA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '5107107', 'cidade_est' => 'MT', 'cidade_desc' => 'SÃO JOSÉ DOS QUATRO MARCOS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '5107107', 'cidade_est' => 'MT', 'cidade_desc' => 'SÃO JOSÉ DOS QUATRO MARCOS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '5205406', 'cidade_est' => 'GO', 'cidade_desc' => 'CERES'],
             ['langu' => 'PORT', 'cidade_ibge' => '5107206', 'cidade_est' => 'MT', 'cidade_desc' => 'RIO BRANCO'],
             ['langu' => 'PORT', 'cidade_ibge' => '5300108', 'cidade_est' => 'DF', 'cidade_desc' => 'BRASÍLIA'],
@@ -811,11 +811,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4321006', 'cidade_est' => 'RS', 'cidade_desc' => 'TAPERA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5214606', 'cidade_est' => 'GO', 'cidade_desc' => 'NIQUELÂNDIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5207808', 'cidade_est' => 'GO', 'cidade_desc' => 'FIRMINÓPOLIS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4323754', 'cidade_est' => 'RS', 'cidade_desc' => 'VITÓRIA DAS MISSÕES'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4323754', 'cidade_est' => 'RS', 'cidade_desc' => 'VITÓRIA DAS MISSÕES'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '5201306', 'cidade_est' => 'GO', 'cidade_desc' => 'ANICUNS'],
             ['langu' => 'PORT', 'cidade_ibge' => '5203575', 'cidade_est' => 'GO', 'cidade_desc' => 'BONÓPOLIS'],
             ['langu' => 'PORT', 'cidade_ibge' => '5216700', 'cidade_est' => 'GO', 'cidade_desc' => 'COLMÉIA (TRANSF. P/TO)'],
@@ -931,11 +931,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '5217906', 'cidade_est' => 'GO', 'cidade_desc' => 'PONTE ALTA DO NORTE (TRANSF. P/TO)'],
             ['langu' => 'PORT', 'cidade_ibge' => '5213004', 'cidade_est' => 'GO', 'cidade_desc' => 'MAURILÂNDIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5221551', 'cidade_est' => 'GO', 'cidade_desc' => 'TURVELÂNDIA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '5105309', 'cidade_est' => 'MT', 'cidade_desc' => 'LUCIÁRA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '5105309', 'cidade_est' => 'MT', 'cidade_desc' => 'LUCIÁRA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '5205521', 'cidade_est' => 'GO', 'cidade_desc' => 'COLINAS DO SUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '5207402', 'cidade_est' => 'GO', 'cidade_desc' => 'EDÉIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5216007', 'cidade_est' => 'GO', 'cidade_desc' => 'PANAMÁ'],
@@ -1033,11 +1033,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '5210000', 'cidade_est' => 'GO', 'cidade_desc' => 'INHUMAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '5106182', 'cidade_est' => 'MT', 'cidade_desc' => 'NOVA LACERDA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5201702', 'cidade_est' => 'GO', 'cidade_desc' => 'ARAGARÇAS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4319364', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO PEDRO DAS MISSÕES'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4319364', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO PEDRO DAS MISSÕES'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4312708', 'cidade_est' => 'RS', 'cidade_desc' => 'NONOAI'],
             ['langu' => 'PORT', 'cidade_ibge' => '4322533', 'cidade_est' => 'RS', 'cidade_desc' => 'VALE DO SOL'],
             ['langu' => 'PORT', 'cidade_ibge' => '5206701', 'cidade_est' => 'GO', 'cidade_desc' => 'DAMIANÓPOLIS'],
@@ -1148,11 +1148,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4317251', 'cidade_est' => 'RS', 'cidade_desc' => 'SANTA TEREZA'],
             ['langu' => 'PORT', 'cidade_ibge' => '5108352', 'cidade_est' => 'MT', 'cidade_desc' => 'VALE DE SÃO DOMINGOS'],
             ['langu' => 'PORT', 'cidade_ibge' => '5217203', 'cidade_est' => 'GO', 'cidade_desc' => 'PIRANHAS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '5100000', 'cidade_est' => 'MT', 'cidade_desc' => 'MUNICÍPIO IGNORADO - MT'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '5100000', 'cidade_est' => 'MT', 'cidade_desc' => 'MUNICÍPIO IGNORADO - MT'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4318051', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO DOMINGOS DO SUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '5218300', 'cidade_est' => 'GO', 'cidade_desc' => 'POSSE'],
             ['langu' => 'PORT', 'cidade_ibge' => '4305871', 'cidade_est' => 'RS', 'cidade_desc' => 'CORONEL BARROS'],
@@ -1273,11 +1273,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4306429', 'cidade_est' => 'RS', 'cidade_desc' => 'DOIS IRMÃOS DAS MISSÕES'],
             ['langu' => 'PORT', 'cidade_ibge' => '4313805', 'cidade_est' => 'RS', 'cidade_desc' => 'PALMITINHO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4318440', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO JORGE'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4314134', 'cidade_est' => 'RS', 'cidade_desc' => 'PAULO BENTO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4314134', 'cidade_est' => 'RS', 'cidade_desc' => 'PAULO BENTO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '5106653', 'cidade_est' => 'MT', 'cidade_desc' => 'PONTAL DO ARAGUAIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4312138', 'cidade_est' => 'RS', 'cidade_desc' => 'MATO CASTELHANO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4313086', 'cidade_est' => 'RS', 'cidade_desc' => 'NOVA PÁDUA'],
@@ -1380,11 +1380,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4310439', 'cidade_est' => 'RS', 'cidade_desc' => 'IPÊ'],
             ['langu' => 'PORT', 'cidade_ibge' => '4313441', 'cidade_est' => 'RS', 'cidade_desc' => 'NOVO TIRADENTES'],
             ['langu' => 'PORT', 'cidade_ibge' => '4314100', 'cidade_est' => 'RS', 'cidade_desc' => 'PASSO FUNDO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4311130', 'cidade_est' => 'RS', 'cidade_desc' => 'JARI'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4311130', 'cidade_est' => 'RS', 'cidade_desc' => 'JARI'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4320859', 'cidade_est' => 'RS', 'cidade_desc' => 'TABAÍ'],
             ['langu' => 'PORT', 'cidade_ibge' => '4304606', 'cidade_est' => 'RS', 'cidade_desc' => 'CANOAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '4320578', 'cidade_est' => 'RS', 'cidade_desc' => 'SETE DE SETEMBRO'],
@@ -1500,11 +1500,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4214201', 'cidade_est' => 'SC', 'cidade_desc' => 'QUILOMBO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4214300', 'cidade_est' => 'SC', 'cidade_desc' => 'RANCHO QUEIMADO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4214409', 'cidade_est' => 'SC', 'cidade_desc' => 'RIO DAS ANTAS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4215109', 'cidade_est' => 'SC', 'cidade_desc' => 'RODEIO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4215109', 'cidade_est' => 'SC', 'cidade_desc' => 'RODEIO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4215307', 'cidade_est' => 'SC', 'cidade_desc' => 'SALETE'],
             ['langu' => 'PORT', 'cidade_ibge' => '4215554', 'cidade_est' => 'SC', 'cidade_desc' => 'SANTA HELENA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4217501', 'cidade_est' => 'SC', 'cidade_desc' => 'SEARA'],
@@ -1612,11 +1612,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4311502', 'cidade_est' => 'RS', 'cidade_desc' => 'LAVRAS DO SUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '4314076', 'cidade_est' => 'RS', 'cidade_desc' => 'PASSO DO SOBRADO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4309001', 'cidade_est' => 'RS', 'cidade_desc' => 'GIRUÁ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4319406', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO PEDRO DO SUL'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4319406', 'cidade_est' => 'RS', 'cidade_desc' => 'SÃO PEDRO DO SUL'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4312476', 'cidade_est' => 'RS', 'cidade_desc' => 'MORRO REUTER'],
             ['langu' => 'PORT', 'cidade_ibge' => '4308300', 'cidade_est' => 'RS', 'cidade_desc' => 'FONTOURA XAVIER'],
             ['langu' => 'PORT', 'cidade_ibge' => '4312252', 'cidade_est' => 'RS', 'cidade_desc' => 'MINAS DO LEÃO'],
@@ -1724,11 +1724,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4307708', 'cidade_est' => 'RS', 'cidade_desc' => 'ESTEIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4308805', 'cidade_est' => 'RS', 'cidade_desc' => 'GENERAL CÂMARA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4310504', 'cidade_est' => 'RS', 'cidade_desc' => 'IRAÍ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4309555', 'cidade_est' => 'RS', 'cidade_desc' => 'HARMONIA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4309555', 'cidade_est' => 'RS', 'cidade_desc' => 'HARMONIA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4314753', 'cidade_est' => 'RS', 'cidade_desc' => 'POÇO DAS ANTAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '4216354', 'cidade_est' => 'SC', 'cidade_desc' => 'SÃO JOÃO DO ITAPERIÚ'],
             ['langu' => 'PORT', 'cidade_ibge' => '4216701', 'cidade_est' => 'SC', 'cidade_desc' => 'SÃO JOSÉ DO CEDRO'],
@@ -1862,11 +1862,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4304309', 'cidade_est' => 'RS', 'cidade_desc' => 'CÂNDIDO GODÓI'],
             ['langu' => 'PORT', 'cidade_ibge' => '4304663', 'cidade_est' => 'RS', 'cidade_desc' => 'CAPÃO DO LEÃO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4305207', 'cidade_est' => 'RS', 'cidade_desc' => 'CERRO LARGO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4306932', 'cidade_est' => 'RS', 'cidade_desc' => 'ENTRE-IJUÍS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4306932', 'cidade_est' => 'RS', 'cidade_desc' => 'ENTRE-IJUÍS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4307104', 'cidade_est' => 'RS', 'cidade_desc' => 'HERVAL'],
             ['langu' => 'PORT', 'cidade_ibge' => '4307500', 'cidade_est' => 'RS', 'cidade_desc' => 'ESPUMOSO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4308250', 'cidade_est' => 'RS', 'cidade_desc' => 'FLORIANO PEIXOTO'],
@@ -2000,11 +2000,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4120655', 'cidade_est' => 'PR', 'cidade_desc' => 'QUARTO CENTENÁRIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4120705', 'cidade_est' => 'PR', 'cidade_desc' => 'QUATIGUÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '4120804', 'cidade_est' => 'PR', 'cidade_desc' => 'QUATRO BARRAS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4120853', 'cidade_est' => 'PR', 'cidade_desc' => 'QUATRO PONTES'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4120853', 'cidade_est' => 'PR', 'cidade_desc' => 'QUATRO PONTES'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4120903', 'cidade_est' => 'PR', 'cidade_desc' => 'QUEDAS DO IGUAÇU'],
             ['langu' => 'PORT', 'cidade_ibge' => '4125100', 'cidade_est' => 'PR', 'cidade_desc' => 'SÃO JOÃO DO TRIUNFO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4125209', 'cidade_est' => 'PR', 'cidade_desc' => 'SÃO JORGE D OESTE'],
@@ -2123,11 +2123,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4116802', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA CANTU'],
             ['langu' => 'PORT', 'cidade_ibge' => '4116901', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA ESPERANÇA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4116950', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA ESPERANÇA DO SUDOESTE'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4117008', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA FÁTIMA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4117008', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA FÁTIMA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4117057', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA LARANJEIRAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '4117107', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA LONDRINA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4117206', 'cidade_est' => 'PR', 'cidade_desc' => 'NOVA OLÍMPIA'],
@@ -2243,11 +2243,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4112306', 'cidade_est' => 'PR', 'cidade_desc' => 'JAPIRA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4112405', 'cidade_est' => 'PR', 'cidade_desc' => 'JAPURÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '4112504', 'cidade_est' => 'PR', 'cidade_desc' => 'JARDIM ALEGRE'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4112603', 'cidade_est' => 'PR', 'cidade_desc' => 'JARDIM OLINDA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4112603', 'cidade_est' => 'PR', 'cidade_desc' => 'JARDIM OLINDA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4112702', 'cidade_est' => 'PR', 'cidade_desc' => 'JATAIZINHO'],
             ['langu' => 'PORT', 'cidade_ibge' => '4112751', 'cidade_est' => 'PR', 'cidade_desc' => 'JESUÍTAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '4112801', 'cidade_est' => 'PR', 'cidade_desc' => 'JOAQUIM TÁVORA'],
@@ -2366,11 +2366,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4106852', 'cidade_est' => 'PR', 'cidade_desc' => 'CRUZMALTINA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4106902', 'cidade_est' => 'PR', 'cidade_desc' => 'CURITIBA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4107009', 'cidade_est' => 'PR', 'cidade_desc' => 'CURIÚVA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4107108', 'cidade_est' => 'PR', 'cidade_desc' => 'DIAMANTE DO NORTE'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4107108', 'cidade_est' => 'PR', 'cidade_desc' => 'DIAMANTE DO NORTE'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4107124', 'cidade_est' => 'PR', 'cidade_desc' => 'DIAMANTE DO SUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '4107157', 'cidade_est' => 'PR', 'cidade_desc' => 'DIAMANTE D OESTE'],
             ['langu' => 'PORT', 'cidade_ibge' => '4107207', 'cidade_est' => 'PR', 'cidade_desc' => 'DOIS VIZINHOS'],
@@ -2475,11 +2475,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '4101705', 'cidade_est' => 'PR', 'cidade_desc' => 'ARARUNA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4101804', 'cidade_est' => 'PR', 'cidade_desc' => 'ARAUCÁRIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4101853', 'cidade_est' => 'PR', 'cidade_desc' => 'ARIRANHA DO IVAÍ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '4101903', 'cidade_est' => 'PR', 'cidade_desc' => 'ASSAÍ'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '4101903', 'cidade_est' => 'PR', 'cidade_desc' => 'ASSAÍ'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '4102000', 'cidade_est' => 'PR', 'cidade_desc' => 'ASSIS CHATEAUBRIAND'],
             ['langu' => 'PORT', 'cidade_ibge' => '4102109', 'cidade_est' => 'PR', 'cidade_desc' => 'ASTORGA'],
             ['langu' => 'PORT', 'cidade_ibge' => '4102208', 'cidade_est' => 'PR', 'cidade_desc' => 'ATALAIA'],
@@ -2616,11 +2616,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3529203', 'cidade_est' => 'SP', 'cidade_desc' => 'MARTINÓPOLIS'],
             ['langu' => 'PORT', 'cidade_ibge' => '3529302', 'cidade_est' => 'SP', 'cidade_desc' => 'MATÃO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3529401', 'cidade_est' => 'SP', 'cidade_desc' => 'MAUÁ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3529500', 'cidade_est' => 'SP', 'cidade_desc' => 'MENDONÇA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3529500', 'cidade_est' => 'SP', 'cidade_desc' => 'MENDONÇA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3529609', 'cidade_est' => 'SP', 'cidade_desc' => 'MERIDIANO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3529658', 'cidade_est' => 'SP', 'cidade_desc' => 'MESÓPOLIS'],
             ['langu' => 'PORT', 'cidade_ibge' => '3529708', 'cidade_est' => 'SP', 'cidade_desc' => 'MIGUELÓPOLIS'],
@@ -2744,11 +2744,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3524402', 'cidade_est' => 'SP', 'cidade_desc' => 'JACAREÍ'],
             ['langu' => 'PORT', 'cidade_ibge' => '3524501', 'cidade_est' => 'SP', 'cidade_desc' => 'JACI'],
             ['langu' => 'PORT', 'cidade_ibge' => '3524600', 'cidade_est' => 'SP', 'cidade_desc' => 'JACUPIRANGA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3524709', 'cidade_est' => 'SP', 'cidade_desc' => 'JAGUARIÚNA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3524709', 'cidade_est' => 'SP', 'cidade_desc' => 'JAGUARIÚNA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3524808', 'cidade_est' => 'SP', 'cidade_desc' => 'JALES'],
             ['langu' => 'PORT', 'cidade_ibge' => '3524907', 'cidade_est' => 'SP', 'cidade_desc' => 'JAMBEIRO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3525003', 'cidade_est' => 'SP', 'cidade_desc' => 'JANDIRA'],
@@ -2875,11 +2875,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3520103', 'cidade_est' => 'SP', 'cidade_desc' => 'IGARAPAVA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520202', 'cidade_est' => 'SP', 'cidade_desc' => 'IGARATÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520301', 'cidade_est' => 'SP', 'cidade_desc' => 'IGUAPE'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3520400', 'cidade_est' => 'SP', 'cidade_desc' => 'ILHABELA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3520400', 'cidade_est' => 'SP', 'cidade_desc' => 'ILHABELA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3520426', 'cidade_est' => 'SP', 'cidade_desc' => 'ILHA COMPRIDA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520442', 'cidade_est' => 'SP', 'cidade_desc' => 'ILHA SOLTEIRA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520509', 'cidade_est' => 'SP', 'cidade_desc' => 'INDAIATUBA'],
@@ -3011,11 +3011,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3514809', 'cidade_est' => 'SP', 'cidade_desc' => 'ELDORADO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520707', 'cidade_est' => 'SP', 'cidade_desc' => 'INDIAPORÃ'],
             ['langu' => 'PORT', 'cidade_ibge' => '3520806', 'cidade_est' => 'SP', 'cidade_desc' => 'INÚBIA PAULISTA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3302205', 'cidade_est' => 'RJ', 'cidade_desc' => 'ITAPERUNA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3302205', 'cidade_est' => 'RJ', 'cidade_desc' => 'ITAPERUNA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3302254', 'cidade_est' => 'RJ', 'cidade_desc' => 'ITATIAIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3302270', 'cidade_est' => 'RJ', 'cidade_desc' => 'JAPERI'],
             ['langu' => 'PORT', 'cidade_ibge' => '3302304', 'cidade_est' => 'RJ', 'cidade_desc' => 'LAJE DO MURIAÉ'],
@@ -3142,11 +3142,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3204401', 'cidade_est' => 'ES', 'cidade_desc' => 'RIO NOVO DO SUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '3204500', 'cidade_est' => 'ES', 'cidade_desc' => 'SANTA LEOPOLDINA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3204559', 'cidade_est' => 'ES', 'cidade_desc' => 'SANTA MARIA DE JETIBÁ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3204609', 'cidade_est' => 'ES', 'cidade_desc' => 'SANTA TERESA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3204609', 'cidade_est' => 'ES', 'cidade_desc' => 'SANTA TERESA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3204658', 'cidade_est' => 'ES', 'cidade_desc' => 'SÃO DOMINGOS DO NORTE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3204708', 'cidade_est' => 'ES', 'cidade_desc' => 'SÃO GABRIEL DA PALHA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3204807', 'cidade_est' => 'ES', 'cidade_desc' => 'SÃO JOSÉ DO CALÇADO'],
@@ -3283,11 +3283,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3200000', 'cidade_est' => 'ES', 'cidade_desc' => 'MUNICÍPIO IGNORADO - ES'],
             ['langu' => 'PORT', 'cidade_ibge' => '3200102', 'cidade_est' => 'ES', 'cidade_desc' => 'AFONSO CLÁUDIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3200136', 'cidade_est' => 'ES', 'cidade_desc' => 'ÁGUIA BRANCA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3200169', 'cidade_est' => 'ES', 'cidade_desc' => 'ÁGUA DOCE DO NORTE'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3200169', 'cidade_est' => 'ES', 'cidade_desc' => 'ÁGUA DOCE DO NORTE'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3200201', 'cidade_est' => 'ES', 'cidade_desc' => 'ALEGRE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3200300', 'cidade_est' => 'ES', 'cidade_desc' => 'ALFREDO CHAVES'],
             ['langu' => 'PORT', 'cidade_ibge' => '3200359', 'cidade_est' => 'ES', 'cidade_desc' => 'ALTO RIO NOVO'],
@@ -3442,11 +3442,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3152006', 'cidade_est' => 'MG', 'cidade_desc' => 'POMPÉU'],
             ['langu' => 'PORT', 'cidade_ibge' => '3152105', 'cidade_est' => 'MG', 'cidade_desc' => 'PONTE NOVA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3152131', 'cidade_est' => 'MG', 'cidade_desc' => 'PONTO CHIQUE'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3152170', 'cidade_est' => 'MG', 'cidade_desc' => 'PONTO DOS VOLANTES'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3152170', 'cidade_est' => 'MG', 'cidade_desc' => 'PONTO DOS VOLANTES'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3152204', 'cidade_est' => 'MG', 'cidade_desc' => 'PORTEIRINHA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3152303', 'cidade_est' => 'MG', 'cidade_desc' => 'PORTO FIRME'],
             ['langu' => 'PORT', 'cidade_ibge' => '3152402', 'cidade_est' => 'MG', 'cidade_desc' => 'POTÉ'],
@@ -3594,11 +3594,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3147709', 'cidade_est' => 'MG', 'cidade_desc' => 'PASSA TEMPO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3147808', 'cidade_est' => 'MG', 'cidade_desc' => 'PASSA-VINTE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3147907', 'cidade_est' => 'MG', 'cidade_desc' => 'PASSOS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3147956', 'cidade_est' => 'MG', 'cidade_desc' => 'PATIS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3147956', 'cidade_est' => 'MG', 'cidade_desc' => 'PATIS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3148004', 'cidade_est' => 'MG', 'cidade_desc' => 'PATOS DE MINAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '3148103', 'cidade_est' => 'MG', 'cidade_desc' => 'PATROCÍNIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3148202', 'cidade_est' => 'MG', 'cidade_desc' => 'PATROCÍNIO DO MURIAÉ'],
@@ -3740,11 +3740,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3126703', 'cidade_est' => 'MG', 'cidade_desc' => 'FRANCISCO SÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '3126752', 'cidade_est' => 'MG', 'cidade_desc' => 'FRANCISCÓPOLIS'],
             ['langu' => 'PORT', 'cidade_ibge' => '3126802', 'cidade_est' => 'MG', 'cidade_desc' => 'FREI GASPAR'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3126901', 'cidade_est' => 'MG', 'cidade_desc' => 'FREI INOCÊNCIO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3126901', 'cidade_est' => 'MG', 'cidade_desc' => 'FREI INOCÊNCIO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3126950', 'cidade_est' => 'MG', 'cidade_desc' => 'FREI LAGONEGRO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3127008', 'cidade_est' => 'MG', 'cidade_desc' => 'FRONTEIRA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3127057', 'cidade_est' => 'MG', 'cidade_desc' => 'FRONTEIRA DOS VALES'],
@@ -3871,11 +3871,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3120508', 'cidade_est' => 'MG', 'cidade_desc' => 'CRISTINA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3120607', 'cidade_est' => 'MG', 'cidade_desc' => 'CRUCILÂNDIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3120706', 'cidade_est' => 'MG', 'cidade_desc' => 'CRUZEIRO DA FORTALEZA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3120805', 'cidade_est' => 'MG', 'cidade_desc' => 'CRUZÍLIA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3120805', 'cidade_est' => 'MG', 'cidade_desc' => 'CRUZÍLIA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3120839', 'cidade_est' => 'MG', 'cidade_desc' => 'CUPARAQUE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3120870', 'cidade_est' => 'MG', 'cidade_desc' => 'CURRAL DE DENTRO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3120904', 'cidade_est' => 'MG', 'cidade_desc' => 'CURVELO'],
@@ -3999,11 +3999,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3115706', 'cidade_est' => 'MG', 'cidade_desc' => 'CENTRAL DE MINAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '3115805', 'cidade_est' => 'MG', 'cidade_desc' => 'CENTRALINA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3115904', 'cidade_est' => 'MG', 'cidade_desc' => 'CHÁCARA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3116001', 'cidade_est' => 'MG', 'cidade_desc' => 'CHALÉ'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3116001', 'cidade_est' => 'MG', 'cidade_desc' => 'CHALÉ'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3116100', 'cidade_est' => 'MG', 'cidade_desc' => 'CHAPADA DO NORTE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3116159', 'cidade_est' => 'MG', 'cidade_desc' => 'CHAPADA GAÚCHA'],
             ['langu' => 'PORT', 'cidade_ibge' => '3116209', 'cidade_est' => 'MG', 'cidade_desc' => 'CHIADOR'],
@@ -4124,11 +4124,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '3111002', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPESTRE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3111101', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPINA VERDE'],
             ['langu' => 'PORT', 'cidade_ibge' => '3111150', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPO AZUL'],
-            ['langu' => 'PORT', 'cidade_ibge' => '3111200', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPO BELO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '3111200', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPO BELO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '3111309', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPO DO MEIO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3111408', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPO FLORIDO'],
             ['langu' => 'PORT', 'cidade_ibge' => '3111507', 'cidade_est' => 'MG', 'cidade_desc' => 'CAMPOS ALTOS'],
@@ -4241,11 +4241,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2932606', 'cidade_est' => 'BA', 'cidade_desc' => 'URANDI'],
             ['langu' => 'PORT', 'cidade_ibge' => '2932705', 'cidade_est' => 'BA', 'cidade_desc' => 'URUÇUCA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2932804', 'cidade_est' => 'BA', 'cidade_desc' => 'UTINGA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2932903', 'cidade_est' => 'BA', 'cidade_desc' => 'VALENÇA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2932903', 'cidade_est' => 'BA', 'cidade_desc' => 'VALENÇA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2933000', 'cidade_est' => 'BA', 'cidade_desc' => 'VALENTE'],
             ['langu' => 'PORT', 'cidade_ibge' => '2933059', 'cidade_est' => 'BA', 'cidade_desc' => 'VÁRZEA DA ROÇA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2933109', 'cidade_est' => 'BA', 'cidade_desc' => 'VÁRZEA DO POÇO'],
@@ -4374,11 +4374,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2910750', 'cidade_est' => 'BA', 'cidade_desc' => 'FÁTIMA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2910776', 'cidade_est' => 'BA', 'cidade_desc' => 'FEIRA DA MATA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2910800', 'cidade_est' => 'BA', 'cidade_desc' => 'FEIRA DE SANTANA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2910859', 'cidade_est' => 'BA', 'cidade_desc' => 'FILADÉLFIA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2910859', 'cidade_est' => 'BA', 'cidade_desc' => 'FILADÉLFIA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2910909', 'cidade_est' => 'BA', 'cidade_desc' => 'FIRMINO ALVES'],
             ['langu' => 'PORT', 'cidade_ibge' => '2911006', 'cidade_est' => 'BA', 'cidade_desc' => 'FLORESTA AZUL'],
             ['langu' => 'PORT', 'cidade_ibge' => '2911105', 'cidade_est' => 'BA', 'cidade_desc' => 'FORMOSA DO RIO PRETO'],
@@ -4502,11 +4502,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2904407', 'cidade_est' => 'BA', 'cidade_desc' => 'BREJOLÂNDIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2904506', 'cidade_est' => 'BA', 'cidade_desc' => 'BROTAS DE MACAÚBAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2904605', 'cidade_est' => 'BA', 'cidade_desc' => 'BRUMADO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2904704', 'cidade_est' => 'BA', 'cidade_desc' => 'BUERAREMA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2904704', 'cidade_est' => 'BA', 'cidade_desc' => 'BUERAREMA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2904753', 'cidade_est' => 'BA', 'cidade_desc' => 'BURITIRAMA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2904803', 'cidade_est' => 'BA', 'cidade_desc' => 'CAATIBA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2904852', 'cidade_est' => 'BA', 'cidade_desc' => 'CABACEIRAS DO PARAGUAÇU'],
@@ -4630,11 +4630,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2900207', 'cidade_est' => 'BA', 'cidade_desc' => 'ABARÉ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2900306', 'cidade_est' => 'BA', 'cidade_desc' => 'ACAJUTIBA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2900355', 'cidade_est' => 'BA', 'cidade_desc' => 'ADUSTINA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2900405', 'cidade_est' => 'BA', 'cidade_desc' => 'ÁGUA FRIA'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2900405', 'cidade_est' => 'BA', 'cidade_desc' => 'ÁGUA FRIA'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2900504', 'cidade_est' => 'BA', 'cidade_desc' => 'ÉRICO CARDOSO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2900603', 'cidade_est' => 'BA', 'cidade_desc' => 'AIQUARA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2900702', 'cidade_est' => 'BA', 'cidade_desc' => 'ALAGOINHAS'],
@@ -4750,11 +4750,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2802106', 'cidade_est' => 'SE', 'cidade_desc' => 'ESTÂNCIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2802205', 'cidade_est' => 'SE', 'cidade_desc' => 'FEIRA NOVA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2802304', 'cidade_est' => 'SE', 'cidade_desc' => 'FREI PAULO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2802403', 'cidade_est' => 'SE', 'cidade_desc' => 'GARARU'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2802403', 'cidade_est' => 'SE', 'cidade_desc' => 'GARARU'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2802502', 'cidade_est' => 'SE', 'cidade_desc' => 'GENERAL MAYNARD'],
             ['langu' => 'PORT', 'cidade_ibge' => '2802601', 'cidade_est' => 'SE', 'cidade_desc' => 'GRACHO CARDOSO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2802700', 'cidade_est' => 'SE', 'cidade_desc' => 'ILHA DAS FLORES'],
@@ -4867,11 +4867,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2615409', 'cidade_est' => 'PE', 'cidade_desc' => 'TORITAMA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2705705', 'cidade_est' => 'AL', 'cidade_desc' => 'OLHO D ÁGUA DAS FLORES'],
             ['langu' => 'PORT', 'cidade_ibge' => '2705804', 'cidade_est' => 'AL', 'cidade_desc' => 'OLHO D ÁGUA DO CASADO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2513604', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTANA DOS GARROTES'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2513604', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTANA DOS GARROTES'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2513653', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTARÉM'],
             ['langu' => 'PORT', 'cidade_ibge' => '2513703', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTA RITA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2513802', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTA TERESINHA'],
@@ -4971,11 +4971,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2608404', 'cidade_est' => 'PE', 'cidade_desc' => 'JUREMA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2608453', 'cidade_est' => 'PE', 'cidade_desc' => 'LAGOA DO CARRO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2608503', 'cidade_est' => 'PE', 'cidade_desc' => 'LAGOA DO ITAENGA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2507705', 'cidade_est' => 'PB', 'cidade_desc' => 'JUAZEIRINHO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2507705', 'cidade_est' => 'PB', 'cidade_desc' => 'JUAZEIRINHO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2507804', 'cidade_est' => 'PB', 'cidade_desc' => 'JUNCO DO SERIDÓ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2507903', 'cidade_est' => 'PB', 'cidade_desc' => 'JURIPIRANGA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2508000', 'cidade_est' => 'PB', 'cidade_desc' => 'JURU'],
@@ -5070,11 +5070,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2601409', 'cidade_est' => 'PE', 'cidade_desc' => 'BARREIROS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2601508', 'cidade_est' => 'PE', 'cidade_desc' => 'BELÉM DE MARIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2601607', 'cidade_est' => 'PE', 'cidade_desc' => 'BELÉM DE SÃO FRANCISCO'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2601706', 'cidade_est' => 'PE', 'cidade_desc' => 'BELO JARDIM'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2601706', 'cidade_est' => 'PE', 'cidade_desc' => 'BELO JARDIM'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2601805', 'cidade_est' => 'PE', 'cidade_desc' => 'BETÂNIA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2601904', 'cidade_est' => 'PE', 'cidade_desc' => 'BEZERROS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2602001', 'cidade_est' => 'PE', 'cidade_desc' => 'BODOCÓ'],
@@ -5174,11 +5174,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2507101', 'cidade_est' => 'PB', 'cidade_desc' => 'ITAPOROROCA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2507200', 'cidade_est' => 'PB', 'cidade_desc' => 'ITATUBA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2507309', 'cidade_est' => 'PB', 'cidade_desc' => 'JACARAÚ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2507408', 'cidade_est' => 'PB', 'cidade_desc' => 'JERICÓ'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2507408', 'cidade_est' => 'PB', 'cidade_desc' => 'JERICÓ'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2507507', 'cidade_est' => 'PB', 'cidade_desc' => 'JOÃO PESSOA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2507606', 'cidade_est' => 'PB', 'cidade_desc' => 'JUAREZ TÁVORA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2513406', 'cidade_est' => 'PB', 'cidade_desc' => 'SANTA LUZIA'],
@@ -5276,11 +5276,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2500908', 'cidade_est' => 'PB', 'cidade_desc' => 'ARARA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2501005', 'cidade_est' => 'PB', 'cidade_desc' => 'ARARUNA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2501104', 'cidade_est' => 'PB', 'cidade_desc' => 'AREIA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2501153', 'cidade_est' => 'PB', 'cidade_desc' => 'AREIA DE BARAÚNAS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2501153', 'cidade_est' => 'PB', 'cidade_desc' => 'AREIA DE BARAÚNAS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2501203', 'cidade_est' => 'PB', 'cidade_desc' => 'AREIAL'],
             ['langu' => 'PORT', 'cidade_ibge' => '2501302', 'cidade_est' => 'PB', 'cidade_desc' => 'AROEIRAS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2501351', 'cidade_est' => 'PB', 'cidade_desc' => 'ASSUNÇÃO'],
@@ -5396,11 +5396,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2300606', 'cidade_est' => 'CE', 'cidade_desc' => 'ALTANEIRA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2300705', 'cidade_est' => 'CE', 'cidade_desc' => 'ALTO SANTO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2300754', 'cidade_est' => 'CE', 'cidade_desc' => 'AMONTADA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2300804', 'cidade_est' => 'CE', 'cidade_desc' => 'ANTONINA DO NORTE'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2300804', 'cidade_est' => 'CE', 'cidade_desc' => 'ANTONINA DO NORTE'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2300903', 'cidade_est' => 'CE', 'cidade_desc' => 'APUIARÉS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2301000', 'cidade_est' => 'CE', 'cidade_desc' => 'AQUIRAZ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2301109', 'cidade_est' => 'CE', 'cidade_desc' => 'ARACATI'],
@@ -5492,11 +5492,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2403509', 'cidade_est' => 'RN', 'cidade_desc' => 'ESPÍRITO SANTO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2403608', 'cidade_est' => 'RN', 'cidade_desc' => 'EXTREMOZ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2207702', 'cidade_est' => 'PI', 'cidade_desc' => 'PARNAÍBA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2207751', 'cidade_est' => 'PI', 'cidade_desc' => 'PASSAGEM FRANCA DO PIAUÍ'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2207751', 'cidade_est' => 'PI', 'cidade_desc' => 'PASSAGEM FRANCA DO PIAUÍ'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2207777', 'cidade_est' => 'PI', 'cidade_desc' => 'PATOS DO PIAUÍ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2207793', 'cidade_est' => 'PI', 'cidade_desc' => 'PAU D ARCO DO PIAUÍ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2207801', 'cidade_est' => 'PI', 'cidade_desc' => 'PAULISTANA'],
@@ -5557,11 +5557,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2302909', 'cidade_est' => 'CE', 'cidade_desc' => 'CAPISTRANO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2303006', 'cidade_est' => 'CE', 'cidade_desc' => 'CARIDADE'],
             ['langu' => 'PORT', 'cidade_ibge' => '2303105', 'cidade_est' => 'CE', 'cidade_desc' => 'CARIRÉ'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2303204', 'cidade_est' => 'CE', 'cidade_desc' => 'CARIRIAÇU'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2303204', 'cidade_est' => 'CE', 'cidade_desc' => 'CARIRIAÇU'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2303303', 'cidade_est' => 'CE', 'cidade_desc' => 'CARIÚS'],
             ['langu' => 'PORT', 'cidade_ibge' => '2303402', 'cidade_est' => 'CE', 'cidade_desc' => 'CARNAUBAL'],
             ['langu' => 'PORT', 'cidade_ibge' => '2303501', 'cidade_est' => 'CE', 'cidade_desc' => 'CASCAVEL'],
@@ -5632,11 +5632,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2205359', 'cidade_est' => 'PI', 'cidade_desc' => 'JOÃO COSTA'],
             ['langu' => 'PORT', 'cidade_ibge' => '2205409', 'cidade_est' => 'PI', 'cidade_desc' => 'JOAQUIM PIRES'],
             ['langu' => 'PORT', 'cidade_ibge' => '2205458', 'cidade_est' => 'PI', 'cidade_desc' => 'JOCA MARQUES'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2205508', 'cidade_est' => 'PI', 'cidade_desc' => 'JOSÉ DE FREITAS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2205508', 'cidade_est' => 'PI', 'cidade_desc' => 'JOSÉ DE FREITAS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2205516', 'cidade_est' => 'PI', 'cidade_desc' => 'JUAZEIRO DO PIAUÍ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2205524', 'cidade_est' => 'PI', 'cidade_desc' => 'JÚLIO BORGES'],
             ['langu' => 'PORT', 'cidade_ibge' => '2205532', 'cidade_est' => 'PI', 'cidade_desc' => 'JUREMA'],
@@ -5707,11 +5707,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2108603', 'cidade_est' => 'MA', 'cidade_desc' => 'PINHEIRO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2108702', 'cidade_est' => 'MA', 'cidade_desc' => 'PIO XII'],
             ['langu' => 'PORT', 'cidade_ibge' => '2108801', 'cidade_est' => 'MA', 'cidade_desc' => 'PIRAPEMAS'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2108900', 'cidade_est' => 'MA', 'cidade_desc' => 'POÇÃO DE PEDRAS'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2108900', 'cidade_est' => 'MA', 'cidade_desc' => 'POÇÃO DE PEDRAS'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2109007', 'cidade_est' => 'MA', 'cidade_desc' => 'PORTO FRANCO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2109056', 'cidade_est' => 'MA', 'cidade_desc' => 'PORTO RICO DO MARANHÃO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2109106', 'cidade_est' => 'MA', 'cidade_desc' => 'PRESIDENTE DUTRA'],
@@ -5809,11 +5809,11 @@ class CidadesSeed extends Seeder
             ['langu' => 'PORT', 'cidade_ibge' => '2207603', 'cidade_est' => 'PI', 'cidade_desc' => 'PARNAGUÁ'],
             ['langu' => 'PORT', 'cidade_ibge' => '2110104', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTA QUITÉRIA DO MARANHÃO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2110203', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTA RITA'],
-            ['langu' => 'PORT', 'cidade_ibge' => '2110237', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTANA DO MARANHÃO'],];
+            ['langu' => 'PORT', 'cidade_ibge' => '2110237', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTANA DO MARANHÃO'], ];
 
-            DB::table('tbdm_cidade')->insert($cidades);
+        DB::table('tbdm_cidade')->insert($cidades);
 
-            $cidades = [
+        $cidades = [
             ['langu' => 'PORT', 'cidade_ibge' => '2110278', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTO AMARO DO MARANHÃO'],
             ['langu' => 'PORT', 'cidade_ibge' => '2110302', 'cidade_est' => 'MA', 'cidade_desc' => 'SANTO ANTÔNIO DOS LOPES'],
             ['langu' => 'PORT', 'cidade_ibge' => '2110401', 'cidade_est' => 'MA', 'cidade_desc' => 'SÃO BENEDITO DO RIO PRETO'],

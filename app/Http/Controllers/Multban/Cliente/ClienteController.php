@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Multban\Cliente;
 
 use App\Enums\EmpresaStatusEnum;
-use App\Enums\EstoqramEnum;
-use App\Enums\FiltrosEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Multban\Auditoria\LogAuditoria;
 use App\Models\Multban\Cliente\CardCateg;
@@ -16,33 +14,27 @@ use App\Models\Multban\Cliente\ClienteCard;
 use App\Models\Multban\Cliente\ClienteProntuario;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
-use App\Models\Multban\Cliente\Endereco\Cadasest;
-use App\Models\Multban\Cliente\Endereco\Cadasmun;
-use App\Models\Multban\Cliente\Endereco\CadasPais;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\Multban\Empresa\Empresa;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
-use GuzzleHttp\Client;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
-use Intervention\Image\Laravel\Facades\Image;
-use Laravel\Pail\ValueObjects\Origin\Console;
-use Illuminate\Support\Facades\Log;
 
 class ClienteController extends Controller
 {
     private $permissions;
+
     /**
      * Display a listing of the resource.
      *
@@ -72,7 +64,7 @@ class ClienteController extends Controller
         $cardTipos = CardTipo::all();
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
-        $cliente = new Cliente();
+        $cliente = new Cliente;
         $convenios = TbDmConvenios::all();
         $users = User::with('cargo')->get(); // ou sua query customizada
 
@@ -80,7 +72,7 @@ class ClienteController extends Controller
         foreach ($userRole as $key => $value) {
 
             if ($value == 'admin') {
-                $canChangeStatus = true; //Se for usuário Admin, pode mudar o Status
+                $canChangeStatus = true; // Se for usuário Admin, pode mudar o Status
             }
         }
 
@@ -100,7 +92,6 @@ class ClienteController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -115,11 +106,11 @@ class ClienteController extends Controller
             foreach ($userRole as $key => $value) {
 
                 if ($value == 'admin') {
-                    $canChangeStatus = true; //Se for usuário Admin, pode mudar o Status
+                    $canChangeStatus = true; // Se for usuário Admin, pode mudar o Status
                 }
             }
 
-            $cliente = new Cliente();
+            $cliente = new Cliente;
             $input = $request->all();
 
             $input['cliente_nome'] = rtrim($request->cliente_nome);
@@ -130,7 +121,7 @@ class ClienteController extends Controller
             if ($clienteChk) {
                 return response()->json([
                     'message_type' => 'Já existe um cliente cadastrado com esse CPF/CNPJ.',
-                    'message' => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
+                    'message'      => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
@@ -143,67 +134,67 @@ class ClienteController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $cliente->cliente_tipo       = $request->cliente_tipo;
-            $cliente->convenio_id        = $request->convenio_id;
-            $cliente->carteirinha        = $request->carteirinha;
-            $cliente->cliente_dt_nasc    = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
-            $cliente->cliente_doc        = removerCNPJ($request->cliente_doc);
-            $cliente->cliente_rg         = removerCNPJ($request->cliente_rg);
-            $cliente->cliente_pasprt     = $request->cliente_pasprt;
-            $cliente->cliente_sts        = !$canChangeStatus ? 'NA' : $request->cliente_sts; /*Cliente nasce com o status "Em Análise"*/
-            $cliente->cliente_uuid       = Str::uuid()->toString();
-            $cliente->cliente_nome       = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
-            $cliente->cliente_nm_alt     = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
-            $cliente->cliente_nm_card    = $request->cliente_nm_card;
-            $cliente->cliente_email      = $request->cliente_email;
-            $cliente->cliente_email_s    = $request->cliente_email_s;
-            $cliente->cliente_cel        = removerMascaraTelefone($request->cliente_cel);
-            $cliente->cliente_cel_s      = removerMascaraTelefone($request->cliente_cel_s);
-            $cliente->cliente_telfixo    = removerMascaraTelefone($request->cliente_telfixo);
-            $cliente->cliente_rendam     = $input['cliente_rendam'];
-            $cliente->cliente_rdam_s     = $request->cliente_rdam_s;
-            $cliente->cliente_dt_fech    = $request->cliente_dt_fech;
-            $cliente->cliente_cep        = removerMascaraCEP($request->cliente_cep);
-            $cliente->cliente_end        = mb_strtoupper(rtrim($request->cliente_end), 'UTF-8');
-            $cliente->cliente_endnum     = $request->cliente_endnum;
-            $cliente->cliente_endcmp     = mb_strtoupper(rtrim($request->cliente_endcmp), 'UTF-8');
-            $cliente->cliente_endbair    = mb_strtoupper(rtrim($request->cliente_endbair), 'UTF-8');
-            $cliente->cliente_endcid     = $request->cliente_endcid;
-            $cliente->cliente_endest     = $request->cliente_endest;
-            $cliente->cliente_endpais    = $request->cliente_endpais;
-            $cliente->cliente_cep_s      = removerMascaraCEP($request->cliente_cep_s);
-            $cliente->cliente_end_s      = mb_strtoupper(rtrim($request->cliente_end_s), 'UTF-8');
-            $cliente->cliente_endnum_s   = $request->cliente_endnum_s;
-            $cliente->cliente_endcmp_s   = mb_strtoupper(rtrim($request->cliente_endcmp_s), 'UTF-8');
-            $cliente->cliente_endbair_s  = mb_strtoupper(rtrim($request->cliente_endbair_s), 'UTF-8');
-            $cliente->cliente_endcid_s   = $request->cliente_endcid_s;
-            $cliente->cliente_endest_s   = $request->cliente_endest_s;
-            $cliente->cliente_endpais_s  = $request->cliente_endpais_s;
-            $cliente->cliente_score      = $request->cliente_score;
-            $cliente->cliente_lmt_sg     = $request->cliente_lmt_sg;
-            $cliente->criador            = Auth::user()->user_id;
-            $cliente->modificador        = Auth::user()->user_id;
-            $cliente->dthr_cr            = Carbon::now();
-            $cliente->dthr_ch            = Carbon::now();
+            $cliente->cliente_tipo = $request->cliente_tipo;
+            $cliente->convenio_id = $request->convenio_id;
+            $cliente->carteirinha = $request->carteirinha;
+            $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
+            $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
+            $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
+            $cliente->cliente_pasprt = $request->cliente_pasprt;
+            $cliente->cliente_sts = ! $canChangeStatus ? 'NA' : $request->cliente_sts; /* Cliente nasce com o status "Em Análise" */
+            $cliente->cliente_uuid = Str::uuid()->toString();
+            $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
+            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
+            $cliente->cliente_nm_card = $request->cliente_nm_card;
+            $cliente->cliente_email = $request->cliente_email;
+            $cliente->cliente_email_s = $request->cliente_email_s;
+            $cliente->cliente_cel = removerMascaraTelefone($request->cliente_cel);
+            $cliente->cliente_cel_s = removerMascaraTelefone($request->cliente_cel_s);
+            $cliente->cliente_telfixo = removerMascaraTelefone($request->cliente_telfixo);
+            $cliente->cliente_rendam = $input['cliente_rendam'];
+            $cliente->cliente_rdam_s = $request->cliente_rdam_s;
+            $cliente->cliente_dt_fech = $request->cliente_dt_fech;
+            $cliente->cliente_cep = removerMascaraCEP($request->cliente_cep);
+            $cliente->cliente_end = mb_strtoupper(rtrim($request->cliente_end), 'UTF-8');
+            $cliente->cliente_endnum = $request->cliente_endnum;
+            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->cliente_endcmp), 'UTF-8');
+            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->cliente_endbair), 'UTF-8');
+            $cliente->cliente_endcid = $request->cliente_endcid;
+            $cliente->cliente_endest = $request->cliente_endest;
+            $cliente->cliente_endpais = $request->cliente_endpais;
+            $cliente->cliente_cep_s = removerMascaraCEP($request->cliente_cep_s);
+            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->cliente_end_s), 'UTF-8');
+            $cliente->cliente_endnum_s = $request->cliente_endnum_s;
+            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->cliente_endcmp_s), 'UTF-8');
+            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->cliente_endbair_s), 'UTF-8');
+            $cliente->cliente_endcid_s = $request->cliente_endcid_s;
+            $cliente->cliente_endest_s = $request->cliente_endest_s;
+            $cliente->cliente_endpais_s = $request->cliente_endpais_s;
+            $cliente->cliente_score = $request->cliente_score;
+            $cliente->cliente_lmt_sg = $request->cliente_lmt_sg;
+            $cliente->criador = Auth::user()->user_id;
+            $cliente->modificador = Auth::user()->user_id;
+            $cliente->dthr_cr = Carbon::now();
+            $cliente->dthr_ch = Carbon::now();
 
             $cliente->save();
 
             $tbdm_clientes_emp = DB::connection('dbsysclient')->table('tbdm_clientes_emp')->insert([
-                'emp_id' => $emp_id,
-                'cliente_id' => $cliente->cliente_id,
-                'cliente_uuid' => $cliente->cliente_uuid,
-                'cliente_doc' => removerCNPJ($cliente->cliente_doc),
+                'emp_id'         => $emp_id,
+                'cliente_id'     => $cliente->cliente_id,
+                'cliente_uuid'   => $cliente->cliente_uuid,
+                'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                 'cliente_pasprt' => $cliente->cliente_pasprt,
-                'cad_liberado' => '',
-                'criador' => Auth::user()->user_id,
-                'dthr_cr' => Carbon::now(),
-                'modificador' => Auth::user()->user_id,
-                'dthr_ch' => Carbon::now(),
+                'cad_liberado'   => '',
+                'criador'        => Auth::user()->user_id,
+                'dthr_cr'        => Carbon::now(),
+                'modificador'    => Auth::user()->user_id,
+                'dthr_ch'        => Carbon::now(),
             ]);
 
-            //Auditoria
+            // Auditoria
 
-            $logAuditoria         = new LogAuditoria();
+            $logAuditoria = new LogAuditoria;
             $logAuditoria->auddat = date('Y-m-d H:i:s');
             $logAuditoria->audusu = Auth::user()->user_id;
             $logAuditoria->audtar = 'Adicionou o cliente';
@@ -214,17 +205,17 @@ class ClienteController extends Controller
             $logAuditoria->audnip = request()->ip();
             $logAuditoria->save();
 
-
             DB::commit();
             // Session::flash("idModeloInserido", $cliente->cliente_id);
 
             // Session::flash('success', "Cliente " . str_pad($cliente->cliente_id, 5, "0", STR_PAD_LEFT) . " adicionado com sucesso.");
 
             return response()->json([
-                'message'   => "Cliente " . str_pad($cliente->cliente_id, 5, "0", STR_PAD_LEFT) . " adicionado com sucesso.",
+                'message'   => 'Cliente ' . str_pad($cliente->cliente_id, 5, '0', STR_PAD_LEFT) . ' adicionado com sucesso.',
             ]);
-        } catch (Exception | \Throwable $e) {
+        } catch (Exception|\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage(),
             ], 500);
@@ -276,18 +267,21 @@ class ClienteController extends Controller
                 if ($row->anexo == 'x') {
                     return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
                 }
+
                 return '<span class="badge badge-secondary">Sem Anexo</span>';
             })
             ->addColumn('medico', function ($row) {
-                if (!empty($row->user)) {
+                if (! empty($row->user)) {
                     return $row->user->user_name;
                 }
+
                 return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
             })
             ->addColumn('crm_medico', function ($row) {
-                if (!empty($row->user)) {
+                if (! empty($row->user)) {
                     return $row->user->user_crm;
                 }
+
                 return 'Sem CRM';
             })
             ->addColumn('images', function ($row) {
@@ -297,11 +291,11 @@ class ClienteController extends Controller
                 return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
             })
             ->editColumn('protocolo', function ($row) {
-                return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
+                return str_pad($row->protocolo, 12, '0', STR_PAD_LEFT);
             })
             ->editColumn('protocolo_tp', function ($row) {
                 $badge = '';
-                if (!empty($row->tipo)) {
+                if (! empty($row->tipo)) {
 
                     switch ($row->tipo->protocolo_tp) {
                         case 1:
@@ -324,7 +318,7 @@ class ClienteController extends Controller
         foreach ($userRole as $key => $value) {
 
             if ($value == 'admin') {
-                $canChangeStatus = true; //Se for usuário Admin, pode mudar o Status
+                $canChangeStatus = true; // Se for usuário Admin, pode mudar o Status
             }
         }
 
@@ -345,7 +339,6 @@ class ClienteController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -371,14 +364,14 @@ class ClienteController extends Controller
                 ], 422);
             }
 
-            //Verifica se ouve mudanças nos campos, se sim grava na auditoria
+            // Verifica se ouve mudanças nos campos, se sim grava na auditoria
             foreach ($input as $key => $value) {
                 if (Arr::exists($cliente->toArray(), $key)) {
-                    if ($cliente->$key != $value) {
+                    if ($value != $cliente->$key) {
                         if ($key == 'updated_at' || $key == 'created_at') {
                         } else {
 
-                            $logAuditoria = new LogAuditoria();
+                            $logAuditoria = new LogAuditoria;
                             $logAuditoria->auddat = date('Y-m-d H:i:s');
                             $logAuditoria->audusu = Auth::user()->username;
                             $logAuditoria->audtar = 'Alterou o campo ' . $key;
@@ -406,8 +399,6 @@ class ClienteController extends Controller
         }
     }
 
-
-
     /**
      * Remove the specified resource from storage.
      *
@@ -422,17 +413,18 @@ class ClienteController extends Controller
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::EXCLUIDO;
                 $cliente->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Excluído com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Excluído com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -449,23 +441,24 @@ class ClienteController extends Controller
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::INATIVO;
                 $cliente->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Inativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Inativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -479,23 +472,24 @@ class ClienteController extends Controller
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::ATIVO;
                 $cliente->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Ativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Ativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -510,11 +504,11 @@ class ClienteController extends Controller
         if (empty($parametro)) {
             return [
                 'clientes' => [],
-                'cartoes' => []
+                'cartoes'  => [],
             ];
         }
 
-        $query = Cliente::whereHas('clienteEmp', function($q) use ($emp_id) {
+        $query = Cliente::whereHas('clienteEmp', function ($q) use ($emp_id) {
             $q->where('emp_id', $emp_id);
         });
 
@@ -539,7 +533,7 @@ class ClienteController extends Controller
                     'card_pts_mult', 'card_pts_cash', 'card_sts'
                 )
                 ->get()
-                ->map(function($cartao) {
+                ->map(function ($cartao) {
                     // Busca os textos descritivos usando os models
                     $tp = CardTipo::where('card_tp', $cartao->card_tp)->first();
                     $mod = CardMod::where('card_mod', $cartao->card_mod)->first();
@@ -547,6 +541,7 @@ class ClienteController extends Controller
                     $cartao->card_tp_desc = $tp ? $tp->card_tp_desc : $cartao->card_tp;
                     $cartao->card_mod_desc = $mod ? $mod->card_mod_desc : $cartao->card_mod;
                     $cartao->card_sts_desc = $sts ? $sts->card_sts_desc : $cartao->card_sts;
+
                     return $cartao;
                 })
                 ->toArray();
@@ -556,7 +551,7 @@ class ClienteController extends Controller
                 ->where('emp_id', $emp_id)
                 ->where('cliente_doc', $cliente->cliente_doc)
                 ->get()
-                ->sum(function($cartao) {
+                ->sum(function ($cartao) {
                     return
                         floatval($cartao->card_pts_part) +
                         floatval($cartao->card_pts_fraq) +
@@ -567,7 +562,7 @@ class ClienteController extends Controller
         }
 
         return [
-            'clientes' => $clientes->toArray()
+            'clientes' => $clientes->toArray(),
         ];
     }
 
@@ -589,7 +584,7 @@ class ClienteController extends Controller
     {
         try {
 
-            $prontuario = new ClienteProntuario();
+            $prontuario = new ClienteProntuario;
             $prontuario->cliente_id = $request->input('cliente_id');
             $prontuario->protocolo_tp = 1;
             $prontuario->protocolo_dt = Carbon::now();
@@ -614,12 +609,12 @@ class ClienteController extends Controller
 
                 foreach ($images as $image) {
                     $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/images');
-                    if (!file_exists($directory)) {
+                    if (! file_exists($directory)) {
                         mkdir($directory, 0777, true);
                     }
 
                     $directoryThumbs = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails');
-                    if (!file_exists($directoryThumbs)) {
+                    if (! file_exists($directoryThumbs)) {
                         mkdir($directoryThumbs, 0777, true);
                     }
 
@@ -648,22 +643,19 @@ class ClienteController extends Controller
                 $prontuario->save();
             }
 
-
-
             if ($request->hasFile('fileDoc')) {
                 $files = $request->file('fileDoc');
                 foreach ($files as $file) {
 
                     $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo);
-                    if (!file_exists($directory)) {
+                    if (! file_exists($directory)) {
                         mkdir($directory, 0777, true);
                     }
 
-                    $filename = time()  . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
                     $file->move($directory, $filename);
                 }
-
 
                 $prontuario = ClienteProntuario::find($prontuario->protocolo);
                 $prontuario->anexo = 'x';
@@ -674,14 +666,14 @@ class ClienteController extends Controller
 
             return response()->json([
                 'title' => 'Sucesso',
-                'type' => 'success',
-                'text' => 'Prontuário salvo com sucesso.'
+                'type'  => 'success',
+                'text'  => 'Prontuário salvo com sucesso.',
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
-                'title' => 'Erro',
+                'title'   => 'Erro',
                 'message' => $th->getMessage(),
-                'type' => 'error',
+                'type'    => 'error',
             ], 500);
         }
     }
@@ -701,18 +693,17 @@ class ClienteController extends Controller
             $prontuario->texto_exm = rtrim($request->input('texto_exm'));
             $prontuario->texto_atd = rtrim($request->input('texto_atd'));
 
-
             if ($request->hasFile('fotoUpload')) {
                 $images = $request->file('fotoUpload');
 
                 foreach ($images as $image) {
                     $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/images');
-                    if (!file_exists($directory)) {
+                    if (! file_exists($directory)) {
                         mkdir($directory, 0777, true);
                     }
 
                     $directoryThumbs = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/fotos/protocolo_' . $prontuario->protocolo . '/thumbnails');
-                    if (!file_exists($directoryThumbs)) {
+                    if (! file_exists($directoryThumbs)) {
                         mkdir($directoryThumbs, 0777, true);
                     }
 
@@ -743,22 +734,19 @@ class ClienteController extends Controller
                 $prontuario->foto_anexo_path = null;
             }
 
-
-
             if ($request->hasFile('fileDoc')) {
                 $files = $request->file('fileDoc');
                 foreach ($files as $file) {
 
                     $directory = Storage::disk('public')->path('prontuarios/empresa_' . $prontuario->emp_id . '/client_' . $prontuario->cliente_id . '/docs/protocolo_' . $prontuario->protocolo);
-                    if (!file_exists($directory)) {
+                    if (! file_exists($directory)) {
                         mkdir($directory, 0777, true);
                     }
 
-                    $filename = time()  . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
                     $file->move($directory, $filename);
                 }
-
 
                 $prontuario = ClienteProntuario::find($prontuario->protocolo);
                 $prontuario->anexo = 'x';
@@ -767,23 +755,22 @@ class ClienteController extends Controller
                 $prontuario->doc_anexo_path = null;
             }
 
-            if (!$request->hasFile('fotoUpload') && !$request->hasFile('fileDoc')) {
+            if (! $request->hasFile('fotoUpload') && ! $request->hasFile('fileDoc')) {
                 $prontuario->anexo = null;
             }
-
 
             $prontuario->save();
 
             return response()->json([
                 'title' => 'OK',
-                'type' => 'success',
-                'text' => 'Prontuário atualizado com sucesso.'
+                'type'  => 'success',
+                'text'  => 'Prontuário atualizado com sucesso.',
             ], 200);
         } catch (\Throwable $th) {
             return response()->json([
-                'title' => 'Erro',
+                'title'   => 'Erro',
                 'message' => $th->getMessage(),
-                'type' => 'error',
+                'type'    => 'error',
             ], 500);
         }
     }
@@ -795,12 +782,12 @@ class ClienteController extends Controller
             $query = '';
 
             $hasQuery = false;
-            if (!empty($request->data_de) && !empty($request->data_ate)) {
+            if (! empty($request->data_de) && ! empty($request->data_ate)) {
                 if (Carbon::createFromFormat('Y-m-d', $request->data_de) > Carbon::createFromFormat('Y-m-d', $request->data_ate)) {
                     return response()->json([
-                        "title" => "Erro",
-                        "type" => "error",
-                        "message" => "Data 'De:' não pode ser maior que a data 'Até:'."
+                        'title'   => 'Erro',
+                        'type'    => 'error',
+                        'message' => "Data 'De:' não pode ser maior que a data 'Até:'.",
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
@@ -809,31 +796,29 @@ class ClienteController extends Controller
                 $hasQuery = true;
             }
 
-
-
-            if (!empty($request->protocolo)) {
-                $query .= "protocolo = " . quotedstr($request->protocolo) . " AND";
+            if (! empty($request->protocolo)) {
+                $query .= 'protocolo = ' . quotedstr($request->protocolo) . ' AND';
                 $hasQuery = true;
             }
 
-            if (!empty($request->user_id)) {
-                $query .= " user_id = " . quotedstr($request->user_id) . "";
+            if (! empty($request->user_id)) {
+                $query .= ' user_id = ' . quotedstr($request->user_id) . '';
                 $hasQuery = true;
             }
 
-            if (!empty($request->protocolo_dt)) {
+            if (! empty($request->protocolo_dt)) {
 
                 $query .= " protocolo_dt >= '" . Carbon::createFromFormat('Y-m-d', $request->data_de)->toDateString() . "' AND";
                 $hasQuery = true;
             }
 
-            if (!empty($request->protocolo_dt)) {
+            if (! empty($request->protocolo_dt)) {
 
                 $query .= " protocolo_dt <= '" . Carbon::createFromFormat('Y-m-d', $request->data_ate)->toDateString() . "' AND";
                 $hasQuery = true;
             }
 
-            $query = rtrim($query, "AND");
+            $query = rtrim($query, 'AND');
 
             if ($hasQuery) {
                 $prontuarios = ClienteProntuario::whereRaw(DB::raw($query))->get();
@@ -847,18 +832,21 @@ class ClienteController extends Controller
                     if ($row->anexo == 'x') {
                         return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
                     }
+
                     return '<span class="badge badge-secondary">Sem Anexo</span>';
                 })
                 ->addColumn('medico', function ($row) {
-                    if (!empty($row->user)) {
+                    if (! empty($row->user)) {
                         return $row->user->user_name;
                     }
+
                     return 'Sem Médico';
                 })
                 ->addColumn('crm_medico', function ($row) {
-                    if (!empty($row->user)) {
+                    if (! empty($row->user)) {
                         return $row->user->user_crm;
                     }
+
                     return 'Sem CRM';
                 })
                 ->addColumn('images', function ($row) {
@@ -868,11 +856,11 @@ class ClienteController extends Controller
                     return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
                 })
                 ->editColumn('protocolo', function ($row) {
-                    return str_pad($row->protocolo, 12, "0", STR_PAD_LEFT);
+                    return str_pad($row->protocolo, 12, '0', STR_PAD_LEFT);
                 })
                 ->editColumn('protocolo_tp', function ($row) {
                     $badge = '';
-                    if (!empty($row->tipo)) {
+                    if (! empty($row->tipo)) {
 
                         switch ($row->tipo->protocolo_tp) {
                             case 1:
@@ -892,48 +880,48 @@ class ClienteController extends Controller
                 ->make(true);
         } catch (\Throwable $th) {
             return response()->json([
-                "title" => "Erro",
-                "type" => "error",
-                "message" => $th->getMessage() . ' ' . $th->getLine() . ' ' . $th->getFile()
+                'title'   => 'Erro',
+                'type'    => 'error',
+                'message' => $th->getMessage() . ' ' . $th->getLine() . ' ' . $th->getFile(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
     public function postObterGridPesquisa(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        //$this->applyFilters(request(), ['empresa_id' => $request->empresa_id, 'cliente_sts' => $request->cliente_sts, 'cliente_tipo' => $request->cliente_tipo, 'cliente_id' => $request->cliente_id, 'cliente_doc' => $request->cliente_doc], 'cliente_filters');
+        // $this->applyFilters(request(), ['empresa_id' => $request->empresa_id, 'cliente_sts' => $request->cliente_sts, 'cliente_tipo' => $request->cliente_tipo, 'cliente_id' => $request->cliente_id, 'cliente_doc' => $request->cliente_doc], 'cliente_filters');
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->cliente_sts)) {
-            $query .= "cliente_sts = " . quotedstr($request->cliente_sts) . " AND ";
+        if (! empty($request->cliente_sts)) {
+            $query .= 'cliente_sts = ' . quotedstr($request->cliente_sts) . ' AND ';
         }
-        if (!empty($request->cliente_tipo)) {
-            $query .= "cliente_tipo = " . quotedstr($request->cliente_tipo) . " AND ";
+        if (! empty($request->cliente_tipo)) {
+            $query .= 'cliente_tipo = ' . quotedstr($request->cliente_tipo) . ' AND ';
         }
-        if (!empty($request->cliente_id)) {
+        if (! empty($request->cliente_id)) {
             if (is_numeric($request->cliente_id)) {
-                $query .= "tbdm_clientes_geral.cliente_id = " . quotedstr($request->cliente_id) . " AND ";
+                $query .= 'tbdm_clientes_geral.cliente_id = ' . quotedstr($request->cliente_id) . ' AND ';
             } else {
                 $query .= "tbdm_clientes_geral.cliente_nome like '%" . $request->cliente_id . "%' AND ";
             }
         }
 
-        if (!empty($request->cliente_doc)) {
+        if (! empty($request->cliente_doc)) {
 
-            $query .= "tbdm_clientes_geral.cliente_doc = " . quotedstr(removerCNPJ($request->cliente_doc)) . " AND ";
+            $query .= 'tbdm_clientes_geral.cliente_doc = ' . quotedstr(removerCNPJ($request->cliente_doc)) . ' AND ';
         }
 
-        if (!empty($request->empresa_id)) {
+        if (! empty($request->empresa_id)) {
             if (is_numeric($request->empresa_id)) {
 
-                $query .= "emp_id = " . $request->empresa_id;
+                $query .= 'emp_id = ' . $request->empresa_id;
             } else {
 
                 $empresasGeral = Empresa::where('emp_nmult', 'like', '%' . $request->empresa_id . '%')->get(['emp_id'])->pluck('emp_id')->toArray();
@@ -944,9 +932,9 @@ class ClienteController extends Controller
             }
         }
 
-        $query = rtrim($query, "AND ");
+        $query = rtrim($query, 'AND ');
 
-        if (!empty($query)) {
+        if (! empty($query)) {
             $data = Cliente::join('tbdm_clientes_emp', 'tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
                 ->select(
                     'tbdm_clientes_geral.*',
@@ -965,22 +953,25 @@ class ClienteController extends Controller
                     $btn .= '<a href="cliente/' . $row->cliente_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                $disabled = "";
-                if ($row->status->cliente_sts == EmpresaStatusEnum::ATIVO)
-                    $disabled = "disabled";
+                $disabled = '';
+                if ($row->status->cliente_sts == EmpresaStatusEnum::ATIVO) {
+                    $disabled = 'disabled';
+                }
 
                 $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="active_grid_id" data-url="cliente" data-id="' . $row->cliente_id . '" title="Ativar"><i class="far fa-check-circle"></i></button>';
 
-                $disabled = "";
-                if ($row->status->cliente_sts == EmpresaStatusEnum::INATIVO)
-                    $disabled = "disabled";
+                $disabled = '';
+                if ($row->status->cliente_sts == EmpresaStatusEnum::INATIVO) {
+                    $disabled = 'disabled';
+                }
 
                 $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="inactive_grid_id" data-url="cliente" data-id="' . $row->cliente_id . '" title="Inativar"><i class="fas fa-ban"></i></button>';
 
                 if (in_array('cliente.destroy', $this->permissions)) {
-                    $disabled = "";
-                    if ($row->status->cliente_sts == EmpresaStatusEnum::EXCLUIDO)
-                        $disabled = "disabled";
+                    $disabled = '';
+                    if ($row->status->cliente_sts == EmpresaStatusEnum::EXCLUIDO) {
+                        $disabled = 'disabled';
+                    }
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $row->cliente_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
                 }
                 $btn .= '';
@@ -988,13 +979,15 @@ class ClienteController extends Controller
                 return $btn;
             })->editColumn('cliente_cel', function ($row) {
                 $badge = formatarTelefone($row->cliente_cel);
+
                 return $badge;
             })->editColumn('cliente_doc', function ($row) {
                 $badge = strlen($row->cliente_doc) == 18 ? formatarCNPJ($row->cliente_doc) : formatarCPF($row->cliente_doc);
+
                 return $badge;
             })->editColumn('cliente_tipo', function ($row) {
                 $badge = '';
-                if (!empty($row->tipo)) {
+                if (! empty($row->tipo)) {
 
                     switch ($row->tipo->cliente_tipo) {
                         case 1:
@@ -1011,7 +1004,7 @@ class ClienteController extends Controller
                 return $badge;
             })->editColumn('cliente_sts', function ($row) {
                 $badge = '';
-                if (!empty($row->status)) {
+                if (! empty($row->status)) {
 
                     switch ($row->status->cliente_sts) {
 
@@ -1031,14 +1024,14 @@ class ClienteController extends Controller
 
                 return $badge;
             })->editColumn('cliente_id', function ($row) {
-                //$id = str_pad($row->cliente_id, 5, "0", STR_PAD_LEFT);
+                // $id = str_pad($row->cliente_id, 5, "0", STR_PAD_LEFT);
                 return $row->cliente_id;
             })
             ->rawColumns(['action', 'cliente_doc', 'cliente_sts', 'cliente_tipo'])
             ->make(true);
     }
 
-    //Cartão
+    // Cartão
     public function storeCard(Request $request)
     {
         try {
@@ -1046,17 +1039,17 @@ class ClienteController extends Controller
             if (empty($request->cliente_id)) {
                 return response()->json([
                     'message_type' => 'Cliente ainda não cadatrado, favor cadastrar o cliente antes de criar o cartão.',
-                    'message' => []
+                    'message'      => [],
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $validator = Validator::make($request->all(), [
-                'emp_id' => 'required',
-                'cliente_id' => 'required',
-                'card_tp' => 'required',
-                'card_mod' => 'required',
-                'card_categ' => 'required',
-                'card_desc' => 'required',
+                'emp_id'      => 'required',
+                'cliente_id'  => 'required',
+                'card_tp'     => 'required',
+                'card_mod'    => 'required',
+                'card_categ'  => 'required',
+                'card_desc'   => 'required',
                 'card_limite' => 'required',
             ]);
 
@@ -1113,19 +1106,21 @@ class ClienteController extends Controller
 
             if ($data) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $data
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $data,
                 ]);
             }
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1134,10 +1129,10 @@ class ClienteController extends Controller
      * Gera um número de cartão de crédito com base no CNPJ da empresa, CPF do cliente e tipo de cartão,
      * completando com dígitos aleatórios e finalizando com o dígito de Luhn.
      *
-     * @param string $cnpj
-     * @param string $cpf
-     * @param string $card_mod
-     * @param int $length
+     * @param  string  $cnpj
+     * @param  string  $cpf
+     * @param  string  $card_mod
+     * @param  int  $length
      * @return string
      */
     private function gerarNumeroCartaoCredito($cnpj, $cpf, $card_mod, $card_tp, $length = 16)
@@ -1200,9 +1195,9 @@ class ClienteController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'tabela' => 'required',
-                'campo' => 'required',
-                'emp_id' => 'required',
+                'tabela'  => 'required',
+                'campo'   => 'required',
+                'emp_id'  => 'required',
                 'user_id' => 'required',
             ]);
 
@@ -1218,23 +1213,23 @@ class ClienteController extends Controller
                 ->where('campo', '=', $request->campo)
                 ->where('user_id', '=', $request->user_id)
                 ->where('emp_id', '=', $request->emp_id)->update([
-                    "tabela" => $request->tabela,
-                    "campo" => $request->campo,
-                    "user_id" => $request->user_id,
-                    "emp_id" => $request->emp_id,
+                    'tabela'  => $request->tabela,
+                    'campo'   => $request->campo,
+                    'user_id' => $request->user_id,
+                    'emp_id'  => $request->emp_id,
                 ]);
 
             return response()->json([
                 'title' => 'Sucesso',
-                'text' => 'Work Flow atualizado com sucesso!',
-                'type' => 'success',
-                'data' => $data
+                'text'  => 'Work Flow atualizado com sucesso!',
+                'type'  => 'success',
+                'data'  => $data,
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1257,24 +1252,24 @@ class ClienteController extends Controller
 
             if ($data) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $data,
+                    'title'   => 'Sucesso',
+                    'text'    => 'Resposta obtida com sucesso!',
+                    'type'    => 'success',
+                    'data'    => $data,
                     'columns' => $columns,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1290,23 +1285,23 @@ class ClienteController extends Controller
 
             if ($data) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarWf'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarWf',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1314,8 +1309,8 @@ class ClienteController extends Controller
     public function getObterGridPesquisaCard(Request $request)
     {
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
         $data = DB::connection('dbsysclient')->table('tbdm_clientes_card')->where(
@@ -1327,7 +1322,6 @@ class ClienteController extends Controller
             '=',
             $request->cliente_id
         )->get();
-
 
         $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
@@ -1349,11 +1343,10 @@ class ClienteController extends Controller
                 $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
                 $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
-
                 return $btn;
             })->editColumn('card_sts', function ($row) {
                 $badge = '';
-                if (!empty($row->card_sts)) {
+                if (! empty($row->card_sts)) {
                     $statusStr = '';
                     $status = CardStatus::where('card_sts', $row->card_sts)->first();
                     if ($status) {
@@ -1383,6 +1376,7 @@ class ClienteController extends Controller
                 return formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
             })->addColumn('empresa', function ($row) {
                 $empresa = Empresa::find($row->emp_id);
+
                 return $empresa ? $empresa->emp_nmult : 'Empresa não encontrada';
             })->editColumn('card_limite', function ($row) {
                 return formatarDecimalParaTexto($row->card_limite);
@@ -1394,16 +1388,16 @@ class ClienteController extends Controller
                 return mb_strtoupper(rtrim($row->card_desc), 'UTF-8');
             })->editColumn('card_categ', function ($row) {
                 $badge = '';
-                if (!empty($row->card_categ)) {
+                if (! empty($row->card_categ)) {
                     $badge = CardCateg::where('card_categ', $row->card_categ)->first();
                     if ($badge) {
                         return '<span class="badge badge-info">' . $badge->card_categ_desc . '</span>';
                     }
                 }
+
                 return $badge;
             })
             ->rawColumns(['action', 'card_sts', 'card_categ'])
             ->make(true);
     }
-
 }

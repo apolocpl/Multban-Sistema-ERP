@@ -13,13 +13,13 @@ class Cliente extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_clientes_geral";
+    protected $table = 'tbdm_clientes_geral';
 
     public $timestamps = false;
 
     public function getKeyName()
     {
-        return "cliente_id";
+        return 'cliente_id';
     }
 
     protected $primaryKey = 'cliente_id';
@@ -77,21 +77,21 @@ class Cliente extends Model
     public function rules($id = '')
     {
         return [
-            'cliente_tipo' => 'required',
-            'cliente_doc' => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
-            'cliente_sts' => 'required',
-            'cliente_pasprt' => 'max:15',
-            'cliente_nome' => 'required|max:80',
-            'cliente_email' => 'required|email',
-            'cliente_cel' => 'required',
-            'cliente_rendam' => 'required',
+            'cliente_tipo'    => 'required',
+            'cliente_doc'     => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
+            'cliente_sts'     => 'required',
+            'cliente_pasprt'  => 'max:15',
+            'cliente_nome'    => 'required|max:80',
+            'cliente_email'   => 'required|email',
+            'cliente_cel'     => 'required',
+            'cliente_rendam'  => 'required',
             'cliente_dt_fech' => 'required',
-            'cliente_cep' => 'required',
-            'cliente_end' => 'required',
-            'cliente_endnum' => 'required',
+            'cliente_cep'     => 'required',
+            'cliente_end'     => 'required',
+            'cliente_endnum'  => 'required',
             'cliente_endbair' => 'required',
-            'cliente_endcid' => 'required',
-            'cliente_endest' => 'required',
+            'cliente_endcid'  => 'required',
+            'cliente_endest'  => 'required',
             'cliente_endpais' => 'required',
         ];
     }
@@ -99,37 +99,37 @@ class Cliente extends Model
     public function rulesAgendamento($id = '')
     {
         return [
-            'cliente_tipo' => 'required',
-            'cliente_doc' => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
-            'cliente_sts' => 'required',
-            'cliente_nome' => 'required|max:80',
-            'cliente_rg' => 'max:14',
-            'carteirinha' => 'max:20',
+            'cliente_tipo'  => 'required',
+            'cliente_doc'   => 'min:11|max:14|string|required|unique:dbsysclient.tbdm_clientes_geral,cliente_doc, ' . $id . ',cliente_id',
+            'cliente_sts'   => 'required',
+            'cliente_nome'  => 'required|max:80',
+            'cliente_rg'    => 'max:14',
+            'carteirinha'   => 'max:20',
             'cliente_email' => 'required|email',
-            'cliente_cel' => 'required',
+            'cliente_cel'   => 'required',
         ];
     }
 
     public function attributes()
     {
         return [
-            'cliente_tipo' =>    '"Dados Gerais"Tipo de Cliente',
-            'cliente_sts' =>     '"Dados Gerais"Status do Cliente',
-            'cliente_doc' =>     '"Dados Gerais"CPF/CNPJ',
-            'cliente_pasprt' =>  '"Dados Gerais"Número do Passaporte',
-            'cliente_nome' =>    '"Dados Gerais"Nome',
-            'cliente_email' =>   '"Dados Gerais"E-mail',
-            'cliente_cel' =>     '"Dados Gerais"Celular',
-            'cliente_rendam' =>  '"Dados Gerais"Renda Mensal Aprox.',
+            'cliente_tipo'    => '"Dados Gerais"Tipo de Cliente',
+            'cliente_sts'     => '"Dados Gerais"Status do Cliente',
+            'cliente_doc'     => '"Dados Gerais"CPF/CNPJ',
+            'cliente_pasprt'  => '"Dados Gerais"Número do Passaporte',
+            'cliente_nome'    => '"Dados Gerais"Nome',
+            'cliente_email'   => '"Dados Gerais"E-mail',
+            'cliente_cel'     => '"Dados Gerais"Celular',
+            'cliente_rendam'  => '"Dados Gerais"Renda Mensal Aprox.',
             'cliente_dt_fech' => '"Dados Gerais"Dia para Fech.',
-            //Endereço
-            'cliente_cep' =>     '"Endereço"CEP',
-            'cliente_end' =>     '"Endereço"Endereço',
-            'cliente_endnum' =>  '"Endereço"Número',
-            'cliente_endcmp' =>  '"Endereço"Complemento',
+            // Endereço
+            'cliente_cep'     => '"Endereço"CEP',
+            'cliente_end'     => '"Endereço"Endereço',
+            'cliente_endnum'  => '"Endereço"Número',
+            'cliente_endcmp'  => '"Endereço"Complemento',
             'cliente_endbair' => '"Endereço"Bairro',
-            'cliente_endcid' =>  '"Endereço"Cidade',
-            'cliente_endest' =>  '"Endereço"Estado',
+            'cliente_endcid'  => '"Endereço"Cidade',
+            'cliente_endest'  => '"Endereço"Estado',
             'cliente_endpais' => '"Endereço"País',
         ];
     }
@@ -140,7 +140,7 @@ class Cliente extends Model
             // 'cliente_tipo.required' => 'Campo obrigatório.',
             // 'cliente_doc.max' => 'O campo deve conter no máximo 14 caracteres.',
             // 'cliente_doc.required' => 'Campo obrigatório.',
-             'cliente_doc.unique' => '"Dados Gerais"Já existe um Cliente cadastrado com esse CPF/CNPJ.',
+            'cliente_doc.unique' => '"Dados Gerais"Já existe um Cliente cadastrado com esse CPF/CNPJ.',
             // 'cliente_doc.min' => 'O campo deve conter no mínimo 14 caracteres.',
             // 'cliente_doc.max' => 'O campo deve conter no máximo 14 caracteres.',
             // 'cliente_sts.required' => 'Campo obrigatório.',

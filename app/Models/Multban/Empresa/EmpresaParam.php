@@ -2,22 +2,21 @@
 
 namespace App\Models\Multban\Empresa;
 
-use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Traits\DbSysClientTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmpresaParam extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
-    protected $table = "tbdm_empresa_param";
+    protected $table = 'tbdm_empresa_param';
 
     public $timestamps = false;
 
     public function getKeyName()
     {
-        return "emp_id";
+        return 'emp_id';
     }
 
     protected $primaryKey = 'emp_id';

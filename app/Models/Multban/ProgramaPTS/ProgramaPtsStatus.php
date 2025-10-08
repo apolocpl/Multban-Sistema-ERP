@@ -9,7 +9,7 @@ class ProgramaPtsStatus extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_prgpts_sts";
+    protected $table = 'tbdm_prgpts_sts';
 
     public $timestamps = false;
 }

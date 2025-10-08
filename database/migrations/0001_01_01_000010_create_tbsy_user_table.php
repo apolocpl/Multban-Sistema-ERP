@@ -14,14 +14,14 @@ class CreateTbsyUserTable extends Migration
     public function up()
     {
         Schema::create('tbsy_user', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->id('user_id')->unique();
             $table->string('user_logon', 20)->unique();
             $table->string('user_sts', 2);
             $table->foreignId('emp_id');
             $table->string('user_cpf', 11)->unique();
             $table->string('user_crm', 11)->unique()->nullable();
-            //FIELDS
+            // FIELDS
             $table->string('user_name', 255);
             $table->integer('user_func')->nullable()->length(3);
             $table->string('user_email')->unique();
@@ -43,17 +43,17 @@ class CreateTbsyUserTable extends Migration
             $table->timestamp('dthr_cr')->nullable();
             $table->integer('modificador')->nullable();
             $table->timestamp('dthr_ch')->useCurrent();
-            //REMEMBER TOKEN
+            // REMEMBER TOKEN
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
-            //KEYS
+            // KEYS
             $table->primary(['user_id', 'user_logon', 'user_sts', 'emp_id', 'user_cpf']);
-            //FOREIGN KEY
-            //$table->foreign('emp_id')->references('emp_id')->on('db_sys_client.tbdm_empresa_geral');
+            // FOREIGN KEY
+            // $table->foreign('emp_id')->references('emp_id')->on('db_sys_client.tbdm_empresa_geral');
         });
 
         // Schema::table('tbdm_user', function($table) {
-		//  $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
+        //  $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
         // });
 
         Schema::create('tbsy_password_reset_tokens', function (Blueprint $table) {

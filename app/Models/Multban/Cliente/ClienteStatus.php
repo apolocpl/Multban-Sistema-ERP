@@ -9,7 +9,7 @@ class ClienteStatus extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_cliente_sts";
+    protected $table = 'tbdm_cliente_sts';
 
     public $timestamps = false;
 }

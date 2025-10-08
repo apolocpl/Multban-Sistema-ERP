@@ -9,7 +9,7 @@ class TbDmBncCode extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_bnccode";
+    protected $table = 'tbdm_bnccode';
 
     protected $primaryKey = 'cdgbc';
 

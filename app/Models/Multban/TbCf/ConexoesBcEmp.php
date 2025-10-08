@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConexoesBcEmp extends Model
 {
-    protected $table = "tbsy_conexoes_bc_emp";
+    protected $table = 'tbsy_conexoes_bc_emp';
 
     public $timestamps = false;
 

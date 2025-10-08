@@ -14,22 +14,22 @@ use App\Models\Multban\Empresa\Empresa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\Facades\DataTables;
-use Intervention\Image\Laravel\Facades\Image;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\Response;
+use Yajra\DataTables\Facades\DataTables;
 
 class UsuarioController extends Controller
 {
     private $permissions;
+
     /**
      * Display a listing of the resource.
      *
@@ -38,9 +38,9 @@ class UsuarioController extends Controller
     public function index(Request $request)
     {
         $filtros = [FiltrosEnum::ID => 'CÓDIGO', FiltrosEnum::NAME => 'NOME', FiltrosEnum::EMAIL => 'E-MAIL', FiltrosEnum::USERNAME => 'USERNAME'];
+
         return response(view('Multban.usuario.index', compact('filtros')));
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -50,7 +50,7 @@ class UsuarioController extends Controller
     public function create()
     {
 
-        $usuario = new User();
+        $usuario = new User;
         $usuario->user_pcomis = formatarMoneyToDecimal($usuario->user_pcomis);
         $roles = Role::pluck('name', 'name')->all();
         $userRole = [];
@@ -66,11 +66,9 @@ class UsuarioController extends Controller
         return response(view('Multban.usuario.edit', compact('users', 'usuario', 'roles', 'userRole', 'tbDmBncCode', 'tbDmUserFunc', 'status', 'langu', 'telas')));
     }
 
-
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -78,7 +76,7 @@ class UsuarioController extends Controller
         DB::beginTransaction();
         try {
 
-            $user = new User();
+            $user = new User;
 
             $input = $request->all();
             $input['user_cpf'] = removerCNPJ($request->user_cpf);
@@ -113,25 +111,23 @@ class UsuarioController extends Controller
             $user->user_pix = $request->user_pix;
             $user->user_agbc = $request->user_agbc;
 
-
-            if (!empty($input['user_pass'])) {
+            if (! empty($input['user_pass'])) {
                 $user->user_pass = Hash::make($input['user_pass']);
             } else {
-                $input = Arr::except($input, array('user_pass'));
+                $input = Arr::except($input, ['user_pass']);
             }
 
             $user->save();
             $user->syncRoles($request->input('user_role'));
 
-
-            $logAuditoria = new LogAuditoria();
+            $logAuditoria = new LogAuditoria;
             $logAuditoria->auddat = date('Y-m-d H:i:s');
             $logAuditoria->audusu = \Illuminate\Support\Facades\Auth::user()->user_name;
             $logAuditoria->audtar = 'Adicionou a empresa ';
             $logAuditoria->audarq = $user->getTable();
             $logAuditoria->audlan = $user->user_id;
-            $logAuditoria->audant = "";
-            $logAuditoria->auddep = "";
+            $logAuditoria->audant = '';
+            $logAuditoria->auddep = '';
             $logAuditoria->audnip = request()->ip();
 
             $logAuditoria->save();
@@ -139,17 +135,18 @@ class UsuarioController extends Controller
             // Session::flash("idModeloInserido", $id);
             // Session::flash('success', "Usuário atualizado com sucesso.");
             DB::commit();
+
             return response()->json([
                 'message'   => 'Usuário adicionado com sucesso...',
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     /**
      * Display the specified resource.
@@ -175,7 +172,6 @@ class UsuarioController extends Controller
 
         return response(view('Multban.usuario.edit', compact('users', 'usuario', 'roles', 'userRole', 'tbDmBncCode', 'tbDmUserFunc', 'status', 'langu', 'telas')));
     }
-
 
     /**
      * Show the form for editing the specified resource.
@@ -211,7 +207,7 @@ class UsuarioController extends Controller
     public function copy($id)
     {
         $usuario = User::find($id);
-        $usuario->user_pcomis = str_replace(".", ",", $usuario->user_pcomis);
+        $usuario->user_pcomis = str_replace('.', ',', $usuario->user_pcomis);
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $usuario->roles->pluck('name', 'name')->all();
 
@@ -229,13 +225,12 @@ class UsuarioController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
-        //adicione o DB transiction no codigo abaixo
+        // adicione o DB transiction no codigo abaixo
         DB::beginTransaction();
         try {
 
@@ -252,11 +247,11 @@ class UsuarioController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            //Verifica se ouve mudanças nos campos, se sim grava na auditoria
+            // Verifica se ouve mudanças nos campos, se sim grava na auditoria
             foreach ($input as $key => $value) {
                 if (Arr::exists($user->toArray(), $key)) {
-                    if ($user->$key != $value) {
-                        $logAuditoria = new LogAuditoria();
+                    if ($value != $user->$key) {
+                        $logAuditoria = new LogAuditoria;
                         $logAuditoria->auddat = date('Y-m-d H:i:s');
                         $logAuditoria->audusu = Auth::user()->username;
                         $nomeValue = $value;
@@ -265,9 +260,9 @@ class UsuarioController extends Controller
                             $image = $request->file('image');
                             $string = tirarAcentos($user->name);
 
-                            $string = strtolower(str_replace(" ", "-", $string));
+                            $string = strtolower(str_replace(' ', '-', $string));
 
-                            $string = str_replace(array("'", "&#039;", "."), '', $string);
+                            $string = str_replace(["'", '&#039;', '.'], '', $string);
                             $nomeValue = date('Ymdhms') . '-' . $string . '.' . $image->getClientOriginalExtension();
                         }
                         $logAuditoria->audtar = 'Alterou o campo ' . $key;
@@ -281,10 +276,10 @@ class UsuarioController extends Controller
                 }
             }
 
-            //Verifica se ouve mudanças nos campos, se sim grava na auditoria
+            // Verifica se ouve mudanças nos campos, se sim grava na auditoria
 
             if ($user->roles->pluck('name', 'name')->first() != $request->input('user_role')[0]) {
-                $logAuditoria = new LogAuditoria();
+                $logAuditoria = new LogAuditoria;
                 $logAuditoria->auddat = date('Y-m-d H:i:s');
                 $logAuditoria->audusu = Auth::user()->user_logon;
                 $logAuditoria->audtar = 'Alterou o campo ' . $key;
@@ -317,11 +312,10 @@ class UsuarioController extends Controller
             $user->user_pix = $request->user_pix;
             $user->user_agbc = $request->user_agbc;
 
-
-            if (!empty($input['user_pass'])) {
+            if (! empty($input['user_pass'])) {
                 $user->user_pass = Hash::make($input['user_pass']);
             } else {
-                $input = Arr::except($input, array('user_pass'));
+                $input = Arr::except($input, ['user_pass']);
             }
 
             $user->save();
@@ -330,17 +324,18 @@ class UsuarioController extends Controller
             // Session::flash("idModeloInserido", $id);
             // Session::flash('success', "Usuário atualizado com sucesso.");
             DB::commit();
+
             return response()->json([
                 'message'   => 'Usuário atualizado com sucesso...',
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message'   => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -353,18 +348,18 @@ class UsuarioController extends Controller
         try {
             $user = User::find($id);
 
-            if ($user->user_id == 1)
+            if ($user->user_id == 1) {
                 return response()->json([
                     'message' => 'Não é possível Excluir o usuário administrador.',
-                    'data' => []
+                    'data'    => [],
                 ], Response::HTTP_BAD_REQUEST);
-
+            }
 
             $user->user_sts = EmpresaStatusEnum::EXCLUIDO;
             $user->save();
 
             // auditoria
-            $logAuditoria = new LogAuditoria();
+            $logAuditoria = new LogAuditoria;
             $logAuditoria->auddat = date('Y-m-d H:i:s');
             $logAuditoria->audusu = Auth::user()->user_name;
             $logAuditoria->audtar = 'Deletou o usuário ' . $user->user_name;
@@ -378,8 +373,8 @@ class UsuarioController extends Controller
             // Deletar logs de auditoria do usuário
             return response()->json([
                 'title' => 'Sucesso',
-                'text' => 'Usuário Excluido com sucesso!',
-                'type' => 'success'
+                'text'  => 'Usuário Excluido com sucesso!',
+                'type'  => 'success',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -396,23 +391,24 @@ class UsuarioController extends Controller
             if ($user) {
                 $user->user_sts = EmpresaStatusEnum::INATIVO;
                 $user->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Inativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Inativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -425,23 +421,24 @@ class UsuarioController extends Controller
             if ($user) {
                 $user->user_sts = EmpresaStatusEnum::ATIVO;
                 $user->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Ativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Ativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -461,6 +458,7 @@ class UsuarioController extends Controller
                     'message'   => __($status),
                 ], Response::HTTP_OK);
             }
+
             return response()->json([
                 'message'   => __($status),
             ]);
@@ -474,15 +472,15 @@ class UsuarioController extends Controller
 
     public function getUsersFromRspresa($emp_id)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
         $query = '';
 
         if (is_numeric($emp_id)) {
 
-            $query .= "emp_id = " . $emp_id;
+            $query .= 'emp_id = ' . $emp_id;
         } else {
 
             $empresasGeral = Empresa::where('emp_nmult', 'like', '%' . $emp_id . '%')->get(['emp_id'])->pluck('emp_id')->toArray();
@@ -492,42 +490,43 @@ class UsuarioController extends Controller
             }
         }
 
-        $query . " and user_sts = 'AT'" ;
+        $query . " and user_sts = 'AT'";
 
         $users = User::whereRaw(DB::raw($query))
             ->get(['user_id as id', 'user_name as text'])
             ->toArray();
+
         return response()->json($users);
     }
 
     public function postObterGridPesquisa(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->usuario)) {
+        if (! empty($request->usuario)) {
             if (is_numeric($request->usuario)) {
 
-                $query .= "user_id = " . $request->usuario . " AND ";
+                $query .= 'user_id = ' . $request->usuario . ' AND ';
             } else {
 
                 $query .= "user_name LIKE '%" . $request->usuario . "%' AND ";
             }
         }
 
-        if (!empty($request->cpf)) {
-            $query .= "user_cpf = " . quotedstr(removerCNPJ($request->cpf)) . " AND ";
+        if (! empty($request->cpf)) {
+            $query .= 'user_cpf = ' . quotedstr(removerCNPJ($request->cpf)) . ' AND ';
         }
 
-        if (!empty($request->empresa_id)) {
+        if (! empty($request->empresa_id)) {
             if (is_numeric($request->empresa_id)) {
 
-                $query .= "emp_id = " . $request->empresa_id;
+                $query .= 'emp_id = ' . $request->empresa_id;
             } else {
 
                 $empresasGeral = Empresa::where('emp_nmult', 'like', '%' . $request->empresa_id . '%')->get(['emp_id'])->pluck('emp_id')->toArray();
@@ -538,10 +537,11 @@ class UsuarioController extends Controller
             }
         }
 
-        $query = rtrim($query, "AND ");
+        $query = rtrim($query, 'AND ');
 
-        if (!empty($query))
+        if (! empty($query)) {
             $data = User::whereRaw(DB::raw($query))->get();
+        }
 
         $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
@@ -549,17 +549,21 @@ class UsuarioController extends Controller
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group">';
-                if (in_array('usuario.show', $this->permissions))
+                if (in_array('usuario.show', $this->permissions)) {
                     $btn .= '<a href="usuario/' . $row->user_id . '/visualizar" class="btn btn-sm btn-primary mr-1" data-placement="top" data-trigger="hover" data-toggle="tooltip" title="Visualizar"><i class="fas fa-eye"></i></a>';
+                }
 
-                if (in_array('usuario.edit', $this->permissions))
+                if (in_array('usuario.edit', $this->permissions)) {
                     $btn .= '<a href="usuario/' . $row->user_id . '/alterar" class="btn btn-sm btn-primary mr-1" data-placement="top" data-trigger="hover" data-toggle="tooltip" title="Editar"><i class="fas fa-edit"></i></a>';
+                }
 
-                if (in_array('usuario.copy', $this->permissions))
+                if (in_array('usuario.copy', $this->permissions)) {
                     $btn .= '<a href="usuario/' . $row->user_id . '/copiar" class="btn btn-sm btn-primary mr-1" data-placement="top" data-trigger="hover" data-toggle="tooltip" title="Copiar"><i class="fas fa-copy"></i></a>';
+                }
 
-                if (in_array('usuario.destroy', $this->permissions))
+                if (in_array('usuario.destroy', $this->permissions)) {
                     $btn .= '<a href="#" class="btn btn-sm btn-primary mr-1" id="delete_grid_id" data-id="' . $row->user_id . '" data-placement="top" data-trigger="hover" data-toggle="tooltip" title="Excluir"><i class="far fa-trash-alt"></i></a>';
+                }
 
                 $btn .= '</div>';
 
@@ -570,11 +574,12 @@ class UsuarioController extends Controller
                 foreach ($row->getRoleNames() as $key => $value) {
                     $badge .= '<span class="badge badge-success">' . $value . '</span>';
                 }
+
                 return $badge;
             })
             ->editColumn('status', function ($row) {
                 $badge = '';
-                if (!empty($row->status)) {
+                if (! empty($row->status)) {
 
                     switch ($row->status->user_sts) {
 
@@ -597,6 +602,7 @@ class UsuarioController extends Controller
                 if ($empresa) {
                     $emp_nfant = $empresa->emp_nfant;
                 }
+
                 return $emp_nfant;
             })
             ->editColumn('user_cpf', function ($row) {

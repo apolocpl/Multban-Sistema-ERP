@@ -3,7 +3,6 @@
 namespace App\Http\Routes;
 
 use App\Http\Controllers\Multban\Produto\ProdutoController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 class ProdutoRoute
@@ -18,8 +17,8 @@ class ProdutoRoute
         Route::get('produto/{id}/copiar', [ProdutoController::class, 'copy'])->middleware('permission:produto.copy')->name('produto.copy');
         Route::get('produto/{id}/visualizar', [ProdutoController::class, 'show'])->middleware('permission:produto.show')->name('produto.show');
         Route::delete('produto/{id}', [ProdutoController::class, 'destroy'])->middleware('permission:produto.destroy')->name('produto.destroy');
-        Route::post('produto/active/{id}', [ProdutoController::class, 'active']);//->middleware('permission:produto.active')->name('produto.active');
-        Route::post('produto/inactive/{id}', [ProdutoController::class, 'inactive']);//->middleware('permission:produto.inactive')->name('produto.inactive');
+        Route::post('produto/active/{id}', [ProdutoController::class, 'active']); // ->middleware('permission:produto.active')->name('produto.active');
+        Route::post('produto/inactive/{id}', [ProdutoController::class, 'inactive']); // ->middleware('permission:produto.inactive')->name('produto.inactive');
 
         Route::post('produto/obtergridpesquisa', [ProdutoController::class, 'getObterGridPesquisa']);
 

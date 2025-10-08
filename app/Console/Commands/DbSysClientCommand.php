@@ -22,12 +22,12 @@ class DbSysClientCommand extends Command
      */
     public function handle(): int
     {
-        if (!User::find($this->option('dbsysclient'))) {
+        if (! User::find($this->option('dbsysclient'))) {
             $this->info("User: #{$this->option('dbsysclient')} Not Found.");
         }
         $db_sys_client = $this->option('dbsysclient');
         foreach (
-            User::query()->when($db_sys_client , function (Builder $query) use ($db_sys_client) {
+            User::query()->when($db_sys_client, function (Builder $query) use ($db_sys_client) {
 
                 return $query->where('user_id', '=', $db_sys_client);
             })->cursor()

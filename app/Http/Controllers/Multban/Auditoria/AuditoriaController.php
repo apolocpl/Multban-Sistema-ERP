@@ -19,7 +19,8 @@ class AuditoriaController extends Controller
     public function index()
     {
         $filtros = [0 => 'CÓDIGO', 1 => 'DESCRIÇÃO'];
-        # return view('Multban.auditoria.index', compact('filtros'));
+
+        // return view('Multban.auditoria.index', compact('filtros'));
         return response()->view('Multban.auditoria.index', compact('filtros'));
     }
 
@@ -36,7 +37,6 @@ class AuditoriaController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -70,7 +70,6 @@ class AuditoriaController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -92,30 +91,32 @@ class AuditoriaController extends Controller
 
     public function getObterGridPesquisa(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
         $parametro = $request->parametro;
-        //dd($request->all());
+        // dd($request->all());
         $data = '';
         switch ($request->idFiltro) {
-            case  0: //ProdutoConstans::codigo:
-                if (!empty($parametro)) {
-                    if (!empty($request->audarq)) {
+            case 0: // ProdutoConstans::codigo:
+                if (! empty($parametro)) {
+                    if (! empty($request->audarq)) {
                         $data = LogAuditoria::where('audarq', $request->audarq)->where('audlan', $parametro)->limit(100)->orderBy('id', 'desc')->get();
-                    }else{
+                    } else {
 
                         $data = LogAuditoria::where('id', $parametro)->limit(100)->get();
                     }
-                } else
+                } else {
                     $data = LogAuditoria::limit(100)->get();
+                }
                 break;
-            case 1: //ProdutoConstans::titulo:
-                if (!empty($parametro))
+            case 1: // ProdutoConstans::titulo:
+                if (! empty($parametro)) {
                     $data = LogAuditoria::where('fardes', 'LIKE', '%' . $parametro . '%')->limit(100)->get();
-                else
+                } else {
                     $data = LogAuditoria::limit(100)->get();
+                }
                 break;
             default:
                 break;
@@ -127,10 +128,12 @@ class AuditoriaController extends Controller
             ->addIndexColumn()
             ->editColumn('audant', function ($row) {
                 $retorno = $row->audant;
-                if (is_numeric($row->audant))
+                if (is_numeric($row->audant)) {
                     if (is_float($row->audant + 0)) {
                         $retorno = number_format($row->audant, 2);
                     }
+                }
+
                 return $retorno;
             })
             ->editColumn('auddat', function ($row) {

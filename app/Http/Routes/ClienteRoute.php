@@ -16,15 +16,15 @@ class ClienteRoute
         Route::get('cliente', [ClienteController::class, 'index'])->middleware('permission:cliente.index')->name('cliente.index');
         Route::get('cliente/{id}/visualizar', [ClienteController::class, 'show'])->middleware('permission:cliente.show')->name('cliente.show');
         Route::delete('cliente/{id}', [ClienteController::class, 'destroy'])->middleware('permission:empresa.destroy')->name('cliente.destroy');
-        Route::post('cliente/active/{id}', [ClienteController::class, 'active']); //->middleware('permission:empresa.active')->name('empresa.active');
-        Route::post('cliente/inactive/{id}', [ClienteController::class, 'inactive']); //->middleware('permission:empresa.inactive')->name('empresa.inactive');
+        Route::post('cliente/active/{id}', [ClienteController::class, 'active']); // ->middleware('permission:empresa.active')->name('empresa.active');
+        Route::post('cliente/inactive/{id}', [ClienteController::class, 'inactive']); // ->middleware('permission:empresa.inactive')->name('empresa.inactive');
 
         Route::get('cliente/get-client', [ClienteController::class, 'getClient']);
 
         Route::post('cliente/obtergridpesquisa', [ClienteController::class, 'postObterGridPesquisa']);
         Route::post('cliente/obtergridpesquisa-protocolo', [ClienteController::class, 'postObterGridPesquisaProtocolo']);
 
-        //cartão
+        // cartão
         Route::post('cliente/store-card', [ClienteController::class, 'storeCard']);
         Route::get('cliente/create-card', [ClienteController::class, 'createCard']);
         Route::get('cliente/{emp_id}/edit-card', [ClienteController::class, 'editCard']);
@@ -32,7 +32,6 @@ class ClienteRoute
         Route::delete('cliente/{emp_id}/destroy-card', [ClienteController::class, 'destroyCard']);
 
         Route::post('cliente/get-obter-grid-pesquisa-card', [ClienteController::class, 'getObterGridPesquisaCard']);
-
 
         Route::post('cliente/store-prontuario', [ClienteController::class, 'storeProntuario']);
         Route::post('cliente/update-prontuario/{id}', [ClienteController::class, 'updateProntuario']);

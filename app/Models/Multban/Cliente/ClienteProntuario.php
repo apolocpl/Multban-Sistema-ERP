@@ -11,9 +11,9 @@ class ClienteProntuario extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_clientes_prt";
+    protected $table = 'tbdm_clientes_prt';
 
-    protected $primaryKey = "protocolo";
+    protected $primaryKey = 'protocolo';
 
     public $timestamps = false;
 
@@ -48,6 +48,6 @@ class ClienteProntuario extends Model
         'texto_anm',
         'texto_rec',
         'dthr_cr',
-        'dthr_ch'
+        'dthr_ch',
     ];
 }

@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmpresaRamoDeAtividade extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
-    protected $table = "tbdm_emp_ratv";
+    protected $table = 'tbdm_emp_ratv';
 
     public $timestamps = false;
 }

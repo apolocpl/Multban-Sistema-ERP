@@ -9,11 +9,10 @@ use App\Models\Multban\DadosMestre\TbDmCanalCm;
 use App\Models\Multban\DadosMestre\TbdmFornecedor;
 use App\Models\Multban\DadosMestre\TbDmMsgCateg;
 use App\Models\Multban\Empresa\DestinoDosValores;
-use Illuminate\Http\Request;
-use App\Models\Multban\Empresa\EmpresaTiposDePlanoVendido;
 use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Empresa\EmpresaTipoDeAdquirentes;
 use App\Models\Multban\Empresa\EmpresaTipoDeBoletagem;
+use App\Models\Multban\Empresa\EmpresaTiposDePlanoVendido;
 use App\Models\Multban\TbCf\ConexoesAPI;
 use App\Models\Multban\TbCf\ConexoesBcEmp;
 use App\Models\Multban\TbCf\TbCfMsgComp;
@@ -21,28 +20,31 @@ use App\Models\Multban\TbCf\TbCfWorkFlow;
 use App\Models\Multban\TbSy\TbSyTabAlias;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
+use Symfony\Component\HttpFoundation\Response;
+use Yajra\DataTables\DataTables;
 
 class SistemaMultbanController extends Controller
 {
     private $permissions;
+
     private $req;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $tiposDePlanoVendido = EmpresaTiposDePlanoVendido::all();
-        $empresaGeral = new Empresa();
+        $empresaGeral = new Empresa;
 
         $tbdmFornecedor = TbdmFornecedor::all();
         $tables = DB::connection('dbsysclient')->select('SHOW TABLES');
@@ -118,12 +120,12 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'bc_fornec' => 'required',
-                'bc_emp_host' => 'required',
+                'bc_fornec'    => 'required',
+                'bc_emp_host'  => 'required',
                 'bc_emp_porta' => 'required',
-                'bc_emp_nome' => 'required',
-                'bc_emp_user' => 'required',
-                'bc_emp_pass' => 'required',
+                'bc_emp_nome'  => 'required',
+                'bc_emp_user'  => 'required',
+                'bc_emp_pass'  => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -138,59 +140,61 @@ class SistemaMultbanController extends Controller
             if ($conexao) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe uma conexão para essa empresa.',
-                    'type' => 'error',
+                    'text'  => 'Já existe uma conexão para essa empresa.',
+                    'type'  => 'error',
 
                 ], Response::HTTP_NOT_ACCEPTABLE);
             }
 
             DB::beginTransaction();
             $conexao = DB::table('tbsy_conexoes_bc_emp')->insert([
-                "bc_emp_ident" => $request->bc_emp_ident,
-                "bc_emp_host" => Crypt::encryptString($request->bc_emp_host),
-                "bc_emp_porta" => Crypt::encryptString($request->bc_emp_porta),
-                "bc_emp_nome" => Crypt::encryptString($request->bc_emp_nome),
-                "bc_emp_user" => Crypt::encryptString($request->bc_emp_user),
-                "bc_emp_pass" => Crypt::encryptString($request->bc_emp_pass),
-                "bc_emp_token" => $request->bc_emp_token,
-                "bc_emp_sslmo" => $request->bc_emp_sslmo,
-                "bc_emp_sslce" => $request->bc_emp_sslce,
-                "bc_emp_sslky" => $request->bc_emp_sslky,
-                "bc_emp_sslca" => $request->bc_emp_sslca,
-                "bc_emp_toconex" => $request->bc_emp_toconex,
-                "bc_emp_tocons" => $request->bc_emp_tocons,
-                "bc_emp_pooling" => $request->bc_emp_pooling,
-                "bc_emp_charset" => $request->bc_emp_charset,
-                "bc_emp_tzone" => $request->bc_emp_tzone,
-                "bc_emp_appname" => $request->bc_emp_appname,
-                "bc_emp_keepalv" => $request->bc_emp_keepalv,
-                "bc_emp_compress" => $request->bc_emp_compress,
-                "bc_emp_readonly" => $request->bc_emp_readonly,
-                "bc_fornec" => $request->bc_fornec,
-                "emp_id" => $request->emp_id,
+                'bc_emp_ident'    => $request->bc_emp_ident,
+                'bc_emp_host'     => Crypt::encryptString($request->bc_emp_host),
+                'bc_emp_porta'    => Crypt::encryptString($request->bc_emp_porta),
+                'bc_emp_nome'     => Crypt::encryptString($request->bc_emp_nome),
+                'bc_emp_user'     => Crypt::encryptString($request->bc_emp_user),
+                'bc_emp_pass'     => Crypt::encryptString($request->bc_emp_pass),
+                'bc_emp_token'    => $request->bc_emp_token,
+                'bc_emp_sslmo'    => $request->bc_emp_sslmo,
+                'bc_emp_sslce'    => $request->bc_emp_sslce,
+                'bc_emp_sslky'    => $request->bc_emp_sslky,
+                'bc_emp_sslca'    => $request->bc_emp_sslca,
+                'bc_emp_toconex'  => $request->bc_emp_toconex,
+                'bc_emp_tocons'   => $request->bc_emp_tocons,
+                'bc_emp_pooling'  => $request->bc_emp_pooling,
+                'bc_emp_charset'  => $request->bc_emp_charset,
+                'bc_emp_tzone'    => $request->bc_emp_tzone,
+                'bc_emp_appname'  => $request->bc_emp_appname,
+                'bc_emp_keepalv'  => $request->bc_emp_keepalv,
+                'bc_emp_compress' => $request->bc_emp_compress,
+                'bc_emp_readonly' => $request->bc_emp_readonly,
+                'bc_fornec'       => $request->bc_fornec,
+                'emp_id'          => $request->emp_id,
             ]);
 
             if ($conexao) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $conexao
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $conexao,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -201,12 +205,12 @@ class SistemaMultbanController extends Controller
             DB::beginTransaction();
 
             $validator = Validator::make($request->all(), [
-                'bc_fornec' => 'required',
-                'bc_emp_host' => 'required',
+                'bc_fornec'    => 'required',
+                'bc_emp_host'  => 'required',
                 'bc_emp_porta' => 'required',
-                'bc_emp_nome' => 'required',
-                'bc_emp_user' => 'required',
-                'bc_emp_pass' => 'required',
+                'bc_emp_nome'  => 'required',
+                'bc_emp_user'  => 'required',
+                'bc_emp_pass'  => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -217,50 +221,52 @@ class SistemaMultbanController extends Controller
             }
 
             $conexao = DB::table('tbsy_conexoes_bc_emp')->where('emp_id', '=', $request->emp_id)->update([
-                "bc_emp_ident" => $request->bc_emp_ident,
-                "bc_emp_host" => Crypt::encryptString($request->bc_emp_host),
-                "bc_emp_porta" => Crypt::encryptString($request->bc_emp_porta),
-                "bc_emp_nome" => Crypt::encryptString($request->bc_emp_nome),
-                "bc_emp_user" => Crypt::encryptString($request->bc_emp_user),
-                "bc_emp_pass" => Crypt::encryptString($request->bc_emp_pass),
-                "bc_emp_token" => $request->bc_emp_token,
-                "bc_emp_sslmo" => $request->bc_emp_sslmo,
-                "bc_emp_sslce" => $request->bc_emp_sslce,
-                "bc_emp_sslky" => $request->bc_emp_sslky,
-                "bc_emp_sslca" => $request->bc_emp_sslca,
-                "bc_emp_toconex" => $request->bc_emp_toconex,
-                "bc_emp_tocons" => $request->bc_emp_tocons,
-                "bc_emp_pooling" => $request->bc_emp_pooling,
-                "bc_emp_charset" => $request->bc_emp_charset,
-                "bc_emp_tzone" => $request->bc_emp_tzone,
-                "bc_emp_appname" => $request->bc_emp_appname,
-                "bc_emp_keepalv" => $request->bc_emp_keepalv,
-                "bc_emp_compress" => $request->bc_emp_compress,
-                "bc_emp_readonly" => $request->bc_emp_readonly,
-                "bc_fornec" => $request->bc_fornec,
+                'bc_emp_ident'    => $request->bc_emp_ident,
+                'bc_emp_host'     => Crypt::encryptString($request->bc_emp_host),
+                'bc_emp_porta'    => Crypt::encryptString($request->bc_emp_porta),
+                'bc_emp_nome'     => Crypt::encryptString($request->bc_emp_nome),
+                'bc_emp_user'     => Crypt::encryptString($request->bc_emp_user),
+                'bc_emp_pass'     => Crypt::encryptString($request->bc_emp_pass),
+                'bc_emp_token'    => $request->bc_emp_token,
+                'bc_emp_sslmo'    => $request->bc_emp_sslmo,
+                'bc_emp_sslce'    => $request->bc_emp_sslce,
+                'bc_emp_sslky'    => $request->bc_emp_sslky,
+                'bc_emp_sslca'    => $request->bc_emp_sslca,
+                'bc_emp_toconex'  => $request->bc_emp_toconex,
+                'bc_emp_tocons'   => $request->bc_emp_tocons,
+                'bc_emp_pooling'  => $request->bc_emp_pooling,
+                'bc_emp_charset'  => $request->bc_emp_charset,
+                'bc_emp_tzone'    => $request->bc_emp_tzone,
+                'bc_emp_appname'  => $request->bc_emp_appname,
+                'bc_emp_keepalv'  => $request->bc_emp_keepalv,
+                'bc_emp_compress' => $request->bc_emp_compress,
+                'bc_emp_readonly' => $request->bc_emp_readonly,
+                'bc_fornec'       => $request->bc_fornec,
             ]);
 
             if ($conexao) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro alterado com sucesso!',
-                    'type' => 'success',
-                    'data' => $conexao
+                    'text'  => 'Registro alterado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $conexao,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -277,22 +283,22 @@ class SistemaMultbanController extends Controller
             if ($conexao) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $conexao
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $conexao,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -306,23 +312,23 @@ class SistemaMultbanController extends Controller
         }
 
         return Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(emp_nmult) text'))
-            ->where("emp_nmult", "LIKE", '%' . $parametro . '%')
+            ->where('emp_nmult', 'LIKE', '%' . $parametro . '%')
             ->get()
             ->toArray();
     }
 
     public function getObterGridPesquisa(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
-                if (!empty($request->fornec_bd)) {
+                if (! empty($request->fornec_bd)) {
                     $data = ConexoesBcEmp::where('emp_id', '=', $request->emp_id)->where('bc_fornec', '=', $request->fornec_bd)->get();
                 } else {
                     $data = ConexoesBcEmp::where('emp_id', '=', $request->emp_id)->get();
@@ -330,7 +336,7 @@ class SistemaMultbanController extends Controller
             } else {
                 $empresasGeral = Empresa::where('emp_nmult', 'like', '%' . $request->emp_id . '%')->get(['emp_id'])->pluck('emp_id')->toArray();
                 if ($empresasGeral) {
-                    if (!empty($request->fornec_bd)) {
+                    if (! empty($request->fornec_bd)) {
                         $data = ConexoesBcEmp::whereIn('emp_id', $empresasGeral)->where('bc_fornec', '=', $request->fornec_bd)->get();
                     } else {
                         $data = ConexoesBcEmp::whereIn('emp_id', $empresasGeral)->get();
@@ -361,7 +367,7 @@ class SistemaMultbanController extends Controller
                 return $row->empresa->emp_nfant;
             })->editColumn('empresa_sts', function ($row) {
                 $badge = '';
-                if (!empty($row->empresa->status)) {
+                if (! empty($row->empresa->status)) {
 
                     switch ($row->empresa->status->emp_sts) {
 
@@ -390,9 +396,8 @@ class SistemaMultbanController extends Controller
     {
         try {
 
-
             $validator = Validator::make($request->all(), [
-                'emp_tab_name' => 'required',
+                'emp_tab_name'  => 'required',
                 'emp_tab_alias' => 'required',
             ]);
 
@@ -408,33 +413,35 @@ class SistemaMultbanController extends Controller
             if ($aliasEx) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe um Alias cadastrado.',
-                    'type' => 'error',
+                    'text'  => 'Já existe um Alias cadastrado.',
+                    'type'  => 'error',
                 ], Response::HTTP_NOT_FOUND);
             }
 
             DB::beginTransaction();
             $alias = DB::table('tbsy_tab_alias')->insert([
-                "emp_tab_name" => $request->emp_tab_name,
-                "emp_tab_alias" => $request->emp_tab_alias,
-                "emp_id" => $request->emp_id,
+                'emp_tab_name'  => $request->emp_tab_name,
+                'emp_tab_alias' => $request->emp_tab_alias,
+                'emp_id'        => $request->emp_id,
             ]);
 
             if ($alias) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $alias
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $alias,
                 ]);
             }
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -444,7 +451,7 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'emp_tab_name' => 'required',
+                'emp_tab_name'  => 'required',
                 'emp_tab_alias' => 'required',
             ]);
 
@@ -460,8 +467,8 @@ class SistemaMultbanController extends Controller
             if ($aliasEx) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe um Alias cadastrado!',
-                    'type' => 'error',
+                    'text'  => 'Já existe um Alias cadastrado!',
+                    'type'  => 'error',
                 ]);
             }
 
@@ -474,23 +481,23 @@ class SistemaMultbanController extends Controller
 
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Alias atualizado com sucesso!',
-                    'type' => 'success',
-                    'data' => $alias
+                    'text'  => 'Alias atualizado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $alias,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Alias não encontrado!',
-                'type' => 'error',
-                'data' => []
+                'text'  => 'Alias não encontrado!',
+                'type'  => 'error',
+                'data'  => [],
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -502,22 +509,22 @@ class SistemaMultbanController extends Controller
             if ($alias) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $alias
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $alias,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -530,36 +537,36 @@ class SistemaMultbanController extends Controller
 
             if ($alias) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarAlias'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarAlias',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
 
     public function getObterGridPesquisaAlias(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
                 $data = TbSyTabAlias::where('emp_id', '=', $request->emp_id)->get();
@@ -593,20 +600,20 @@ class SistemaMultbanController extends Controller
             ->make(true);
     }
 
-    //APIs
+    // APIs
     public function storeApis(Request $request)
     {
         try {
 
             $validator = Validator::make($request->all(), [
-                'emp_id' => 'required',
-                'bc_fornec_api' => 'required',
-                'api_grupo_api' => 'required',
-                'api_subgrp_api' => 'required',
+                'emp_id'           => 'required',
+                'bc_fornec_api'    => 'required',
+                'api_grupo_api'    => 'required',
+                'api_subgrp_api'   => 'required',
                 'api_emp_endpoint' => 'required',
-                'api_emp_mtdo' => 'required',
-                'api_emp_tpde' => 'required',
-                'api_emp_tpda' => 'required',
+                'api_emp_mtdo'     => 'required',
+                'api_emp_tpde'     => 'required',
+                'api_emp_tpda'     => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -627,8 +634,8 @@ class SistemaMultbanController extends Controller
             if ($apiInsert) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe uma API para essa empresa com o mesmo fornecedor, grupo e subgrupo.',
-                    'type' => 'error'
+                    'text'  => 'Já existe uma API para essa empresa com o mesmo fornecedor, grupo e subgrupo.',
+                    'type'  => 'error',
                 ], Response::HTTP_BAD_REQUEST);
             }
 
@@ -650,16 +657,16 @@ class SistemaMultbanController extends Controller
             if ($apiInsert) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'API cadastrada com sucesso!',
-                    'type' => 'success',
-                    'data' => $apiInsert
+                    'text'  => 'API cadastrada com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $apiInsert,
                 ]);
             }
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -669,14 +676,14 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'emp_id' => 'required',
-                'bc_fornec_api' => 'required',
-                'api_grupo_api' => 'required',
-                'api_subgrp_api' => 'required',
+                'emp_id'           => 'required',
+                'bc_fornec_api'    => 'required',
+                'api_grupo_api'    => 'required',
+                'api_subgrp_api'   => 'required',
                 'api_emp_endpoint' => 'required',
-                'api_emp_mtdo' => 'required',
-                'api_emp_tpde' => 'required',
-                'api_emp_tpda' => 'required',
+                'api_emp_mtdo'     => 'required',
+                'api_emp_tpde'     => 'required',
+                'api_emp_tpda'     => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -707,23 +714,23 @@ class SistemaMultbanController extends Controller
             if ($apiUpdate) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'API atualizada com sucesso!',
-                    'type' => 'success',
-                    'data' => $apiUpdate
+                    'text'  => 'API atualizada com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $apiUpdate,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'API não encontrado!',
-                'type' => 'error',
-                'data' => []
+                'text'  => 'API não encontrado!',
+                'type'  => 'error',
+                'data'  => [],
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -743,22 +750,22 @@ class SistemaMultbanController extends Controller
             if ($apis) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $apis
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $apis,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -775,23 +782,23 @@ class SistemaMultbanController extends Controller
 
             if ($alias) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarFapi'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarFapi',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -799,33 +806,33 @@ class SistemaMultbanController extends Controller
     public function getObterGridPesquisaApis(Request $request)
     {
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->bc_fornec_apis)) {
+        if (! empty($request->bc_fornec_apis)) {
 
-            $query .= "bc_fornec = " . quotedstr($request->bc_fornec_apis) . " AND ";
+            $query .= 'bc_fornec = ' . quotedstr($request->bc_fornec_apis) . ' AND ';
         }
 
-        if (!empty($request->api_grupo)) {
+        if (! empty($request->api_grupo)) {
 
-            $query .= "api_grupo = " . quotedstr($request->api_grupo) . " AND ";
+            $query .= 'api_grupo = ' . quotedstr($request->api_grupo) . ' AND ';
         }
 
-        if (!empty($request->api_subgrp)) {
-            $query .= "api_subgrp = " . quotedstr($request->api_subgrp) . " AND ";
+        if (! empty($request->api_subgrp)) {
+            $query .= 'api_subgrp = ' . quotedstr($request->api_subgrp) . ' AND ';
         }
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
 
-                $query .= "emp_id = " . $request->emp_id;
+                $query .= 'emp_id = ' . $request->emp_id;
                 $data = ConexoesAPI::whereRaw(DB::raw($query))->get();
             } else {
 
@@ -875,16 +882,16 @@ class SistemaMultbanController extends Controller
             ->make(true);
     }
 
-    //Padrões de planos
+    // Padrões de planos
     public function storePdPlan(Request $request)
     {
         try {
 
             $validator = Validator::make($request->all(), [
-                'tp_plano' => 'required',
+                'tp_plano'    => 'required',
                 'emp_destvlr' => 'required',
                 'emp_tpbolet' => 'required',
-                'emp_adqrnt' => 'required',
+                'emp_adqrnt'  => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -902,8 +909,8 @@ class SistemaMultbanController extends Controller
             if ($padroes) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe uma conexão para essa empresa.',
-                    'type' => 'error',
+                    'text'  => 'Já existe uma conexão para essa empresa.',
+                    'type'  => 'error',
 
                 ], Response::HTTP_NOT_ACCEPTABLE);
             }
@@ -919,25 +926,27 @@ class SistemaMultbanController extends Controller
 
             if ($padroes) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $padroes
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $padroes,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -955,22 +964,22 @@ class SistemaMultbanController extends Controller
             if ($padrao) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $padrao
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $padrao,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -980,10 +989,10 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'tp_plano' => 'required',
+                'tp_plano'    => 'required',
                 'emp_destvlr' => 'required',
                 'emp_tpbolet' => 'required',
-                'emp_adqrnt' => 'required',
+                'emp_adqrnt'  => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -1009,24 +1018,25 @@ class SistemaMultbanController extends Controller
 
             if ($padroes) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro atualizado com sucesso!',
-                    'type' => 'success',
-                    'data' => $padroes
+                    'text'  => 'Registro atualizado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $padroes,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1041,23 +1051,23 @@ class SistemaMultbanController extends Controller
 
             if ($padroes) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarTpPlano'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarTpPlano',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1065,24 +1075,24 @@ class SistemaMultbanController extends Controller
     public function getObterGridPesquisaPdPlan(Request $request)
     {
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->tp_plano_pesquisa)) {
+        if (! empty($request->tp_plano_pesquisa)) {
 
-            $query .= "tp_plano = " . quotedstr($request->tp_plano_pesquisa) . " AND ";
+            $query .= 'tp_plano = ' . quotedstr($request->tp_plano_pesquisa) . ' AND ';
         }
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
 
-                $query .= "emp_id = " . $request->emp_id;
+                $query .= 'emp_id = ' . $request->emp_id;
                 $data = DB::connection('dbsysclient')->table('tbcf_padroes_planos')->whereRaw(DB::raw($query))->get();
             } else {
 
@@ -1125,21 +1135,21 @@ class SistemaMultbanController extends Controller
             ->make(true);
     }
 
-    //White Label
+    // White Label
     public function storeWhiteLabel(Request $request)
     {
         try {
 
             $validator = Validator::make($request->all(), [
 
-                'text_color_df' => 'required',
-                'fd_color' => 'required',
-                'fdsel_color' => 'required',
-                'ft_color' => 'required',
-                'ftsel_color' => 'required',
-                'bg_menu_ac_color' => 'required',
+                'text_color_df'         => 'required',
+                'fd_color'              => 'required',
+                'fdsel_color'           => 'required',
+                'ft_color'              => 'required',
+                'ftsel_color'           => 'required',
+                'bg_menu_ac_color'      => 'required',
                 'bg_item_menu_ac_color' => 'required',
-                'menu_ac_color' => 'required',
+                'menu_ac_color'         => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -1156,14 +1166,14 @@ class SistemaMultbanController extends Controller
             if ($padroes) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe um White Label para essa empresa.',
-                    'type' => 'error',
+                    'text'  => 'Já existe um White Label para essa empresa.',
+                    'type'  => 'error',
 
                 ], Response::HTTP_NOT_ACCEPTABLE);
             }
 
             $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
-            if (!file_exists($destinationPath)) {
+            if (! file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
 
@@ -1215,7 +1225,7 @@ class SistemaMultbanController extends Controller
 
                 $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
 
-                if (!file_exists($destinationPath)) {
+                if (! file_exists($destinationPath)) {
                     mkdir($destinationPath, 0777, true);
                 }
 
@@ -1236,7 +1246,7 @@ class SistemaMultbanController extends Controller
 
                 $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
 
-                if (!file_exists($destinationPath)) {
+                if (! file_exists($destinationPath)) {
                     mkdir($destinationPath, 0777, true);
                 }
 
@@ -1267,23 +1277,24 @@ class SistemaMultbanController extends Controller
 
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $padroes
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $padroes,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage() . ', Line: ' .  $th->getLine(),
-                'type' => 'error'
+                'text'  => $th->getMessage() . ', Line: ' . $th->getLine(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1300,22 +1311,22 @@ class SistemaMultbanController extends Controller
             if ($padrao) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $padrao
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $padrao,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1326,14 +1337,14 @@ class SistemaMultbanController extends Controller
 
             $validator = Validator::make($request->all(), [
 
-                'text_color_df' => 'required',
-                'fd_color' => 'required',
-                'fdsel_color' => 'required',
-                'ft_color' => 'required',
-                'ftsel_color' => 'required',
-                'bg_menu_ac_color' => 'required',
+                'text_color_df'         => 'required',
+                'fd_color'              => 'required',
+                'fdsel_color'           => 'required',
+                'ft_color'              => 'required',
+                'ftsel_color'           => 'required',
+                'bg_menu_ac_color'      => 'required',
                 'bg_item_menu_ac_color' => 'required',
-                'menu_ac_color' => 'required',
+                'menu_ac_color'         => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -1344,7 +1355,7 @@ class SistemaMultbanController extends Controller
             }
 
             $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
-            if (!file_exists($destinationPath)) {
+            if (! file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
 
@@ -1396,7 +1407,7 @@ class SistemaMultbanController extends Controller
 
                 $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
 
-                if (!file_exists($destinationPath)) {
+                if (! file_exists($destinationPath)) {
                     mkdir($destinationPath, 0777, true);
                 }
 
@@ -1417,7 +1428,7 @@ class SistemaMultbanController extends Controller
 
                 $destinationPath = storage_path() . '/app/public/white-label/empresa-' . $request->emp_id . '/';
 
-                if (!file_exists($destinationPath)) {
+                if (! file_exists($destinationPath)) {
                     mkdir($destinationPath, 0777, true);
                 }
 
@@ -1448,23 +1459,24 @@ class SistemaMultbanController extends Controller
 
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $whiteLabel
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $whiteLabel,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage() . ', Line: ' .  $th->getLine(),
-                'type' => 'error'
+                'text'  => $th->getMessage() . ', Line: ' . $th->getLine(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1475,7 +1487,6 @@ class SistemaMultbanController extends Controller
 
             $padroes = DB::connection('dbsysclient')->table('tbcf_config_wl')
                 ->where('emp_id', '=', $request->emp_id)->delete();
-
 
             if (Storage::disk('public')->exists('white-label/empresa-' . $request->emp_id . '/multban.min.css')) {
                 Storage::disk('public')->delete('white-label/empresa-' . $request->emp_id . '/multban.min.css');
@@ -1491,23 +1502,23 @@ class SistemaMultbanController extends Controller
 
             if ($padroes) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarWl'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarWl',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1515,19 +1526,19 @@ class SistemaMultbanController extends Controller
     public function getObterGridPesquisaWhiteLabel(Request $request)
     {
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
 
-                $query .= "emp_id = " . $request->emp_id;
+                $query .= 'emp_id = ' . $request->emp_id;
                 $data = DB::connection('dbsysclient')->table('tbcf_config_wl')->whereRaw(DB::raw($query))->get();
             } else {
 
@@ -1579,7 +1590,7 @@ class SistemaMultbanController extends Controller
 
             $form .= '<div class="form-group col-md-12"><label for="' . $value['name'] . '">' . $value['name'] . '</label>';
             $form .= '<input ';
-            $form .= ' maxlength="' . str_replace(["varchar(", ")"], ["", ""], $value['type']) . '"';
+            $form .= ' maxlength="' . str_replace(['varchar(', ')'], ['', ''], $value['type']) . '"';
             $form .= ' class="form-control  form-control-sm" type="text" id="' . $value['name'] . '" name="' . $value['name'] . '" value=""/></div>';
 
             if ($count % 3 == 0) {
@@ -1594,10 +1605,10 @@ class SistemaMultbanController extends Controller
 
         return response()->json([
             'title' => 'Sucesso',
-            'text' => 'Resposta obtida com sucesso!',
-            'type' => 'success',
-            'data' => $columnDefinitions,
-            'form' => $form
+            'text'  => 'Resposta obtida com sucesso!',
+            'type'  => 'success',
+            'data'  => $columnDefinitions,
+            'form'  => $form,
         ]);
     }
 
@@ -1630,23 +1641,23 @@ class SistemaMultbanController extends Controller
             if ($tbdm) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $tbdm,
-                    'form' => $form,
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $tbdm,
+                    'form'  => $form,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1663,8 +1674,8 @@ class SistemaMultbanController extends Controller
 
             foreach ($columnDefinitions as $key => $value) {
                 $valor = $value['nullable'] == true ? '' : 'required';
-                if ($value['type_name'] == "varchar") {
-                    $valor .= '|max:' . str_replace(["varchar(", ")"], ["", ""], $value['type']);
+                if ($value['type_name'] == 'varchar') {
+                    $valor .= '|max:' . str_replace(['varchar(', ')'], ['', ''], $value['type']);
                 }
 
                 $validatorFields[$value['name']] = $valor;
@@ -1693,26 +1704,28 @@ class SistemaMultbanController extends Controller
 
             if ($tbdm) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Dados atualizados com sucesso!',
-                    'type' => 'success',
+                    'text'  => 'Dados atualizados com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
+
     public function updateDm(Request $request)
     {
         try {
@@ -1724,8 +1737,8 @@ class SistemaMultbanController extends Controller
 
             foreach ($columnDefinitions as $key => $value) {
                 $valor = $value['nullable'] == true ? '' : 'required';
-                if ($value['type_name'] == "varchar") {
-                    $valor .= '|max:' . str_replace(["varchar(", ")"], ["", ""], $value['type']);
+                if ($value['type_name'] == 'varchar') {
+                    $valor .= '|max:' . str_replace(['varchar(', ')'], ['', ''], $value['type']);
                 }
 
                 $validatorFields[$value['name']] = $valor;
@@ -1753,11 +1766,11 @@ class SistemaMultbanController extends Controller
                 ->whereRaw(DB::raw(Crypt::decryptString($request->v_id)))
                 ->first();
 
-            if (!$tbdm) {
+            if (! $tbdm) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Registro não encontrado!',
-                    'type' => 'error'
+                    'text'  => 'Registro não encontrado!',
+                    'type'  => 'error',
                 ], Response::HTTP_NOT_FOUND);
             }
 
@@ -1768,14 +1781,14 @@ class SistemaMultbanController extends Controller
 
             return response()->json([
                 'title' => 'Sucesso',
-                'text' => 'Dados atualizados com sucesso!',
-                'type' => 'success',
+                'text'  => 'Dados atualizados com sucesso!',
+                'type'  => 'success',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1790,23 +1803,23 @@ class SistemaMultbanController extends Controller
 
             if ($tbdm) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarTbdm'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarTbdm',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1815,17 +1828,16 @@ class SistemaMultbanController extends Controller
     {
         $this->req = $request;
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
-        $columnDefinitions = new Collection();
+        $query = '';
+        $columnDefinitions = new Collection;
 
-        if (!empty($request->emp_id)) {
-
+        if (! empty($request->emp_id)) {
 
             $columnDefinitions = DB::connection('dbsysclient')->getSchemaBuilder()->getColumnListing($this->req->tabela_bdm);
 
@@ -1844,7 +1856,7 @@ class SistemaMultbanController extends Controller
                 foreach ($row as $key => $value) {
 
                     if ($count < 5) {
-                        if (!empty($value)) {
+                        if (! empty($value)) {
                             $attrData .= $key . ' = ' . quotedstr($value) . ' AND ';
                         }
                     }
@@ -1855,7 +1867,7 @@ class SistemaMultbanController extends Controller
 
                 if (in_array('config-sistema-multban.edit', $this->permissions)) {
 
-                    $btn .= '<button type="button" data-id="' . Crypt::encryptString($attrData)  . '" ';
+                    $btn .= '<button type="button" data-id="' . Crypt::encryptString($attrData) . '" ';
                     $btn .= 'data-name="' . Crypt::encryptString($this->req->tabela_bdm) . '" ';
                     $btn .= 'class="btn btn-primary btn-sm mr-1 btn-dados-mestre" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
@@ -1882,9 +1894,9 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'canal_id' => 'required',
+                'canal_id'  => 'required',
                 'msg_categ' => 'required',
-                'msg_text' => 'required',
+                'msg_text'  => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -1902,34 +1914,36 @@ class SistemaMultbanController extends Controller
             if ($msg) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe uma Mensagem cadastrada.',
-                    'type' => 'error',
+                    'text'  => 'Já existe uma Mensagem cadastrada.',
+                    'type'  => 'error',
                 ], Response::HTTP_NOT_FOUND);
             }
 
             DB::beginTransaction();
             $msg = DB::connection('dbsysclient')->table('tbcf_msg_comp')->insert([
-                "canal_id" => $request->canal_id,
-                "msg_categ" => $request->msg_categ,
-                "msg_text" => $request->msg_text,
-                "emp_id" => $request->emp_id,
+                'canal_id'  => $request->canal_id,
+                'msg_categ' => $request->msg_categ,
+                'msg_text'  => $request->msg_text,
+                'emp_id'    => $request->emp_id,
             ]);
 
             if ($msg) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $msg
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $msg,
                 ]);
             }
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1947,15 +1961,15 @@ class SistemaMultbanController extends Controller
 
             return response()->json([
                 'title' => 'Sucesso',
-                'text' => 'Mensagem atualizado com sucesso!',
-                'type' => 'success',
-                'data' => $msg
+                'text'  => 'Mensagem atualizado com sucesso!',
+                'type'  => 'success',
+                'data'  => $msg,
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1972,22 +1986,22 @@ class SistemaMultbanController extends Controller
             if ($msg) {
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $msg
+                    'text'  => 'Resposta obtida com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $msg,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -2003,52 +2017,52 @@ class SistemaMultbanController extends Controller
 
             if ($msg) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarPdMsg'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarPdMsg',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
 
     public function getObterGridPesquisaPdMsg(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->canal_id_filtro)) {
+        if (! empty($request->canal_id_filtro)) {
 
-            $query .= "canal_id = " . quotedstr($request->canal_id_filtro) . " AND ";
+            $query .= 'canal_id = ' . quotedstr($request->canal_id_filtro) . ' AND ';
         }
 
-        if (!empty($request->msg_categ_filtro)) {
+        if (! empty($request->msg_categ_filtro)) {
 
-            $query .= "msg_categ = " . quotedstr($request->msg_categ_filtro) . " AND ";
+            $query .= 'msg_categ = ' . quotedstr($request->msg_categ_filtro) . ' AND ';
         }
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
 
-                $query .= "emp_id = " . $request->emp_id;
+                $query .= 'emp_id = ' . $request->emp_id;
                 $data = TbCfMsgComp::whereRaw(DB::raw($query))->get();
             } else {
 
@@ -2096,15 +2110,15 @@ class SistemaMultbanController extends Controller
             ->make(true);
     }
 
-    //Work Flow
+    // Work Flow
     public function storeWf(Request $request)
     {
         try {
 
             $validator = Validator::make($request->all(), [
-                'tabela' => 'required',
-                'campo' => 'required',
-                'emp_id' => 'required',
+                'tabela'  => 'required',
+                'campo'   => 'required',
+                'emp_id'  => 'required',
                 'user_id' => 'required',
             ]);
 
@@ -2124,34 +2138,36 @@ class SistemaMultbanController extends Controller
             if ($data) {
                 return response()->json([
                     'title' => 'Erro',
-                    'text' => 'Já existe um Work Flow cadastrada.',
-                    'type' => 'error',
+                    'text'  => 'Já existe um Work Flow cadastrada.',
+                    'type'  => 'error',
                 ], Response::HTTP_NOT_FOUND);
             }
 
             DB::beginTransaction();
             $data = DB::connection('dbsysclient')->table('tbcf_config_wf')->insert([
-                "tabela" => $request->tabela,
-                "campo" => $request->campo,
-                "user_id" => $request->user_id,
-                "emp_id" => $request->emp_id,
+                'tabela'  => $request->tabela,
+                'campo'   => $request->campo,
+                'user_id' => $request->user_id,
+                'emp_id'  => $request->emp_id,
             ]);
 
             if ($data) {
                 DB::commit();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro criado com sucesso!',
-                    'type' => 'success',
-                    'data' => $data
+                    'text'  => 'Registro criado com sucesso!',
+                    'type'  => 'success',
+                    'data'  => $data,
                 ]);
             }
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -2161,9 +2177,9 @@ class SistemaMultbanController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'tabela' => 'required',
-                'campo' => 'required',
-                'emp_id' => 'required',
+                'tabela'  => 'required',
+                'campo'   => 'required',
+                'emp_id'  => 'required',
                 'user_id' => 'required',
             ]);
 
@@ -2179,23 +2195,23 @@ class SistemaMultbanController extends Controller
                 ->where('campo', '=', $request->campo)
                 ->where('user_id', '=', $request->user_id)
                 ->where('emp_id', '=', $request->emp_id)->update([
-                    "tabela" => $request->tabela,
-                    "campo" => $request->campo,
-                    "user_id" => $request->user_id,
-                    "emp_id" => $request->emp_id,
+                    'tabela'  => $request->tabela,
+                    'campo'   => $request->campo,
+                    'user_id' => $request->user_id,
+                    'emp_id'  => $request->emp_id,
                 ]);
 
             return response()->json([
                 'title' => 'Sucesso',
-                'text' => 'Work Flow atualizado com sucesso!',
-                'type' => 'success',
-                'data' => $data
+                'text'  => 'Work Flow atualizado com sucesso!',
+                'type'  => 'success',
+                'data'  => $data,
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -2218,24 +2234,24 @@ class SistemaMultbanController extends Controller
 
             if ($data) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Resposta obtida com sucesso!',
-                    'type' => 'success',
-                    'data' => $data,
+                    'title'   => 'Sucesso',
+                    'text'    => 'Resposta obtida com sucesso!',
+                    'type'    => 'success',
+                    'data'    => $data,
                     'columns' => $columns,
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ], Response::HTTP_NOT_FOUND);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -2251,23 +2267,23 @@ class SistemaMultbanController extends Controller
 
             if ($data) {
                 return response()->json([
-                    'title' => 'Sucesso',
-                    'text' => 'Registro deletado com sucesso!',
-                    'type' => 'success',
-                    'btnPesquisar' => 'btnPesquisarWf'
+                    'title'        => 'Sucesso',
+                    'text'         => 'Registro deletado com sucesso!',
+                    'type'         => 'success',
+                    'btnPesquisar' => 'btnPesquisarWf',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $th->getMessage(),
-                'type' => 'error'
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -2287,6 +2303,7 @@ class SistemaMultbanController extends Controller
         foreach ($tables as $key => $value) {
             $dataArray[] = ['id' => $value->Tables_in_db_sys_client, 'text' => strtoupper($value->Tables_in_db_sys_client)];
         }
+
         return $dataArray;
     }
 
@@ -2310,24 +2327,24 @@ class SistemaMultbanController extends Controller
     public function getObterGridPesquisaWf(Request $request)
     {
 
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = new Collection();
+        $data = new Collection;
 
-        $query = "";
+        $query = '';
 
-        if (!empty($request->tabela_filtro)) {
+        if (! empty($request->tabela_filtro)) {
 
-            $query .= "tabela = " . quotedstr($request->tabela_filtro) . " AND ";
+            $query .= 'tabela = ' . quotedstr($request->tabela_filtro) . ' AND ';
         }
 
-        if (!empty($request->emp_id)) {
+        if (! empty($request->emp_id)) {
 
             if (is_numeric($request->emp_id)) {
 
-                $query .= "emp_id = " . $request->emp_id;
+                $query .= 'emp_id = ' . $request->emp_id;
                 $data = TbCfWorkFlow::whereRaw(DB::raw($query))->get();
             } else {
 
@@ -2368,16 +2385,18 @@ class SistemaMultbanController extends Controller
                 return $btn;
             })->editColumn('user', function ($row) {
                 $user = User::find($row->user_id);
-                $userName = "";
+                $userName = '';
                 if ($user) {
                     $userName = $user->user_name;
                 }
+
                 return $userName;
             })->editColumn('empresa', function ($row) {
-                $emp_rzsoc = "";
+                $emp_rzsoc = '';
                 if ($row->empresa) {
                     $emp_rzsoc = $row->empresa->emp_rzsoc;
                 }
+
                 return $emp_rzsoc;
             })
             ->rawColumns(['action'])

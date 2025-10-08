@@ -11,13 +11,13 @@ class TbCfWorkFlow extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbcf_config_wf";
+    protected $table = 'tbcf_config_wf';
 
     public $timestamps = false;
 
     public function canal()
     {
-        //return $this->belongsTo(TbDmCanalCm::class, 'canal_id', 'canal_id');
+        // return $this->belongsTo(TbDmCanalCm::class, 'canal_id', 'canal_id');
     }
 
     public function empresa()

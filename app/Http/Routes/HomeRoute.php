@@ -13,7 +13,6 @@ class HomeRoute
         Route::get('home', 'HomeController@index')->name('home');
         Route::resource('home', 'HomeController');
 
-
         Route::get('home/maisvendidos', [HomeController::class, 'maisVendidos'])->name('home.maisvendidos');
 
         Route::get('/notificacao/obtergridpesquisa', 'Sistema\Notificacao\NotificacaoController@getObterGridPesquisa');
@@ -26,9 +25,9 @@ class HomeRoute
         Route::delete('/notificacao/{id}', 'Sistema\Notificacao\NotificacaoController@destroy')->name('notificacao.destroy');
 
         Route::resource('notificacao', 'Sistema\Notificacao\NotificacaoController');
-        //Route::resource('transportadora', 'Sistema\Transportadora\TransportadoraController');
-        //Route::resource('documentacao', 'Sistema\Documentacao\DocumentacaoController');
-        //Route::resource('perfil', 'Sistema\Usuario\Perfil\PerfilController');
+        // Route::resource('transportadora', 'Sistema\Transportadora\TransportadoraController');
+        // Route::resource('documentacao', 'Sistema\Documentacao\DocumentacaoController');
+        // Route::resource('perfil', 'Sistema\Usuario\Perfil\PerfilController');
 
         Route::get('/logout', 'Auth\LoginController@logout');
     }

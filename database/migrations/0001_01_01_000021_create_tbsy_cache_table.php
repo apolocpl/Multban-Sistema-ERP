@@ -12,22 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbsy_cache', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->string('key');
-            //FIELDS
+            // FIELDS
             $table->mediumText('value');
             $table->integer('expiration');
-            //KEYS
+            // KEYS
             $table->primary('key');
         });
 
         Schema::create('tbsy_cache_locks', function (Blueprint $table) {
-            //PRIMARY KEY
+            // PRIMARY KEY
             $table->string('key');
-            //FIELDS
+            // FIELDS
             $table->string('owner');
             $table->integer('expiration');
-            //KEYS
+            // KEYS
             $table->primary('key');
         });
     }

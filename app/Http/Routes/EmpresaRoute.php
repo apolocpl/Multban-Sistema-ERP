@@ -3,14 +3,13 @@
 namespace App\Http\Routes;
 
 use App\Http\Controllers\Multban\Empresa\EmpresaController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 class EmpresaRoute
 {
     public static function rotas()
     {
-        //Pedido de venda
+        // Pedido de venda
         Route::get('empresa', [EmpresaController::class, 'index'])->middleware('permission:empresa.index')->name('empresa.index');
         Route::get('empresa/{id}/alterar', [EmpresaController::class, 'edit'])->middleware('permission:empresa.edit')->name('empresa.edit');
         Route::patch('empresa/{id}/alterar', [EmpresaController::class, 'update'])->middleware('permission:empresa.update')->name('empresa.update');
@@ -18,8 +17,8 @@ class EmpresaRoute
         Route::post('empresa/inserir', [EmpresaController::class, 'store'])->middleware('permission:empresa.store')->name('empresa.store');
         Route::get('empresa/{id}/visualizar', [EmpresaController::class, 'show'])->middleware('permission:empresa.show')->name('empresa.show');
         Route::delete('empresa/{id}', [EmpresaController::class, 'destroy'])->middleware('permission:empresa.destroy')->name('empresa.destroy');
-        Route::post('empresa/active/{id}', [EmpresaController::class, 'active']);//->middleware('permission:empresa.active')->name('empresa.active');
-        Route::post('empresa/inactive/{id}', [EmpresaController::class, 'inactive']);//->middleware('permission:empresa.inactive')->name('empresa.inactive');
+        Route::post('empresa/active/{id}', [EmpresaController::class, 'active']); // ->middleware('permission:empresa.active')->name('empresa.active');
+        Route::post('empresa/inactive/{id}', [EmpresaController::class, 'inactive']); // ->middleware('permission:empresa.inactive')->name('empresa.inactive');
 
         Route::post('empresa/obtergridpesquisa', [EmpresaController::class, 'getObterGridPesquisa']);
 

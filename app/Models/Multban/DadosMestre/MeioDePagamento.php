@@ -9,7 +9,7 @@ class MeioDePagamento extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_meio_pag";
+    protected $table = 'tbdm_meio_pag';
 
     public $timestamps = false;
 }

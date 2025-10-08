@@ -29,15 +29,15 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
 
 class EmpresaController extends Controller
 {
     private $permissions;
+
     /**
      * Display a listing of the resource.
      *
@@ -47,13 +47,14 @@ class EmpresaController extends Controller
     {
         $filtros = [
             FiltrosEnum::COD_FRANQUEADORA => 'Código da Franqueadora',
-            FiltrosEnum::EMPRESA => 'Empresa',
-            FiltrosEnum::NOME_FANTASIA => 'Nome Fantasia',
-            FiltrosEnum::NOME_MULTBAN => 'Nome MultBan',
-            FiltrosEnum::CNPJ => 'CNPJ'
+            FiltrosEnum::EMPRESA          => 'Empresa',
+            FiltrosEnum::NOME_FANTASIA    => 'Nome Fantasia',
+            FiltrosEnum::NOME_MULTBAN     => 'Nome MultBan',
+            FiltrosEnum::CNPJ             => 'CNPJ',
         ];
         $status = EmpresaStatus::all();
-        $empresaGeral = new Empresa();
+        $empresaGeral = new Empresa;
+
         return response(view('Multban.empresa.index', compact('filtros', 'status', 'empresaGeral')));
     }
 
@@ -64,9 +65,9 @@ class EmpresaController extends Controller
      */
     public function create()
     {
-        $empresaGeral = new Empresa();
+        $empresaGeral = new Empresa;
 
-        $empresaParam = new EmpresaParam();
+        $empresaParam = new EmpresaParam;
 
         $pais = Pais::all();
 
@@ -84,13 +85,13 @@ class EmpresaController extends Controller
 
         $codigoDosbancos = TbDmBncCode::all();
 
-        $empresaTaxpos = new Collection();
+        $empresaTaxpos = new Collection;
 
         $franqueadorMaster = [];
 
-        $rebateLoja = new Empresa();
-        $royaltiesLoja = new Empresa();
-        $comissaoLoja = new Empresa();
+        $rebateLoja = new Empresa;
+        $royaltiesLoja = new Empresa;
+        $comissaoLoja = new Empresa;
 
         $destinoDosValores = DestinoDosValores::all();
 
@@ -125,7 +126,6 @@ class EmpresaController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -133,7 +133,7 @@ class EmpresaController extends Controller
         try {
             DB::beginTransaction();
 
-            $empresaGeral = new Empresa();
+            $empresaGeral = new Empresa;
             $input = $request->all();
 
             $validaTaxas = $this->validaTaxas($request);
@@ -178,11 +178,11 @@ class EmpresaController extends Controller
             $input['tax_comiss'] = formatarTextoParaDecimal($request->tax_comiss);
             $input['tax_royalties'] = formatarTextoParaDecimal($request->tax_royalties);
             $input['tax_rebate'] = formatarTextoParaDecimal($request->tax_rebate);
-            $input['emp_integra'] = $request->emp_integra == "on" ? "x" : "";
-            $input['emp_checkb'] = $request->emp_checkb == "on" ? "x" : "";
-            $input['emp_checkm'] = $request->emp_checkm == "on" ? "x" : "";
-            $input['emp_checkc'] = $request->emp_checkc == "on" ? "x" : "";
-            $input['emp_reemb'] = $request->emp_reemb == "on" ? "x" : "";
+            $input['emp_integra'] = $request->emp_integra == 'on' ? 'x' : '';
+            $input['emp_checkb'] = $request->emp_checkb == 'on' ? 'x' : '';
+            $input['emp_checkm'] = $request->emp_checkm == 'on' ? 'x' : '';
+            $input['emp_checkc'] = $request->emp_checkc == 'on' ? 'x' : '';
+            $input['emp_reemb'] = $request->emp_reemb == 'on' ? 'x' : '';
             $input['lib_cnscore'] = $request->lib_cnscore == 'on' ? 'x' : '';
             $input['card_posctr'] = $request->card_posctr == 'on' ? 'x' : '';
             $input['cob_mltjr_atr'] = $request->cob_mltjr_atr == 'on' ? 'x' : '';
@@ -214,58 +214,57 @@ class EmpresaController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
+            $empresaParam = new EmpresaParam;
 
-            $empresaParam = new EmpresaParam();
+            if ($request->pagar_por == 'rebate_split') {
 
-            if ($request->pagar_por == "rebate_split") {
-
-                $empresaParam->rebate_split = "x";
-                $empresaParam->rebate_transf = "";
+                $empresaParam->rebate_split = 'x';
+                $empresaParam->rebate_transf = '';
             }
 
-            if ($request->pagar_por == "rebate_transf") {
+            if ($request->pagar_por == 'rebate_transf') {
 
-                $empresaParam->rebate_transf = "x";
-                $empresaParam->rebate_split = "";
+                $empresaParam->rebate_transf = 'x';
+                $empresaParam->rebate_split = '';
             }
 
-            if ($request->royalties_paghar_por == "royalties_split") {
+            if ($request->royalties_paghar_por == 'royalties_split') {
 
-                $empresaParam->royalties_split = "x";
-                $empresaParam->royalties_transf = "";
+                $empresaParam->royalties_split = 'x';
+                $empresaParam->royalties_transf = '';
             }
 
-            if ($request->royalties_paghar_por == "royalties_transf") {
+            if ($request->royalties_paghar_por == 'royalties_transf') {
 
-                $empresaParam->royalties_transf = "x";
-                $empresaParam->royalties_split = "";
+                $empresaParam->royalties_transf = 'x';
+                $empresaParam->royalties_split = '';
             }
 
-            if ($request->comissao_paghar_por == "comiss_split") {
+            if ($request->comissao_paghar_por == 'comiss_split') {
 
-                $empresaParam->comiss_split = "x";
-                $empresaParam->comiss_transf = "";
+                $empresaParam->comiss_split = 'x';
+                $empresaParam->comiss_transf = '';
             }
 
-            if ($request->comissao_paghar_por == "comiss_transf") {
+            if ($request->comissao_paghar_por == 'comiss_transf') {
 
-                $empresaParam->comiss_split = "";
-                $empresaParam->comiss_transf = "x";
+                $empresaParam->comiss_split = '';
+                $empresaParam->comiss_transf = 'x';
             }
 
-            if ($request->inadimplencia == "inad_descprox") {
+            if ($request->inadimplencia == 'inad_descprox') {
 
-                $empresaParam->inad_descprox = "x";
-                $empresaParam->inad_semrisco = "";
+                $empresaParam->inad_descprox = 'x';
+                $empresaParam->inad_semrisco = '';
             }
 
-            if ($request->inadimplencia == "inad_semrisco") {
+            if ($request->inadimplencia == 'inad_semrisco') {
 
-                $empresaParam->inad_descprox = "";
-                $empresaParam->inad_semrisco = "x";
+                $empresaParam->inad_descprox = '';
+                $empresaParam->inad_semrisco = 'x';
             }
 
-            $empresaParam->blt_ctr = $request->blt_ctr == "on" ? "x" : "";
+            $empresaParam->blt_ctr = $request->blt_ctr == 'on' ? 'x' : '';
             $empresaParam->tax_blt = $input['tax_blt'];
             $empresaParam->emp_cdgbc = $request->emp_cdgbc;
             $empresaParam->emp_agbc = $request->emp_agbc;
@@ -282,28 +281,28 @@ class EmpresaController extends Controller
             $empresaParam->vlr_bolepix = formatarTextoParaDecimal($request->vlr_bolepix);
             $empresaParam->dias_inat_card = $request->dias_inat_card;
             $empresaParam->isnt_pixblt = formatarTextoParaDecimal($request->isnt_pixblt);
-            $empresaParam->lib_cnscore = $request->lib_cnscore == "on" ? "x" : "";
+            $empresaParam->lib_cnscore = $request->lib_cnscore == 'on' ? 'x' : '';
             $empresaParam->intervalo_mes = $request->intervalo_mes;
             $empresaParam->qtde_cns_freem = $request->qtde_cns_freem;
             $empresaParam->qtde_cns_cntrm = $request->qtde_cns_cntrm;
-            $empresaParam->card_posctr = $request->card_posctr == "on" ? "x" : "";
+            $empresaParam->card_posctr = $request->card_posctr == 'on' ? 'x' : '';
             $empresaParam->card_posparc = formatarTextoParaDecimal($request->card_posparc);
             $empresaParam->blt_parclib = formatarTextoParaDecimal($request->blt_parclib);
-            $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == "on" ? "x" : "";
+            $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == 'on' ? 'x' : '';
             $empresaParam->perc_mlt_atr = formatarTextoParaDecimal($request->perc_mlt_atr);
             $empresaParam->perc_jrs_atr = formatarTextoParaDecimal($request->perc_jrs_atr);
             $empresaParam->perc_com_mltjr = formatarTextoParaDecimal($request->perc_com_mltjr);
-            $empresaParam->parc_cjuros = $request->parc_cjuros == "on" ? "x" : "";
+            $empresaParam->parc_cjuros = $request->parc_cjuros == 'on' ? 'x' : '';
             $empresaParam->parc_jr_deprc = $request->parc_jr_deprc;
             $empresaParam->tax_jrsparc = formatarTextoParaDecimal($request->tax_jrsparc);
             $empresaParam->parc_com_jrs = formatarTextoParaDecimal($request->parc_com_jrs);
-            $empresaParam->card_prectr = $request->card_prectr == "on" ? "x" : "";
+            $empresaParam->card_prectr = $request->card_prectr == 'on' ? 'x' : '';
             $empresaParam->tax_pre = formatarTextoParaDecimal($request->tax_pre);
-            $empresaParam->card_giftctr = $request->card_giftctr == "on" ? "x" : "";
+            $empresaParam->card_giftctr = $request->card_giftctr == 'on' ? 'x' : '';
             $empresaParam->tax_gift = formatarTextoParaDecimal($request->tax_gift);
-            $empresaParam->card_fidctr = $request->card_fidctr == "on" ? "x" : "";
+            $empresaParam->card_fidctr = $request->card_fidctr == 'on' ? 'x' : '';
             $empresaParam->tax_fid = formatarTextoParaDecimal($request->tax_fid);
-            $empresaParam->antecip_ctr = $request->antecip_ctr == "on" ? "x" : "";
+            $empresaParam->antecip_ctr = $request->antecip_ctr == 'on' ? 'x' : '';
             $empresaParam->tax_antmult = formatarTextoParaDecimal($request->tax_antmult);
             $empresaParam->tax_antfundo = formatarTextoParaDecimal($request->tax_antfundo);
             $empresaParam->perc_rec_ant = formatarTextoParaDecimal($request->perc_rec_ant);
@@ -312,7 +311,7 @@ class EmpresaController extends Controller
             $empresaParam->fndant_ccbc = $request->fndant_ccbc;
             $empresaParam->fndant_pix = $request->fndant_pix;
             $empresaParam->fndant_seller = $request->fndant_seller;
-            $empresaParam->antecip_auto = $request->antecip_auto == "on" ? "x" : "";
+            $empresaParam->antecip_auto = $request->antecip_auto == 'on' ? 'x' : '';
             $empresaParam->ant_auto_srvd = $request->ant_auto_srvd;
             $empresaParam->ant_auto_prdvo = $request->ant_auto_prdvo;
             $empresaParam->ant_auto_prdvd = $request->ant_auto_prdvd;
@@ -324,7 +323,7 @@ class EmpresaController extends Controller
             $empresaParam->tax_royalties = formatarTextoParaDecimal($request->tax_royalties);
             $empresaParam->tax_rebate = formatarTextoParaDecimal($request->tax_rebate);
 
-            $empresaParam->cobsrv_atv = $request->cobsrv_atv == "on" ? "x" : "";
+            $empresaParam->cobsrv_atv = $request->cobsrv_atv == 'on' ? 'x' : '';
             $empresaParam->cobsrv_diasatr = $request->cobsrv_diasatr;
             $empresaParam->cobsrv_multa = $input['cobsrv_multa'];
             $empresaParam->cobsrv_juros = $input['cobsrv_juros'];
@@ -338,16 +337,16 @@ class EmpresaController extends Controller
             $empresaParam->ant_blktit = $input['ant_blktit'];
             $empresaParam->ant_titpdv = $input['ant_titpdv'];
             $empresaParam->emp_destvlr = $input['emp_destvlr'];
-            $empresaParam->emp_dbaut = $request->emp_dbaut == "on" ? "x" : "";
+            $empresaParam->emp_dbaut = $request->emp_dbaut == 'on' ? 'x' : '';
 
             $empresaParam->criador = \Illuminate\Support\Facades\Auth::user()->user_id;
             $empresaParam->dthr_cr = Carbon::now();
             $empresaParam->dthr_ch = Carbon::now();
 
             $empresaGeral->emp_cnpj = removerCNPJ($request->emp_cnpj);
-            $empresaGeral->emp_wl = $request->emp_wl == "on" ? "x" : "";
+            $empresaGeral->emp_wl = $request->emp_wl == 'on' ? 'x' : '';
             $empresaGeral->emp_comwl = formatarTextoParaDecimal($request->emp_comwl);
-            $empresaGeral->emp_privlbl = $request->emp_privlbl == "on" ? "x" : "";
+            $empresaGeral->emp_privlbl = $request->emp_privlbl == 'on' ? 'x' : '';
             $empresaGeral->emp_sts = $request->emp_sts;
             $empresaGeral->emp_ie = removerCNPJ($request->emp_ie);
             $empresaGeral->emp_im = removerCNPJ($request->emp_im);
@@ -356,24 +355,24 @@ class EmpresaController extends Controller
             $empresaGeral->emp_nmult = $request->emp_nmult;
             $empresaGeral->emp_ratv = $request->emp_ratv;
 
-            if ($request->emp_frq == "sim") {
+            if ($request->emp_frq == 'sim') {
                 $empresaGeral->emp_frqmst = $request->emp_frqmst;
-                $empresaGeral->emp_frq = "x";
+                $empresaGeral->emp_frq = 'x';
             } else {
                 $empresaGeral->emp_frqmst = null;
-                $empresaGeral->emp_frq = "";
+                $empresaGeral->emp_frq = '';
             }
 
-            if ($request->emp_frqcmp == "sim") {
-                $empresaGeral->emp_frqcmp = "x";
+            if ($request->emp_frqcmp == 'sim') {
+                $empresaGeral->emp_frqcmp = 'x';
             } else {
-                $empresaGeral->emp_frqcmp = "";
+                $empresaGeral->emp_frqcmp = '';
             }
 
-            if ($request->emp_altlmt == "sim") {
-                $empresaGeral->emp_altlmt = "x";
+            if ($request->emp_altlmt == 'sim') {
+                $empresaGeral->emp_altlmt = 'x';
             } else {
-                $empresaGeral->emp_altlmt = "";
+                $empresaGeral->emp_altlmt = '';
             }
 
             $empresaGeral->emp_tpbolet = $request->emp_tpbolet;
@@ -435,43 +434,44 @@ class EmpresaController extends Controller
 
             $empresaParam->save();
 
-
             $this->gravaTaxas($request, $empresaGeral->emp_id);
 
-            $logAuditoria = new LogAuditoria();
+            $logAuditoria = new LogAuditoria;
             $logAuditoria->auddat = date('Y-m-d H:i:s');
             $logAuditoria->audusu = \Illuminate\Support\Facades\Auth::user()->user_name;
             $logAuditoria->audtar = 'Adicionou a empresa ';
             $logAuditoria->audarq = $empresaParam->getTable();
             $logAuditoria->audlan = $empresaParam->emp_id;
-            $logAuditoria->audant = "";
-            $logAuditoria->auddep = "";
+            $logAuditoria->audant = '';
+            $logAuditoria->auddep = '';
             $logAuditoria->audnip = request()->ip();
 
             $logAuditoria->save();
 
             DB::commit();
 
-            Session::flash('success', "Empresa cadastrada com sucesso.");
+            Session::flash('success', 'Empresa cadastrada com sucesso.');
 
-            Session::flash("idModeloInserido", $empresaGeral->emp_id);
+            Session::flash('idModeloInserido', $empresaGeral->emp_id);
 
             return response()->json([
                 'message' => 'Processando...',
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -506,7 +506,7 @@ class EmpresaController extends Controller
 
         $empresaTaxpos = EmpresaTaxpos::where('emp_id', $id)->get();
 
-        if (!$empresaGeral) {
+        if (! $empresaGeral) {
             return response(redirect('/empresa')->with('error', 'Opps, empresa não encontrada.'));
         }
 
@@ -567,15 +567,15 @@ class EmpresaController extends Controller
 
         $empresaTaxpos = EmpresaTaxpos::where('emp_id', $id)->get();
 
-        if (!$empresaGeral) {
+        if (! $empresaGeral) {
             return response(redirect('/empresa')->with('error', 'Opps, empresa não encontrada.'));
         }
 
         $empresaParam = EmpresaParam::find($empresaGeral->emp_id);
 
-        $rebateLoja = new Empresa();
-        $royaltiesLoja = new Empresa();
-        $comissaoLoja = new Empresa();
+        $rebateLoja = new Empresa;
+        $royaltiesLoja = new Empresa;
+        $comissaoLoja = new Empresa;
 
         if ($empresaParam) {
             $rebateLoja = Empresa::find($empresaParam->rebate_emp);
@@ -632,7 +632,6 @@ class EmpresaController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -689,11 +688,11 @@ class EmpresaController extends Controller
             $input['tax_rebate'] = formatarTextoParaDecimal($request->tax_rebate);
             $input['parc_jr_deprc'] = formatarTextoParaDecimal($request->parc_jr_deprc);
             $input['tax_jrsparc'] = formatarTextoParaDecimal($request->tax_jrsparc);
-            $input['emp_integra'] = $request->emp_integra == "on" ? "x" : "";
-            $input['emp_checkb'] = $request->emp_checkb == "on" ? "x" : "";
-            $input['emp_checkm'] = $request->emp_checkm == "on" ? "x" : "";
-            $input['emp_checkc'] = $request->emp_checkc == "on" ? "x" : "";
-            $input['emp_reemb'] = $request->emp_reemb == "on" ? "x" : "";
+            $input['emp_integra'] = $request->emp_integra == 'on' ? 'x' : '';
+            $input['emp_checkb'] = $request->emp_checkb == 'on' ? 'x' : '';
+            $input['emp_checkm'] = $request->emp_checkm == 'on' ? 'x' : '';
+            $input['emp_checkc'] = $request->emp_checkc == 'on' ? 'x' : '';
+            $input['emp_reemb'] = $request->emp_reemb == 'on' ? 'x' : '';
             $input['lib_cnscore'] = $request->lib_cnscore == 'on' ? 'x' : '';
             $input['card_posctr'] = $request->card_posctr == 'on' ? 'x' : '';
             $input['cob_mltjr_atr'] = $request->cob_mltjr_atr == 'on' ? 'x' : '';
@@ -729,11 +728,11 @@ class EmpresaController extends Controller
 
                 $empresaParam = EmpresaParam::find($empresaGeral->emp_id);
 
-                //Verifica se ouve mudanças nos campos Empresa, se sim grava na auditoria
+                // Verifica se ouve mudanças nos campos Empresa, se sim grava na auditoria
                 foreach ($input as $key => $value) {
                     if (Arr::exists($empresaGeral->toArray(), $key)) {
-                        if ($empresaGeral->$key != $value) {
-                            $logAuditoria = new LogAuditoria();
+                        if ($value != $empresaGeral->$key) {
+                            $logAuditoria = new LogAuditoria;
                             $logAuditoria->auddat = date('Y-m-d H:i:s');
                             $logAuditoria->audusu = \Illuminate\Support\Facades\Auth::user()->user_name;
                             $logAuditoria->audtar = 'Alterou o campo ' . $key;
@@ -749,8 +748,8 @@ class EmpresaController extends Controller
 
                     if (Arr::exists($empresaParam->toArray(), $key)) {
 
-                        if ($empresaParam->$key != $value) {
-                            $logAuditoria = new LogAuditoria();
+                        if ($value != $empresaParam->$key) {
+                            $logAuditoria = new LogAuditoria;
                             $logAuditoria->auddat = date('Y-m-d H:i:s');
                             $logAuditoria->audusu = \Illuminate\Support\Facades\Auth::user()->user_name;
                             $logAuditoria->audtar = 'Alterou o campo ' . $key;
@@ -765,55 +764,55 @@ class EmpresaController extends Controller
                     }
                 }
 
-                if ($request->pagar_por == "rebate_split") {
+                if ($request->pagar_por == 'rebate_split') {
 
-                    $empresaParam->rebate_split = "x";
-                    $empresaParam->rebate_transf = "";
+                    $empresaParam->rebate_split = 'x';
+                    $empresaParam->rebate_transf = '';
                 }
 
-                if ($request->pagar_por == "rebate_transf") {
+                if ($request->pagar_por == 'rebate_transf') {
 
-                    $empresaParam->rebate_transf = "x";
-                    $empresaParam->rebate_split = "";
+                    $empresaParam->rebate_transf = 'x';
+                    $empresaParam->rebate_split = '';
                 }
 
-                if ($request->royalties_paghar_por == "royalties_split") {
+                if ($request->royalties_paghar_por == 'royalties_split') {
 
-                    $empresaParam->royalties_split = "x";
-                    $empresaParam->royalties_transf = "";
+                    $empresaParam->royalties_split = 'x';
+                    $empresaParam->royalties_transf = '';
                 }
 
-                if ($request->royalties_paghar_por == "royalties_transf") {
+                if ($request->royalties_paghar_por == 'royalties_transf') {
 
-                    $empresaParam->royalties_transf = "x";
-                    $empresaParam->royalties_split = "";
+                    $empresaParam->royalties_transf = 'x';
+                    $empresaParam->royalties_split = '';
                 }
 
-                if ($request->comissao_paghar_por == "comiss_split") {
+                if ($request->comissao_paghar_por == 'comiss_split') {
 
-                    $empresaParam->comiss_split = "x";
-                    $empresaParam->comiss_transf = "";
+                    $empresaParam->comiss_split = 'x';
+                    $empresaParam->comiss_transf = '';
                 }
 
-                if ($request->comissao_paghar_por == "comiss_transf") {
+                if ($request->comissao_paghar_por == 'comiss_transf') {
 
-                    $empresaParam->comiss_split = "";
-                    $empresaParam->comiss_transf = "x";
+                    $empresaParam->comiss_split = '';
+                    $empresaParam->comiss_transf = 'x';
                 }
 
-                if ($request->inadimplencia == "inad_descprox") {
+                if ($request->inadimplencia == 'inad_descprox') {
 
-                    $empresaParam->inad_descprox = "x";
-                    $empresaParam->inad_semrisco = "";
+                    $empresaParam->inad_descprox = 'x';
+                    $empresaParam->inad_semrisco = '';
                 }
 
-                if ($request->inadimplencia == "inad_semrisco") {
+                if ($request->inadimplencia == 'inad_semrisco') {
 
-                    $empresaParam->inad_descprox = "";
-                    $empresaParam->inad_semrisco = "x";
+                    $empresaParam->inad_descprox = '';
+                    $empresaParam->inad_semrisco = 'x';
                 }
 
-                $empresaParam->blt_ctr = $request->blt_ctr == "on" ? "x" : "";
+                $empresaParam->blt_ctr = $request->blt_ctr == 'on' ? 'x' : '';
                 $empresaParam->tax_blt = $input['tax_blt'];
                 $empresaParam->emp_cdgbc = $request->emp_cdgbc;
                 $empresaParam->emp_agbc = $request->emp_agbc;
@@ -830,28 +829,28 @@ class EmpresaController extends Controller
                 $empresaParam->vlr_bolepix = formatarTextoParaDecimal($request->vlr_bolepix);
                 $empresaParam->dias_inat_card = $request->dias_inat_card;
                 $empresaParam->isnt_pixblt = formatarTextoParaDecimal($request->isnt_pixblt);
-                $empresaParam->lib_cnscore = $request->lib_cnscore == "on" ? "x" : "";
+                $empresaParam->lib_cnscore = $request->lib_cnscore == 'on' ? 'x' : '';
                 $empresaParam->intervalo_mes = $request->intervalo_mes;
                 $empresaParam->qtde_cns_freem = $request->qtde_cns_freem;
                 $empresaParam->qtde_cns_cntrm = $request->qtde_cns_cntrm;
-                $empresaParam->card_posctr = $request->card_posctr == "on" ? "x" : "";
+                $empresaParam->card_posctr = $request->card_posctr == 'on' ? 'x' : '';
                 $empresaParam->card_posparc = formatarTextoParaDecimal($request->card_posparc);
                 $empresaParam->blt_parclib = formatarTextoParaDecimal($request->blt_parclib);
-                $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == "on" ? "x" : "";
+                $empresaParam->cob_mltjr_atr = $request->cob_mltjr_atr == 'on' ? 'x' : '';
                 $empresaParam->perc_mlt_atr = formatarTextoParaDecimal($request->perc_mlt_atr);
                 $empresaParam->perc_jrs_atr = formatarTextoParaDecimal($request->perc_jrs_atr);
                 $empresaParam->perc_com_mltjr = formatarTextoParaDecimal($request->perc_com_mltjr);
-                $empresaParam->parc_cjuros = $request->parc_cjuros == "on" ? "x" : "";
+                $empresaParam->parc_cjuros = $request->parc_cjuros == 'on' ? 'x' : '';
                 $empresaParam->parc_jr_deprc = $request->parc_jr_deprc;
                 $empresaParam->tax_jrsparc = formatarTextoParaDecimal($request->tax_jrsparc);
                 $empresaParam->parc_com_jrs = formatarTextoParaDecimal($request->parc_com_jrs);
-                $empresaParam->card_prectr = $request->card_prectr == "on" ? "x" : "";
+                $empresaParam->card_prectr = $request->card_prectr == 'on' ? 'x' : '';
                 $empresaParam->tax_pre = formatarTextoParaDecimal($request->tax_pre);
-                $empresaParam->card_giftctr = $request->card_giftctr == "on" ? "x" : "";
+                $empresaParam->card_giftctr = $request->card_giftctr == 'on' ? 'x' : '';
                 $empresaParam->tax_gift = formatarTextoParaDecimal($request->tax_gift);
-                $empresaParam->card_fidctr = $request->card_fidctr == "on" ? "x" : "";
+                $empresaParam->card_fidctr = $request->card_fidctr == 'on' ? 'x' : '';
                 $empresaParam->tax_fid = formatarTextoParaDecimal($request->tax_fid);
-                $empresaParam->antecip_ctr = $request->antecip_ctr == "on" ? "x" : "";
+                $empresaParam->antecip_ctr = $request->antecip_ctr == 'on' ? 'x' : '';
                 $empresaParam->tax_antmult = formatarTextoParaDecimal($request->tax_antmult);
                 $empresaParam->tax_antfundo = formatarTextoParaDecimal($request->tax_antfundo);
                 $empresaParam->perc_rec_ant = formatarTextoParaDecimal($request->perc_rec_ant);
@@ -860,7 +859,7 @@ class EmpresaController extends Controller
                 $empresaParam->fndant_ccbc = $request->fndant_ccbc;
                 $empresaParam->fndant_pix = $request->fndant_pix;
                 $empresaParam->fndant_seller = $request->fndant_seller;
-                $empresaParam->antecip_auto = $request->antecip_auto == "on" ? "x" : "";
+                $empresaParam->antecip_auto = $request->antecip_auto == 'on' ? 'x' : '';
                 $empresaParam->ant_auto_srvd = $request->ant_auto_srvd;
                 $empresaParam->ant_auto_prdvo = $request->ant_auto_prdvo;
                 $empresaParam->ant_auto_prdvd = $request->ant_auto_prdvd;
@@ -872,7 +871,7 @@ class EmpresaController extends Controller
                 $empresaParam->tax_royalties = formatarTextoParaDecimal($request->tax_royalties);
                 $empresaParam->tax_rebate = formatarTextoParaDecimal($request->tax_rebate);
 
-                $empresaParam->cobsrv_atv = $request->cobsrv_atv == "on" ? "x" : "";
+                $empresaParam->cobsrv_atv = $request->cobsrv_atv == 'on' ? 'x' : '';
 
                 $empresaParam->cobsrv_diasatr = $request->cobsrv_diasatr;
                 $empresaParam->cobsrv_multa = $input['cobsrv_multa'];
@@ -887,16 +886,16 @@ class EmpresaController extends Controller
                 $empresaParam->ant_blktit = $input['ant_blktit'];
                 $empresaParam->ant_titpdv = $input['ant_titpdv'];
                 $empresaParam->emp_destvlr = $input['emp_destvlr'];
-                $empresaParam->emp_dbaut = $request->emp_dbaut == "on" ? "x" : "";
+                $empresaParam->emp_dbaut = $request->emp_dbaut == 'on' ? 'x' : '';
 
                 $empresaParam->criador = \Illuminate\Support\Facades\Auth::user()->user_id;
                 $empresaParam->dthr_cr = Carbon::now();
                 $empresaParam->dthr_ch = Carbon::now();
 
                 $empresaGeral->emp_cnpj = removerCNPJ($request->emp_cnpj);
-                $empresaGeral->emp_wl = $request->emp_wl == "on" ? "x" : "";
+                $empresaGeral->emp_wl = $request->emp_wl == 'on' ? 'x' : '';
                 $empresaGeral->emp_comwl = formatarTextoParaDecimal($request->emp_comwl);
-                $empresaGeral->emp_privlbl = $request->emp_privlbl == "on" ? "x" : "";
+                $empresaGeral->emp_privlbl = $request->emp_privlbl == 'on' ? 'x' : '';
                 $empresaGeral->emp_sts = $request->emp_sts;
                 $empresaGeral->emp_ie = removerCNPJ($request->emp_ie);
                 $empresaGeral->emp_im = removerCNPJ($request->emp_im);
@@ -905,24 +904,24 @@ class EmpresaController extends Controller
                 $empresaGeral->emp_nmult = $request->emp_nmult;
                 $empresaGeral->emp_ratv = $request->emp_ratv;
 
-                if ($request->emp_frq == "sim") {
+                if ($request->emp_frq == 'sim') {
                     $empresaGeral->emp_frqmst = null;
-                    $empresaGeral->emp_frq = "x";
+                    $empresaGeral->emp_frq = 'x';
                 } else {
                     $empresaGeral->emp_frqmst = $request->emp_frqmst;
-                    $empresaGeral->emp_frq = "";
+                    $empresaGeral->emp_frq = '';
                 }
 
-                if ($request->emp_frqcmp == "sim") {
-                    $empresaGeral->emp_frqcmp = "x";
+                if ($request->emp_frqcmp == 'sim') {
+                    $empresaGeral->emp_frqcmp = 'x';
                 } else {
-                    $empresaGeral->emp_frqcmp = "";
+                    $empresaGeral->emp_frqcmp = '';
                 }
 
-                if ($request->emp_altlmt == "sim") {
-                    $empresaGeral->emp_altlmt = "x";
+                if ($request->emp_altlmt == 'sim') {
+                    $empresaGeral->emp_altlmt = 'x';
                 } else {
-                    $empresaGeral->emp_altlmt = "";
+                    $empresaGeral->emp_altlmt = '';
                 }
 
                 $empresaGeral->emp_tpbolet = $request->emp_tpbolet;
@@ -985,25 +984,27 @@ class EmpresaController extends Controller
                 DB::commit();
             }
 
-            //Session::flash('success', "Empresa atualizada com sucesso.");
+            // Session::flash('success', "Empresa atualizada com sucesso.");
 
-            //Session::flash("idModeloInserido", $id);
+            // Session::flash("idModeloInserido", $id);
             return response()->json([
                 'message' => 'Empresa atualizada com sucesso.',
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -1022,23 +1023,24 @@ class EmpresaController extends Controller
             if ($empresa) {
                 $empresa->emp_sts = EmpresaStatusEnum::EXCLUIDO;
                 $empresa->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Excluído com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Excluído com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1051,23 +1053,24 @@ class EmpresaController extends Controller
             if ($empresa) {
                 $empresa->emp_sts = EmpresaStatusEnum::INATIVO;
                 $empresa->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Inativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Inativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1080,23 +1083,24 @@ class EmpresaController extends Controller
             if ($empresa) {
                 $empresa->emp_sts = EmpresaStatusEnum::ATIVO;
                 $empresa->save();
+
                 return response()->json([
                     'title' => 'Sucesso',
-                    'text' => 'Registro Ativado com sucesso!',
-                    'type' => 'success'
+                    'text'  => 'Registro Ativado com sucesso!',
+                    'type'  => 'success',
                 ]);
             }
 
             return response()->json([
                 'title' => 'Erro',
-                'text' => 'Registro não encontrado!',
-                'type' => 'error'
+                'text'  => 'Registro não encontrado!',
+                'type'  => 'error',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'title' => 'Erro',
-                'text' => $e->getMessage(),
-                'type' => 'error'
+                'text'  => $e->getMessage(),
+                'type'  => 'error',
             ], 500);
         }
     }
@@ -1127,19 +1131,19 @@ class EmpresaController extends Controller
             return [];
         }
 
-        if (!empty($request->campo)) {
+        if (! empty($request->campo)) {
             $campo = $request->campo;
         }
 
         $query = Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
-            ->where(function($q) use ($campo, $parametro) {
+            ->where(function ($q) use ($campo, $parametro) {
                 $q->where($campo, 'like', "%$parametro%")
-                  ->orWhere('emp_cnpj', 'like', "%$parametro%")
-                  ->orWhere('emp_id', 'like', "%$parametro%");
+                    ->orWhere('emp_cnpj', 'like', "%$parametro%")
+                    ->orWhere('emp_id', 'like', "%$parametro%");
             });
 
         // Se o filtro cod_franqueadora estiver preenchido, filtra pelo campo emp_frqmst
-        if (!empty($request->cod_franqueadora)) {
+        if (! empty($request->cod_franqueadora)) {
             $query->Where('emp_frqmst', $request->cod_franqueadora);
         }
 
@@ -1156,19 +1160,19 @@ class EmpresaController extends Controller
             return [];
         }
 
-        if (!empty($request->campo)) {
+        if (! empty($request->campo)) {
             $campo = $request->campo;
         }
 
         $query = Empresa::select(DB::raw('emp_id as id, emp_id, emp_cnpj, UPPER(' . $campo . ') text'))
-            ->where(function($q) use ($campo, $parametro) {
+            ->where(function ($q) use ($campo, $parametro) {
                 $q->where($campo, 'like', "%$parametro%")
-                  ->orWhere('emp_cnpj', 'like', "%$parametro%")
-                  ->orWhere('emp_id', 'like', "%$parametro%");
+                    ->orWhere('emp_cnpj', 'like', "%$parametro%")
+                    ->orWhere('emp_id', 'like', "%$parametro%");
             });
 
         // Se o filtro cod_franqueadora estiver preenchido, filtra pelo campo emp_frqmst
-        if (!empty($request->cod_franqueadora)) {
+        if (! empty($request->cod_franqueadora)) {
             $query->Where('emp_frqmst', $request->cod_franqueadora);
         }
 
@@ -1185,10 +1189,10 @@ class EmpresaController extends Controller
         }
 
         return User::select(DB::raw('user_id as id, user_id, user_cpf, UPPER(user_name) text'))
-            ->where(function($q) use ($parametro) {
+            ->where(function ($q) use ($parametro) {
                 $q->where('user_name', 'like', "%$parametro%")
-                ->orWhere('user_cpf', 'like', "%$parametro%")
-                ->orWhere('user_id', $parametro);
+                    ->orWhere('user_cpf', 'like', "%$parametro%")
+                    ->orWhere('user_id', $parametro);
             })
             ->get()
             ->toArray();
@@ -1200,9 +1204,9 @@ class EmpresaController extends Controller
         $parametro = $request != null ? $request->all()['parametro'] : '';
 
         return Pais::select(DB::raw('pais as id, pais, UPPER(pais_desc) text'))
-            ->where(function($q) use ($parametro) {
+            ->where(function ($q) use ($parametro) {
                 $q->where('pais', 'like', "%$parametro%")
-                ->orWhere('pais_desc', 'like', "%$parametro%");
+                    ->orWhere('pais_desc', 'like', "%$parametro%");
             })
             ->get()
             ->toArray();
@@ -1218,9 +1222,9 @@ class EmpresaController extends Controller
         }
 
         return Estados::select(DB::raw('estado as id, estado, UPPER(estado_desc) text'))
-            ->where(function($q) use ($parametro) {
+            ->where(function ($q) use ($parametro) {
                 $q->where('estado', 'like', "%$parametro%")
-                ->orWhere('estado_desc', 'like', "%$parametro%");
+                    ->orWhere('estado_desc', 'like', "%$parametro%");
             })
             ->where('estado_pais', $request->pais)
             ->get()
@@ -1234,10 +1238,11 @@ class EmpresaController extends Controller
         if (empty($request->estado)) {
             return [];
         }
+
         return Cidade::select(DB::raw('cidade_ibge as id, cidade_ibge, UPPER(cidade_desc) text'))
-            ->where(function($q) use ($parametro) {
+            ->where(function ($q) use ($parametro) {
                 $q->where('cidade_ibge', 'like', "%$parametro%")
-                ->orWhere('cidade_desc', 'like', "%$parametro%");
+                    ->orWhere('cidade_desc', 'like', "%$parametro%");
             })
             ->where('cidade_est', $request->estado)
             ->get()
@@ -1252,7 +1257,7 @@ class EmpresaController extends Controller
         $data = [
             'cidade' => ['id' => $cidade->cidade, 'text' => $cidade->cidade_ibge . ' - ' . $cidade->cidade_desc],
             'estado' => ['id' => $cidade->estado->estado, 'text' => $cidade->estado->estado_desc . ' - ' . $cidade->estado->estado],
-            'pais' => ['id' => $cidade->estado->pais->pais, 'text' => $cidade->estado->pais->pais . ' - ' . $cidade->estado->pais->pais_desc]
+            'pais'   => ['id' => $cidade->estado->pais->pais, 'text' => $cidade->estado->pais->pais . ' - ' . $cidade->estado->pais->pais_desc],
         ];
 
         return $data;
@@ -1265,10 +1270,10 @@ class EmpresaController extends Controller
         $hasError = false;
         $error_list = [];
         if ($request->has('tax_categ_avista')) {
-            foreach ($request->get("tax_categ_avista") as $key => $value) {
+            foreach ($request->get('tax_categ_avista') as $key => $value) {
 
                 if (
-                    !empty(formatarTextoParaDecimal($value['parc_de'])) && !empty(formatarTextoParaDecimal($value['parc_ate'])) && !empty(formatarTextoParaDecimal($value['taxa']))
+                    ! empty(formatarTextoParaDecimal($value['parc_de'])) && ! empty(formatarTextoParaDecimal($value['parc_ate'])) && ! empty(formatarTextoParaDecimal($value['taxa']))
                 ) {
 
                     $last = Arr::last($request->tax_categ_avista);
@@ -1297,10 +1302,10 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_30')) {
-            foreach ($request->get("tax_categ_30") as $key => $value) {
+            foreach ($request->get('tax_categ_30') as $key => $value) {
 
                 if (
-                    !empty(formatarTextoParaDecimal($value['parc_de'])) && !empty(formatarTextoParaDecimal($value['parc_ate'])) && !empty(formatarTextoParaDecimal($value['taxa']))
+                    ! empty(formatarTextoParaDecimal($value['parc_de'])) && ! empty(formatarTextoParaDecimal($value['parc_ate'])) && ! empty(formatarTextoParaDecimal($value['taxa']))
                 ) {
 
                     $last = Arr::last($request->tax_categ_30);
@@ -1328,10 +1333,10 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_60')) {
-            foreach ($request->get("tax_categ_60") as $key => $value) {
+            foreach ($request->get('tax_categ_60') as $key => $value) {
 
                 if (
-                    !empty(formatarTextoParaDecimal($value['parc_de'])) && !empty(formatarTextoParaDecimal($value['parc_ate'])) && !empty(formatarTextoParaDecimal($value['taxa']))
+                    ! empty(formatarTextoParaDecimal($value['parc_de'])) && ! empty(formatarTextoParaDecimal($value['parc_ate'])) && ! empty(formatarTextoParaDecimal($value['taxa']))
                 ) {
 
                     $last = Arr::last($request->tax_categ_60);
@@ -1359,10 +1364,10 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_90')) {
-            foreach ($request->get("tax_categ_90") as $key => $value) {
+            foreach ($request->get('tax_categ_90') as $key => $value) {
 
                 if (
-                    !empty(formatarTextoParaDecimal($value['parc_de'])) && !empty(formatarTextoParaDecimal($value['parc_ate'])) && !empty(formatarTextoParaDecimal($value['taxa']))
+                    ! empty(formatarTextoParaDecimal($value['parc_de'])) && ! empty(formatarTextoParaDecimal($value['parc_ate'])) && ! empty(formatarTextoParaDecimal($value['taxa']))
                 ) {
 
                     $last = Arr::last($request->tax_categ_90);
@@ -1390,7 +1395,7 @@ class EmpresaController extends Controller
             }
         }
 
-        return ["hasError" => $hasError, "error_list" => $error_list];
+        return ['hasError' => $hasError, 'error_list' => $error_list];
     }
 
     // FUNÇÃO QUE GRAVA TAXAS
@@ -1403,11 +1408,11 @@ class EmpresaController extends Controller
         EmpresaTaxpos::where('emp_id', $emp_id)->delete();
 
         if ($request->has('tax_categ_avista')) {
-            foreach ($request->get("tax_categ_avista") as $key => $value) {
+            foreach ($request->get('tax_categ_avista') as $key => $value) {
 
-                $taxa = new EmpresaTaxpos();
+                $taxa = new EmpresaTaxpos;
                 $taxa->emp_id = $emp_id;
-                $taxa->tax_categ = "" . $value['categ'] . "";
+                $taxa->tax_categ = '' . $value['categ'] . '';
                 $taxa->parc_de = intval($value['parc_de']);
                 $taxa->parc_ate = intval($value['parc_ate']);
                 $taxa->tax = formatarTextoParaDecimal($value['taxa']);
@@ -1418,11 +1423,11 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_30')) {
-            foreach ($request->get("tax_categ_30") as $key => $value) {
+            foreach ($request->get('tax_categ_30') as $key => $value) {
 
-                $taxa = new EmpresaTaxpos();
+                $taxa = new EmpresaTaxpos;
                 $taxa->emp_id = $emp_id;
-                $taxa->tax_categ = "" . $value['categ'] . "";
+                $taxa->tax_categ = '' . $value['categ'] . '';
                 $taxa->parc_de = intval($value['parc_de']);
                 $taxa->parc_ate = intval($value['parc_ate']);
                 $taxa->tax = formatarTextoParaDecimal($value['taxa']);
@@ -1433,10 +1438,10 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_60')) {
-            foreach ($request->get("tax_categ_60") as $key => $value) {
-                $taxa = new EmpresaTaxpos();
+            foreach ($request->get('tax_categ_60') as $key => $value) {
+                $taxa = new EmpresaTaxpos;
                 $taxa->emp_id = $emp_id;
-                $taxa->tax_categ = "" . $value['categ'] . "";
+                $taxa->tax_categ = '' . $value['categ'] . '';
                 $taxa->parc_de = intval($value['parc_de']);
                 $taxa->parc_ate = intval($value['parc_ate']);
                 $taxa->tax = formatarTextoParaDecimal($value['taxa']);
@@ -1447,10 +1452,10 @@ class EmpresaController extends Controller
             }
         }
         if ($request->has('tax_categ_90')) {
-            foreach ($request->get("tax_categ_90") as $key => $value) {
-                $taxa = new EmpresaTaxpos();
+            foreach ($request->get('tax_categ_90') as $key => $value) {
+                $taxa = new EmpresaTaxpos;
                 $taxa->emp_id = $emp_id;
-                $taxa->tax_categ = "" . $value['categ'] . "";
+                $taxa->tax_categ = '' . $value['categ'] . '';
                 $taxa->parc_de = intval($value['parc_de']);
                 $taxa->parc_ate = intval($value['parc_ate']);
                 $taxa->tax = formatarTextoParaDecimal($value['taxa']);
@@ -1461,43 +1466,43 @@ class EmpresaController extends Controller
             }
         }
 
-        return ["hasError" => $hasError, "error_list" => $error_list];
+        return ['hasError' => $hasError, 'error_list' => $error_list];
     }
 
     // FUNÇÃO QUE RETORNA AS EMPRESAS AO CLICAR EM PESQUISAR
     public function getObterGridPesquisa(Request $request)
     {
-        if (!Auth::check()) {
-            abort(Response::HTTP_UNAUTHORIZED, "Usuário não autenticado...");
+        if (! Auth::check()) {
+            abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $emp_id = "";
-        $emp_id_frqmst = "";
-        $emp_id_nmult = "";
-        $status = "";
+        $emp_id = '';
+        $emp_id_frqmst = '';
+        $emp_id_nmult = '';
+        $status = '';
 
-        $data = new Collection();
+        $data = new Collection;
 
-        if (!empty($request->cod_franqueadora)) {
+        if (! empty($request->cod_franqueadora)) {
             $emp_id_frqmst = $request->cod_franqueadora;
         }
 
-        if (!empty($request->empresa_id)) {
+        if (! empty($request->empresa_id)) {
             $emp_id = $request->empresa_id;
         }
 
-        if (!empty($request->nome_multban)) {
+        if (! empty($request->nome_multban)) {
             $emp_id_nmult = $request->nome_multban;
         }
 
-        if (!empty($request->emp_sts)) {
+        if (! empty($request->emp_sts)) {
             $status = $request->emp_sts;
         }
 
         // PESQUISA A EMPRESA PELOS FILTROS SELECIONADOS
         $query = Empresa::query();
 
-        if (!empty($emp_id)) {
+        if (! empty($emp_id)) {
             if (is_numeric($emp_id) && intval($emp_id) > 0) {
                 $query->where('emp_id', '=', $emp_id);
             } else {
@@ -1505,7 +1510,7 @@ class EmpresaController extends Controller
             }
         }
 
-        if (!empty($emp_id_frqmst)) {
+        if (! empty($emp_id_frqmst)) {
             if (is_numeric($emp_id_frqmst) && intval($emp_id_frqmst) > 0) {
                 $query->where('emp_frqmst', '=', $emp_id_frqmst);
             } else {
@@ -1513,7 +1518,7 @@ class EmpresaController extends Controller
             }
         }
 
-        if (!empty($emp_id_nmult)) {
+        if (! empty($emp_id_nmult)) {
             if (is_numeric($emp_id_nmult) && intval($emp_id_nmult) > 0) {
                 $query->where('emp_id', '=', $emp_id_nmult);
             } else {
@@ -1521,12 +1526,12 @@ class EmpresaController extends Controller
             }
         }
 
-        if (!empty($status)) {
-                $query->where('emp_sts', '=', $status);
+        if (! empty($status)) {
+            $query->where('emp_sts', '=', $status);
         }
 
-        if (!empty($request->empresa_cnpj)) {
-            $query->where('emp_cnpj', 'like', "%" . removerCNPJ($request->empresa_cnpj) . "%");
+        if (! empty($request->empresa_cnpj)) {
+            $query->where('emp_cnpj', 'like', '%' . removerCNPJ($request->empresa_cnpj) . '%');
         }
 
         // RESULTADO FINAL DA PESQUISA
@@ -1542,22 +1547,25 @@ class EmpresaController extends Controller
                     $btn .= '<a href="empresa/' . $row->emp_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
                 }
 
-                $disabled = "";
-                if ($row->status->emp_sts == EmpresaStatusEnum::ATIVO)
-                    $disabled = "disabled";
+                $disabled = '';
+                if ($row->status->emp_sts == EmpresaStatusEnum::ATIVO) {
+                    $disabled = 'disabled';
+                }
 
                 $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="active_grid_id" data-url="empresa" data-id="' . $row->emp_id . '" title="Ativar"><i class="far fa-check-circle"></i></button>';
 
-                $disabled = "";
-                if ($row->status->emp_sts == EmpresaStatusEnum::INATIVO)
-                    $disabled = "disabled";
+                $disabled = '';
+                if ($row->status->emp_sts == EmpresaStatusEnum::INATIVO) {
+                    $disabled = 'disabled';
+                }
 
                 $btn .= '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="inactive_grid_id" data-url="empresa" data-id="' . $row->emp_id . '" title="Inativar"><i class="fas fa-ban"></i></button>';
 
                 if (in_array('empresa.destroy', $this->permissions)) {
-                    $disabled = "";
-                    if ($row->status->emp_sts == EmpresaStatusEnum::EXCLUIDO)
-                        $disabled = "disabled";
+                    $disabled = '';
+                    if ($row->status->emp_sts == EmpresaStatusEnum::EXCLUIDO) {
+                        $disabled = 'disabled';
+                    }
                     $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="empresa" data-id="' . $row->emp_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
                 }
                 $btn .= '';
@@ -1565,10 +1573,11 @@ class EmpresaController extends Controller
                 return $btn;
             })->editColumn('emp_cnpj', function ($row) {
                 $badge = strlen($row->emp_cnpj) == 14 ? formatarCNPJ($row->emp_cnpj) : formatarCPF($row->emp_cnpj);
+
                 return $badge;
             })->editColumn('emp_sts', function ($row) {
                 $badge = '';
-                if (!empty($row->status)) {
+                if (! empty($row->status)) {
 
                     switch ($row->status->emp_sts) {
 
@@ -1589,7 +1598,8 @@ class EmpresaController extends Controller
 
                 return $badge;
             })->editColumn('emp_id', function ($row) {
-                $id = str_pad($row->emp_id, 5, "0", STR_PAD_LEFT);
+                $id = str_pad($row->emp_id, 5, '0', STR_PAD_LEFT);
+
                 return $id;
             })
             ->rawColumns(['action', 'emp_cnpj', 'emp_sts'])

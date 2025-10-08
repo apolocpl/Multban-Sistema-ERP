@@ -8,10 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmpresaStatus extends Model
 {
-    use HasFactory, DbSysClientTrait;
+    use DbSysClientTrait, HasFactory;
 
-    protected $table = "tbdm_empstatus";
+    protected $table = 'tbdm_empstatus';
 
     public $timestamps = false;
-
 }

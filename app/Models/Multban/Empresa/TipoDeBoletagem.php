@@ -9,7 +9,7 @@ class TipoDeBoletagem extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_tpbolet";
+    protected $table = 'tbdm_tpbolet';
 
     public $timestamps = false;
 }

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class TbDmUserStatus extends Model
 {
-     use DbSysClientTrait;
+    use DbSysClientTrait;
 
-    protected $table = "tbdm_userstatus";
+    protected $table = 'tbdm_userstatus';
 
     public $timestamps = false;
 }

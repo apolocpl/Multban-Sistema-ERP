@@ -9,7 +9,7 @@ class TbDmUserFunc extends Model
 {
     use DbSysClientTrait;
 
-    protected $table = "tbdm_userfunc";
+    protected $table = 'tbdm_userfunc';
 
     public $timestamps = false;
 }

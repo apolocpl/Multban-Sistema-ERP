@@ -17,8 +17,8 @@ class ProgramaPtsRoute
         Route::get('programa-de-pontos/{id}/copiar', [ProgramaPtsController::class, 'copy'])->name('programa-de-pontos.copy');
         Route::get('programa-de-pontos/{id}/visualizar', [ProgramaPtsController::class, 'show'])->name('programa-de-pontos.show');
         Route::delete('programa-de-pontos/{id}', [ProgramaPtsController::class, 'destroy'])->name('programa-de-pontos.destroy');
-        Route::post('programa-de-pontos/active/{id}', [ProgramaPtsController::class, 'active']);//->middleware('permission:empresa.active')->name('empresa.active');
-        Route::post('programa-de-pontos/inactive/{id}', [ProgramaPtsController::class, 'inactive']);//->middleware('permission:empresa.inactive')->name('empresa.inactive');
+        Route::post('programa-de-pontos/active/{id}', [ProgramaPtsController::class, 'active']); // ->middleware('permission:empresa.active')->name('empresa.active');
+        Route::post('programa-de-pontos/inactive/{id}', [ProgramaPtsController::class, 'inactive']); // ->middleware('permission:empresa.inactive')->name('empresa.inactive');
 
         Route::post('programa-de-pontos/obtergridpesquisa', [ProgramaPtsController::class, 'getObterGridPesquisa']);
         Route::post('programa-de-pontos/{id}/alterar-status', [ProgramaPtsController::class, 'alterarStatus']);

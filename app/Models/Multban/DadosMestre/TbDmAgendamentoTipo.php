@@ -7,10 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class TbDmAgendamentoTipo extends Model
 {
-
     use DbSysClientTrait;
 
-    protected $table = "tbdm_agendamento_tp";
+    protected $table = 'tbdm_agendamento_tp';
 
     public $timestamps = false;
 
@@ -21,5 +20,4 @@ class TbDmAgendamentoTipo extends Model
         'langu',
         'agendamento_sts_desc',
     ];
-
 }
