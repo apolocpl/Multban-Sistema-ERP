@@ -3,6 +3,7 @@
 
 /public/hot
 /public/storage
+/storage
 /storage/*.key
 /storage/app/public
 /storage/debugbar
