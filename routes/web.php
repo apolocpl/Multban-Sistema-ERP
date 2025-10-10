@@ -14,10 +14,10 @@ use App\Http\Routes\PainelCobrancaRoute;
 use App\Http\Routes\PerfilDeAcessoRoute;
 use App\Http\Routes\PerfilRoute;
 use App\Http\Routes\ProdutoRoute;
-use App\Http\Routes\ProgramaPTSRoute;
+use App\Http\Routes\ProgramaPtsRoute;
 use App\Http\Routes\RecargaCartoesRoute;
 use App\Http\Routes\RelatoriosRoute;
-use App\Http\Routes\SistemamultbanRoute;
+use App\Http\Routes\SistemaMultbanRoute;
 use App\Http\Routes\UsuarioRoute;
 use App\Http\Routes\VendasRoute;
 use App\Http\Routes\WorkFlowRoute;
@@ -86,12 +86,12 @@ Route::group(['middleware' => ['auth']], function () {
     /**
      * Programa de Pontos Route
      */
-    ProgramaPTSRoute::rotas();
+    ProgramaPtsRoute::rotas();
 
     /**
      * Programa multban
      */
-    SistemamultbanRoute::rotas();
+    SistemaMultbanRoute::rotas();
 
     /**
      * WorkFlow
