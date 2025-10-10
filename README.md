@@ -7,7 +7,7 @@ O Multban e uma plataforma ERP desenvolvida em Laravel voltada para a gestao int
 - **Clientes:** cadastro, prontuario, cartoes e pesquisa avancada de clientes (`app/Http/Controllers/Multban/Cliente`).
 - **Usuarios e Perfis:** gestao de contas, papeis e permissoes com Spatie Permission (`app/Http/Controllers/Multban/Usuario`, `Perfil`, `PerfilDeAcesso`).
 - **Agenda e Workflow:** agendamento de atendimentos e definicao de fluxos operacionais (`app/Http/Controllers/Multban/Agendamento`, `WorkFlow`).
-- **Produtos, Vendas e Programa de Pontos:** catalogo, transacoes e fidelizacao (`app/Http/Controllers/Multban/Produto`, `Venda`, `ProgramaPTS`).
+- **Produtos, Vendas e Programa de Pontos:** catalogo, transacoes e fidelizacao (`app/Http/Controllers/Multban/Produto`, `Venda`, `ProgramaPts`).
 - **Faturamento e Cobranca:** emissao e manutencao de titulos, painel financeiro e integracao com DataTables (`app/Http/Controllers/Multban/FaturamentoServico`, `PainelCobranca`, `ManutencaoTitulo`).
 - **Recarga, Gift Cards e Carga de Dados:** operacoes financeiras complementares e importadores (`app/Http/Controllers/Multban/RecargaCartoes`, `GiftCard`, `CargaDados`).
 - **Relatorios e Configuracoes:** dashboards gerenciais e parametrizacoes gerais (`app/Http/Controllers/Multban/Relatorios`, `Configuracoes`).

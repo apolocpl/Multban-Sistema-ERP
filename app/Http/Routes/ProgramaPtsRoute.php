@@ -2,7 +2,7 @@
 
 namespace App\Http\Routes;
 
-use App\Http\Controllers\Multban\ProgramaPTS\ProgramaPtsController;
+use App\Http\Controllers\Multban\ProgramaPts\ProgramaPtsController;
 use Illuminate\Support\Facades\Route;
 
 class ProgramaPtsRoute
