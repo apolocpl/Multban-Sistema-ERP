@@ -19,7 +19,6 @@ use App\Models\Multban\Empresa\Empresa;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -30,10 +29,39 @@ use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Support\Tenancy\TenantManager;
 
 class ClienteController extends Controller
 {
     private $permissions;
+
+    public function __construct(private readonly TenantManager $tenantManager) {}
+
+    /**
+     * Resolve the authenticated user's empresa id and ensure incoming identifiers belong to it.
+     */
+    private function authenticatedEmpresaId(?int $empresaId = null): int
+    {
+        return $this->tenantManager->ensure($empresaId);
+    }
+
+    /**
+     * Fetch a cliente ensuring it belongs to the authenticated empresa and authorize the provided ability.
+     */
+    private function getClienteForUserOrFail(int $clienteId, string $ability = 'view'): Cliente
+    {
+        $empresaId = $this->tenantManager->ensure();
+
+        $cliente = Cliente::where('cliente_id', $clienteId)
+            ->whereHas('empresa', function ($query) use ($empresaId) {
+                $query->where('tbdm_clientes_emp.emp_id', $empresaId);
+            })
+            ->firstOrFail();
+
+        $this->authorize($ability, $cliente);
+
+        return $cliente;
+    }
 
     /**
      * Display a listing of the resource.
@@ -56,7 +84,7 @@ class ClienteController extends Controller
      */
     public function create()
     {
-        $emp_id = Auth::user()->emp_id;
+        $emp_id = $this->tenantManager->ensure();
         $userRole = Auth::user()->roles->pluck('name', 'name')->all();
 
         $status = ClienteStatus::all();
@@ -99,7 +127,7 @@ class ClienteController extends Controller
         DB::beginTransaction();
         try {
 
-            $emp_id = Auth::user()->emp_id;
+            $emp_id = $this->tenantManager->ensure();
 
             $userRole = Auth::user()->roles->pluck('name', 'name')->all();
             $canChangeStatus = false;
@@ -230,7 +258,7 @@ class ClienteController extends Controller
      */
     public function show($id)
     {
-        $cliente = Cliente::findOrFail($id);
+        $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
 
         return response()->view('Multban.cliente.edit', compact(
             'cliente',
@@ -245,7 +273,7 @@ class ClienteController extends Controller
      */
     public function edit($id)
     {
-        $emp_id = Auth::user()->emp_id;
+        $emp_id = $this->tenantManager->ensure();
         $userRole = Auth::user()->roles->pluck('name', 'name')->all();
 
         $status = ClienteStatus::all();
@@ -253,10 +281,12 @@ class ClienteController extends Controller
         $cardTipos = CardTipo::all();
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
-        $cliente = Cliente::findOrFail($id);
+        $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
 
         $convenios = TbDmConvenios::all();
-        $prontuarios = ClienteProntuario::where('cliente_id', $id)->get();
+        $prontuarios = ClienteProntuario::where('cliente_id', $cliente->cliente_id)
+            ->where('emp_id', $emp_id)
+            ->get();
         $dbsysclient = DB::connection('dbsysclient');
         $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
             ->where('user_func_grp', '=', 'consulta')->get();
@@ -346,7 +376,7 @@ class ClienteController extends Controller
     {
         try {
 
-            $cliente = Cliente::find($id);
+            $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
             $input = $request->all();
 
             $input['cliente_doc'] = removerCNPJ($request->clicgc);
@@ -409,7 +439,7 @@ class ClienteController extends Controller
     {
         try {
 
-            $cliente = Cliente::find($id);
+            $cliente = $this->getClienteForUserOrFail((int) $id, 'delete');
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::EXCLUIDO;
                 $cliente->save();
@@ -437,7 +467,7 @@ class ClienteController extends Controller
     {
         try {
 
-            $cliente = Cliente::find($id);
+            $cliente = $this->getClienteForUserOrFail((int) $id, 'updateStatus');
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::INATIVO;
                 $cliente->save();
@@ -467,7 +497,7 @@ class ClienteController extends Controller
     {
         try {
 
-            $cliente = Cliente::find($id);
+            $cliente = $this->getClienteForUserOrFail((int) $id, 'updateStatus');
 
             if ($cliente) {
                 $cliente->cliente_sts = EmpresaStatusEnum::ATIVO;
@@ -499,7 +529,7 @@ class ClienteController extends Controller
     {
         $parametro = $request->query('parametro', '');
         $parametro = str_replace(['.', '/', '-'], '', $parametro);
-        $emp_id = Auth::user()->emp_id;
+        $emp_id = $this->tenantManager->ensure();
 
         if (empty($parametro)) {
             return [
@@ -584,12 +614,15 @@ class ClienteController extends Controller
     {
         try {
 
+            $cliente = $this->getClienteForUserOrFail((int) $request->input('cliente_id'), 'manageRelatedData');
+            $empresaId = $this->authenticatedEmpresaId((int) $request->input('emp_id'));
+
             $prontuario = new ClienteProntuario;
-            $prontuario->cliente_id = $request->input('cliente_id');
+            $prontuario->cliente_id = $cliente->cliente_id;
             $prontuario->protocolo_tp = 1;
             $prontuario->protocolo_dt = Carbon::now();
-            $prontuario->cliente_doc = 1;
-            $prontuario->emp_id = $request->input('emp_id');
+            $prontuario->cliente_doc = $cliente->cliente_doc;
+            $prontuario->emp_id = $empresaId;
             $prontuario->user_id = Auth::user()->user_id;
             $prontuario->criador = Auth::user()->user_id;
             $prontuario->dthr_cr = Carbon::now();
@@ -682,8 +715,15 @@ class ClienteController extends Controller
     {
         try {
 
-            $prontuario = ClienteProntuario::find($id);
-            $prontuario->cliente_id = $request->input('cliente_id');
+            $cliente = $this->getClienteForUserOrFail((int) $request->input('cliente_id'), 'manageRelatedData');
+            $empresaId = $this->authenticatedEmpresaId();
+
+            $prontuario = ClienteProntuario::where('id', $id)
+                ->where('cliente_id', $cliente->cliente_id)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $prontuario->cliente_id = $cliente->cliente_id;
             $prontuario->modificador = Auth::user()->user_id;
             $prontuario->dthr_ch = Carbon::now();
             $prontuario->texto_prt = rtrim($request->input('texto_prt'));
@@ -779,11 +819,19 @@ class ClienteController extends Controller
     {
         try {
 
-            $query = '';
+            $empresaId = $this->authenticatedEmpresaId();
+            $prontuariosQuery = ClienteProntuario::where('emp_id', $empresaId);
 
-            $hasQuery = false;
+            if ($request->filled('cliente_id')) {
+                $cliente = $this->getClienteForUserOrFail((int) $request->cliente_id, 'manageRelatedData');
+                $prontuariosQuery->where('cliente_id', $cliente->cliente_id);
+            }
+
             if (! empty($request->data_de) && ! empty($request->data_ate)) {
-                if (Carbon::createFromFormat('Y-m-d', $request->data_de) > Carbon::createFromFormat('Y-m-d', $request->data_ate)) {
+                $dataDe = Carbon::createFromFormat('Y-m-d', $request->data_de);
+                $dataAte = Carbon::createFromFormat('Y-m-d', $request->data_ate);
+
+                if ($dataDe->greaterThan($dataAte)) {
                     return response()->json([
                         'title'   => 'Erro',
                         'type'    => 'error',
@@ -791,40 +839,20 @@ class ClienteController extends Controller
                     ], Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $query .= " protocolo_dt >= '" . Carbon::createFromFormat('Y-m-d', $request->data_de)->toDateString() . "' AND";
-                $query .= " protocolo_dt <= '" . Carbon::createFromFormat('Y-m-d', $request->data_ate)->toDateString() . "' AND";
-                $hasQuery = true;
+                $prontuariosQuery
+                    ->whereDate('protocolo_dt', '>=', $dataDe->toDateString())
+                    ->whereDate('protocolo_dt', '<=', $dataAte->toDateString());
             }
 
-            if (! empty($request->protocolo)) {
-                $query .= 'protocolo = ' . quotedstr($request->protocolo) . ' AND';
-                $hasQuery = true;
+            if ($request->filled('protocolo')) {
+                $prontuariosQuery->where('protocolo', $request->protocolo);
             }
 
-            if (! empty($request->user_id)) {
-                $query .= ' user_id = ' . quotedstr($request->user_id) . '';
-                $hasQuery = true;
+            if ($request->filled('user_id')) {
+                $prontuariosQuery->where('user_id', $request->user_id);
             }
 
-            if (! empty($request->protocolo_dt)) {
-
-                $query .= " protocolo_dt >= '" . Carbon::createFromFormat('Y-m-d', $request->data_de)->toDateString() . "' AND";
-                $hasQuery = true;
-            }
-
-            if (! empty($request->protocolo_dt)) {
-
-                $query .= " protocolo_dt <= '" . Carbon::createFromFormat('Y-m-d', $request->data_ate)->toDateString() . "' AND";
-                $hasQuery = true;
-            }
-
-            $query = rtrim($query, 'AND');
-
-            if ($hasQuery) {
-                $prontuarios = ClienteProntuario::whereRaw(DB::raw($query))->get();
-            } else {
-                $prontuarios = ClienteProntuario::where('cliente_id', $request->cliente_id)->get();
-            }
+            $prontuarios = $prontuariosQuery->get();
 
             return DataTables::of($prontuarios)
                 ->addIndexColumn()
@@ -893,55 +921,44 @@ class ClienteController extends Controller
             abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        // $this->applyFilters(request(), ['empresa_id' => $request->empresa_id, 'cliente_sts' => $request->cliente_sts, 'cliente_tipo' => $request->cliente_tipo, 'cliente_id' => $request->cliente_id, 'cliente_doc' => $request->cliente_doc], 'cliente_filters');
+        $empresaId = $this->tenantManager->ensure();
 
-        $data = new Collection;
+        $clientesQuery = Cliente::query()
+            ->join('tbdm_clientes_emp', 'tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
+            ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.emp_id')
+            ->where('tbdm_clientes_emp.emp_id', $empresaId);
 
-        $query = '';
-
-        if (! empty($request->cliente_sts)) {
-            $query .= 'cliente_sts = ' . quotedstr($request->cliente_sts) . ' AND ';
+        if ($request->filled('cliente_sts')) {
+            $clientesQuery->where('tbdm_clientes_geral.cliente_sts', $request->cliente_sts);
         }
-        if (! empty($request->cliente_tipo)) {
-            $query .= 'cliente_tipo = ' . quotedstr($request->cliente_tipo) . ' AND ';
+
+        if ($request->filled('cliente_tipo')) {
+            $clientesQuery->where('tbdm_clientes_geral.cliente_tipo', $request->cliente_tipo);
         }
-        if (! empty($request->cliente_id)) {
+
+        if ($request->filled('cliente_id')) {
             if (is_numeric($request->cliente_id)) {
-                $query .= 'tbdm_clientes_geral.cliente_id = ' . quotedstr($request->cliente_id) . ' AND ';
+                $clientesQuery->where('tbdm_clientes_geral.cliente_id', $request->cliente_id);
             } else {
-                $query .= "tbdm_clientes_geral.cliente_nome like '%" . $request->cliente_id . "%' AND ";
+                $clientesQuery->where('tbdm_clientes_geral.cliente_nome', 'like', '%' . $request->cliente_id . '%');
             }
         }
 
-        if (! empty($request->cliente_doc)) {
-
-            $query .= 'tbdm_clientes_geral.cliente_doc = ' . quotedstr(removerCNPJ($request->cliente_doc)) . ' AND ';
+        if ($request->filled('cliente_doc')) {
+            $clientesQuery->where('tbdm_clientes_geral.cliente_doc', removerCNPJ($request->cliente_doc));
         }
 
-        if (! empty($request->empresa_id)) {
-            if (is_numeric($request->empresa_id)) {
+        if ($request->filled('nome_multban')) {
+            $empresaMatches = Empresa::where('emp_id', $empresaId)
+                ->where('emp_nmult', 'like', '%' . $request->nome_multban . '%')
+                ->exists();
 
-                $query .= 'emp_id = ' . $request->empresa_id;
-            } else {
-
-                $empresasGeral = Empresa::where('emp_nmult', 'like', '%' . $request->empresa_id . '%')->get(['emp_id'])->pluck('emp_id')->toArray();
-
-                if ($empresasGeral) {
-                    $query .= selectItens($empresasGeral, 'tbdm_clientes_emp.emp_id');
-                }
+            if (! $empresaMatches) {
+                $clientesQuery->whereRaw('1 = 0');
             }
         }
 
-        $query = rtrim($query, 'AND ');
-
-        if (! empty($query)) {
-            $data = Cliente::join('tbdm_clientes_emp', 'tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
-                ->select(
-                    'tbdm_clientes_geral.*',
-                    'tbdm_clientes_emp.emp_id',
-                )
-                ->whereRaw(DB::raw($query))->get();
-        }
+        $data = $clientesQuery->get();
 
         $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
@@ -1036,6 +1053,8 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->authenticatedEmpresaId((int) $request->input('emp_id'));
+
             if (empty($request->cliente_id)) {
                 return response()->json([
                     'message_type' => 'Cliente ainda não cadatrado, favor cadastrar o cliente antes de criar o cartão.',
@@ -1062,13 +1081,13 @@ class ClienteController extends Controller
 
             DB::beginTransaction();
 
-            $empresa = Empresa::find($request->emp_id);
+            $empresa = Empresa::find($empresaId);
             $cnpj = '';
             if ($empresa) {
                 $cnpj = substr(removerCNPJ($empresa->emp_cnpj), 0, 7);
             }
 
-            $cliente = Cliente::find($request->cliente_id);
+            $cliente = $this->getClienteForUserOrFail((int) $request->cliente_id, 'manageRelatedData');
             $cpf = '';
             if ($cliente) {
                 $cpf = substr(removerCNPJ($cliente->cliente_doc), 0, 7);
@@ -1080,9 +1099,9 @@ class ClienteController extends Controller
             $numeroCartao = $this->gerarNumeroCartaoCredito($cnpj, $cpf, $request->card_mod, $request->card_tp);
 
             $dadosCartao = [
-                'emp_id'           => $request->emp_id,
-                'cliente_id'       => $request->cliente_id,
-                'cliente_doc'      => removerCNPJ($request->cliente_doc),
+                'emp_id'           => $empresaId,
+                'cliente_id'       => $cliente->cliente_id,
+                'cliente_doc'      => $cliente->cliente_doc,
                 'cliente_pasprt'   => $cliente->cliente_pasprt,
                 'card_uuid'        => Str::uuid()->toString(),
                 'cliente_cardn'    => $numeroCartao,
@@ -1194,6 +1213,8 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->authenticatedEmpresaId((int) $request->input('emp_id'));
+
             $validator = Validator::make($request->all(), [
                 'tabela'  => 'required',
                 'campo'   => 'required',
@@ -1212,11 +1233,11 @@ class ClienteController extends Controller
                 ->where('tabela', '=', $request->tabela)
                 ->where('campo', '=', $request->campo)
                 ->where('user_id', '=', $request->user_id)
-                ->where('emp_id', '=', $request->emp_id)->update([
+                ->where('emp_id', '=', $empresaId)->update([
                     'tabela'  => $request->tabela,
                     'campo'   => $request->campo,
                     'user_id' => $request->user_id,
-                    'emp_id'  => $request->emp_id,
+                    'emp_id'  => $empresaId,
                 ]);
 
             return response()->json([
@@ -1238,10 +1259,12 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->authenticatedEmpresaId((int) ($request->input('emp_id') ?? $emp_id));
+
             $data = DB::connection('dbsysclient')->table('tbcf_config_wf')
                 ->where('tabela', '=', $request->tabela)
                 ->where('campo', '=', $request->campo)
-                ->where('emp_id', '=', $request->emp_id)->first();
+                ->where('emp_id', '=', $empresaId)->first();
 
             $columnsList = DB::connection('dbsysclient')->getSchemaBuilder()->getColumnListing($request->tabela);
             $columns = [];
@@ -1278,10 +1301,12 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->authenticatedEmpresaId((int) ($request->input('emp_id') ?? $emp_id));
+
             $data = DB::connection('dbsysclient')->table('tbcf_config_wf')
                 ->where('tabela', '=', $request->tabela)
                 ->where('campo', '=', $request->campo)
-                ->where('emp_id', '=', $request->emp_id)->delete();
+                ->where('emp_id', '=', $empresaId)->delete();
 
             if ($data) {
                 return response()->json([
