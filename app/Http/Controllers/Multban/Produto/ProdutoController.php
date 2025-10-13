@@ -433,7 +433,7 @@ class ProdutoController extends Controller
         // RESULTADO FINAL DA PESQUISA
         $data = $query->get();
 
-        $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
+        $this->permissions = Auth::user()->permissions->pluck('name')->toArray();
 
         return DataTables::of($data)
             ->addIndexColumn()
