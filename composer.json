@@ -15,7 +15,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
         "spatie/laravel-menu": "^4.2",
-        "spatie/laravel-permission": "^6.17",
+        "spatie/laravel-permission": "^6.21",
         "yajra/laravel-datatables": "12.0"
     },
     "require-dev": {

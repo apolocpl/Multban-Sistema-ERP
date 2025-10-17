@@ -960,7 +960,19 @@ class ClienteController extends Controller
 
         $data = $clientesQuery->get();
 
-        $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
+        $user = Auth::user();
+        if ($user && is_callable([$user, 'getAllPermissions'])) {
+            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
+        } else {
+            $rolePerms = collect();
+            foreach ($user->roles as $role) {
+                if (method_exists($role, 'permissions') || isset($role->permissions)) {
+                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
+                }
+            }
+            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
+            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+        }
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -1348,7 +1360,19 @@ class ClienteController extends Controller
             $request->cliente_id
         )->get();
 
-        $this->permissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
+        $user = Auth::user();
+        if (method_exists($user, 'getAllPermissions')) {
+            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
+        } else {
+            $rolePerms = collect();
+            foreach ($user->roles as $role) {
+                if (method_exists($role, 'permissions') || isset($role->permissions)) {
+                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
+                }
+            }
+            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
+            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+        }
 
         return DataTables::of($data)
             ->addIndexColumn()

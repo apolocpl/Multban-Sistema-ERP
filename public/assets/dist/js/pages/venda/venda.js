@@ -2770,13 +2770,13 @@ $(document).ready(function () {
 
     // Sempre que trocar o tipo de pagamento, ajusta o valorCobrar se necessário
     $('body').on('click', '.payment-box', function() {
-        var totalCarrinho = parseBRL($('.valorTotal').text());
+        var checkout_total = parseBRL($('#checkout_total').text());
         var tipoPagamento = $(this).data('identificacao');
         var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(/\./g, '').replace(',', '.')) || 0;
 
-        if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
+        if (tipoPagamento !== 'DN' && valorCobrar > checkout_total) {
             // atualiza via helper para evitar disparar o handler 'input' que pode reformatar indevidamente
-            atualizarCampoValortotalacobrar(totalCarrinho);
+            atualizarCampoValortotalacobrar(checkout_total);
         }
     });
 
