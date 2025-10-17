@@ -10,6 +10,8 @@ use App\Models\Multban\Empresa\EmpresaTaxpos;
 use App\Models\Multban\Produto\Produto;
 use App\Models\Multban\Produto\ProdutoStatus;
 use App\Models\Multban\Produto\ProdutoTipo;
+use App\Models\Multban\Cliente\Cliente;
+use App\Models\Multban\Cliente\ClienteCard;
 use App\Models\Multban\ProgramaPts\ProgramaPts;
 use App\Models\Multban\TbTr\TbtrHTitulos;
 use App\Models\Multban\TbTr\TbtrITitulos;
@@ -37,40 +39,47 @@ class PdvWebController extends Controller
 
             // DADOS RECEBIDOS DO REQUEST - PDV WEB
             $cliente_id = $request->input('cliente_id');
-            $checkout_subtotal = $request->input('checkout_subtotal');      // Valor total do carrinho antes de descontos
-            $checkout_cashback = $request->input('checkout_cashback');      // Valor total de cashback aplicado
-            $checkout_desconto = $request->input('checkout_desconto');      // Valor total de desconto aplicado
-            $checkout_pago = $request->input('checkout_pago');              // Valor total pago
-            $checkout_troco = $request->input('valortroco');                // Valor total de troco
-            $checkout_descontado = $request->input('checkout_descontado');  // Valor total descontado
-            $checkout_resgatado = $request->input('checkout_resgatado');    // Pontos de cashback resgatados
-            $checkout_total = $request->input('checkout_total');            // Valor total a cobrar (subtotal - desconto - cashback)
-            $valortotalacobrar = $request->input('valortotalacobrar');      // Valor que o usuário quer cobrar agora
-            $proporcao_cobrado = $request->input('proporcao_cobrado');      // Proporção do valor total a ser cobrado
-            $tipoPagto = $request->input('tipoPagto');                      // Tipo de pagamento (ex: 'DN', 'CARTAO', etc.)
-            $carrinho_venda = $request->input('carrinho');                  // array de itens
+            $checkout_subtotal = $request->input('checkout_subtotal');            // Valor total do carrinho antes de descontos
+            $checkout_cashback = $request->input('checkout_cashback');            // Valor total de cashback aplicado
+            $checkout_desconto = $request->input('checkout_desconto');            // Valor total de desconto aplicado
+            $proporcao_cobrado = $request->input('proporcao_cobrado');            // Proporção do valor total a ser cobrado
+            $tipoPagto = $request->input('tipoPagto');                            // Tipo de pagamento (ex: 'DN', 'CARTAO', etc.)
+            $carrinho_venda = $request->input('carrinho');                        // array de itens
+            $check_reembolso = $request->input('check_reembolso', null); // Identifica se o processo é para reembolso
+            $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');        // Data da primeira parcela
+            $parcelas = $request->input('parcelas');                              // Número de parcelas
+            $jurosTotal = $request->input('jurosTotal');                          // Juros total da venda
+            $tax_categ = $request->input('tax_categ');                            // Categoria da taxa (À Vista / 30 / 60 / 90)
+            $regra_parc = $request->input('regra_parc');                          // Regra de parcelamento
+            $card_uuid = $request->input('card_uuid');                            // UUID do cartão
+            $card_mod = $request->input('card_mod');                              // Modelo do cartão
+            $card_tp = $request->input('card_tp');                                // Tipo do cartão
 
-            $vendaSemJuros = $request->input('vendaSemJuros', 0);
-            $check_reembolso = $request->input('check_reembolso', null);
-            $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
-            $parcelas = $request->input('parcelas');
-            $valorTotalComJuros = $request->input('valorTotalComJuros');
-            $valorParcelaComJuros = $request->input('valorParcelaComJuros');
-            $valorParcelaSemJuros = $request->input('valorParcelaSemJuros');
-            $jurosTotal = $request->input('jurosTotal');
-            $jurosTotalParcela = $request->input('jurosTotalParcela');
-            $tax_categ = $request->input('tax_categ');
-            $regra_parc = $request->input('regra_parc');
-            $card_categ = $request->input('card_categ');
-            $card_uuid = $request->input('card_uuid');
-            $card_mod = $request->input('card_mod');
-            $card_tp = $request->input('card_tp');
 
+
+
+            $checkout_pago = $request->input('checkout_pago');                    // Valor total pago
+            $checkout_troco = $request->input('valortroco');                      // Valor total de troco
+            $checkout_descontado = $request->input('checkout_descontado');        // Valor total descontado
+            $checkout_resgatado = $request->input('checkout_resgatado');          // Pontos de cashback resgatados
+            $checkout_total = $request->input('checkout_total');                  // Valor total a cobrar (subtotal - desconto - cashback)
+            $valortotalacobrar = $request->input('valortotalacobrar');            // Valor que o usuário quer cobrar agora
+            $vendaSemJuros = $request->input('vendaSemJuros', 0);        // Check de Vendas sem juros
+            $valorTotalComJuros = $request->input('valorTotalComJuros');          // Valor total com juros
+            $valorParcelaComJuros = $request->input('valorParcelaComJuros');      // Valor da parcela com juros
+            $valorParcelaSemJuros = $request->input('valorParcelaSemJuros');      // Valor da parcela sem juros
+            $jurosTotalParcela = $request->input('jurosTotalParcela');            // Juros total da parcela
+            $card_categ = $request->input('card_categ');                          // Categoria do cartão
+
+
+
+            /////////////////////////////////////////////////////////////////////////////
             // CARREGA DADOS DA EMPRESA E PARÂMETROS DA EMPRESA DO USUÁRIO LOGADO
             $emp_id = $user->emp_id;
             $empresa = Empresa::find($emp_id);
             $empresaParam = EmpresaParam::find($emp_id);
 
+            /////////////////////////////////////////////////////////////////////////////
             // CALCULA DIAS DE PRAZO, SE HOUVER
             $diasPrazo = null;
             if ($dataPrimeiraParcela) {
@@ -79,6 +88,7 @@ class PdvWebController extends Controller
                 $diasPrazo = $hoje->diffInDays($dataPrimeira, false);
             }
 
+            /////////////////////////////////////////////////////////////////////////////
             // BUSCA A TAXA DE ACORDO COM A CATEGORIA E PARCELAS
             $taxpos = EmpresaTaxpos::where('emp_id', $emp_id)
                 ->where('tax_categ', $tax_categ)
@@ -91,10 +101,29 @@ class PdvWebController extends Controller
                 $tax = $taxpos->tax;
             }
 
-            // DESENHAR A REGRA AQUI PARA A LIBERAÇÃO DA ANTECIPAÇÃO
+            /////////////////////////////////////////////////////////////////////////////
+            // VERIFICA LIMITES DO CARTÃO E LIMITE SUGERIDO PARA LIBERAÇÃO DA ANTECIPAÇÃO
             $lib_ant = null;
+            if ($card_uuid && $emp_id) {
+                $card = ClienteCard::where('emp_id', $emp_id)
+                    ->where('card_uuid', $card_uuid)
+                    ->where('cliente_id', $cliente_id)
+                    ->first();
 
-            // PARÂMETROS
+                if ($card) {
+                    $cliente = Cliente::where('cliente_id', $card->cliente_id)->first();
+                    if ($cliente) {
+                        $card_limite = floatval(str_replace(',', '.', str_replace('.', '', $card->card_limite ?? '0')));
+                        $cliente_lmt_sg = floatval(str_replace(',', '.', str_replace('.', '', $cliente->cliente_lmt_sg ?? '0')));
+                        if ($card_limite <= $cliente_lmt_sg) {
+                            $lib_ant = 'X';
+                        }
+                    }
+                }
+            }
+
+            /////////////////////////////////////////////////////////////////////////////
+            // SE A EMPRESA FOR WHITE LABEL, BUSCA A COMISSÃO PARA A MULTBAN
             $emp_wlde = $empresa->emp_wlde;
             $emp_comwl = null;
             if ($emp_wlde) {
@@ -107,13 +136,20 @@ class PdvWebController extends Controller
             // DADOS DOS PARÂMETROS DA EMPRESA
             $vlr_pix = $empresaParam->vlr_pix ? $empresaParam->vlr_pix : 0;                            // Valor Pix
             $vlr_boleto = $empresaParam->vlr_boleto ? $empresaParam->vlr_boleto : 0;                   // Valor Boleto
-            $taxa_bacen = $vlr_pix + $vlr_boleto;                                                      // Taxa Bacen (Pix + Boleto)
-            $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
             $tax_blt = $empresaParam->tax_blt ? $empresaParam->tax_blt : 0;                            // Taxa Boleto
-            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
             $tax_pre = $empresaParam->tax_pre ? $empresaParam->tax_pre : 0;                            // Taxa Pré
             $tax_gift = $empresaParam->tax_gift ? $empresaParam->tax_gift : 0;                         // Taxa Gift
             $tax_fid = $empresaParam->tax_fid ? $empresaParam->tax_fid : 0;                            // Taxa Fidelidade
+            $tax_rebate = $empresaParam->tax_rebate ? $empresaParam->tax_rebate : 0;                   // Taxa Rebate
+            $tax_royalties = $empresaParam->tax_royalties ? $empresaParam->tax_royalties : 0;          // Taxa Royalties
+            $tax_comiss = $empresaParam->tax_comiss ? $empresaParam->tax_comiss : 0;                   // Taxa de Comissão
+
+
+            $taxa_bacen = $vlr_pix + $vlr_boleto;                                                      // Taxa Bacen (Pix + Boleto)
+            $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
+
+            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
+
             $pp_particular = $empresaParam->pp_particular ? $empresaParam->pp_particular : 0;          // Pagamento Particular
             $pp_franquia = $empresaParam->pp_franquia ? $empresaParam->pp_franquia : 0;                // Pagamento Franquia
             $pp_mult = $empresaParam->pp_mult ? $empresaParam->pp_mult : 0;                            // Pagamento Multi Cartão
@@ -122,11 +158,11 @@ class PdvWebController extends Controller
             $tax_antfundo = $empresaParam->tax_antfundo ? $empresaParam->tax_antfundo : 0;             // Taxa Antecipação Fundo
             $perc_rec_ant = $empresaParam->perc_rec_ant ? $empresaParam->perc_rec_ant : 0;             // Percentual Recebido Antecipação
             $rebate_emp = $empresaParam->rebate_emp ? $empresaParam->rebate_emp : 0;                   // Rebate Empresa
-            $tax_rebate = $empresaParam->tax_rebate ? $empresaParam->tax_rebate : 0;                   // Taxa Rebate
+
             $royalties_emp = $empresaParam->royalties_emp ? $empresaParam->royalties_emp : 0;          // Royalties Empresa
-            $tax_royalties = $empresaParam->tax_royalties ? $empresaParam->tax_royalties : 0;          // Taxa Royalties
-            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Comissão Empresa
-            $tax_comiss = $empresaParam->tax_comiss ? $empresaParam->tax_comiss : 0;
+
+            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Empresa Comissionada
+
 
             // FÓRMULAS
             $user_id = $user->user_id;
