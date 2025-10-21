@@ -34,9 +34,11 @@ class PdvWebController extends Controller
         try {
             DB::connection('dbsysclient')->beginTransaction();
 
+            /////////////////////////////////////////////////////////////////////////////
             // DADOS DO USUÁRIO LOGADO
             $user = Auth::user();
 
+            /////////////////////////////////////////////////////////////////////////////
             // DADOS RECEBIDOS DO REQUEST - PDV WEB
             $cliente_id = $request->input('cliente_id');
             $checkout_subtotal = $request->input('checkout_subtotal');            // Valor total do carrinho antes de descontos
@@ -73,11 +75,39 @@ class PdvWebController extends Controller
 
 
 
+
             /////////////////////////////////////////////////////////////////////////////
-            // CARREGA DADOS DA EMPRESA E PARÂMETROS DA EMPRESA DO USUÁRIO LOGADO
+            // CARREGA DADOS DA EMPRESA DO USUÁRIO LOGADO
             $emp_id = $user->emp_id;
             $empresa = Empresa::find($emp_id);
+
+            /////////////////////////////////////////////////////////////////////////////
+            // DADOS DOS PARÂMETROS DA EMPRESA
             $empresaParam = EmpresaParam::find($emp_id);
+            $vlr_pix = $empresaParam->vlr_pix ? $empresaParam->vlr_pix : 0;                            // Valor Pix
+            $vlr_boleto = $empresaParam->vlr_boleto ? $empresaParam->vlr_boleto : 0;                   // Valor Boleto
+            $tax_blt = $empresaParam->tax_blt ? $empresaParam->tax_blt : 0;                            // Taxa Boleto
+            $tax_pre = $empresaParam->tax_pre ? $empresaParam->tax_pre : 0;                            // Taxa Pré
+            $tax_gift = $empresaParam->tax_gift ? $empresaParam->tax_gift : 0;                         // Taxa Gift
+            $tax_fid = $empresaParam->tax_fid ? $empresaParam->tax_fid : 0;                            // Taxa Fidelidade
+            $tax_rebate = $empresaParam->tax_rebate ? $empresaParam->tax_rebate : 0;                   // Taxa Rebate
+            $tax_royalties = $empresaParam->tax_royalties ? $empresaParam->tax_royalties : 0;          // Taxa Royalties
+            $tax_comiss = $empresaParam->tax_comiss ? $empresaParam->tax_comiss : 0;                   // Taxa de Comissão
+
+
+
+            $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
+            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
+            $pp_particular = $empresaParam->pp_particular ? $empresaParam->pp_particular : 0;          // Pagamento Particular
+            $pp_franquia = $empresaParam->pp_franquia ? $empresaParam->pp_franquia : 0;                // Pagamento Franquia
+            $pp_mult = $empresaParam->pp_mult ? $empresaParam->pp_mult : 0;                            // Pagamento Multi Cartão
+            $pp_cashback = $empresaParam->pp_cashback ? $empresaParam->pp_cashback : 0;                // Pagamento Cashback
+            $tax_antmult = $empresaParam->tax_antmult ? $empresaParam->tax_antmult : 0;                // Taxa Antecipação Multi
+            $tax_antfundo = $empresaParam->tax_antfundo ? $empresaParam->tax_antfundo : 0;             // Taxa Antecipação Fundo
+            $perc_rec_ant = $empresaParam->perc_rec_ant ? $empresaParam->perc_rec_ant : 0;             // Percentual Recebido Antecipação
+            $rebate_emp = $empresaParam->rebate_emp ? $empresaParam->rebate_emp : 0;                   // Rebate Empresa
+            $royalties_emp = $empresaParam->royalties_emp ? $empresaParam->royalties_emp : 0;          // Royalties Empresa
+            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Empresa Comissionada
 
             /////////////////////////////////////////////////////////////////////////////
             // CALCULA DIAS DE PRAZO, SE HOUVER
@@ -96,9 +126,9 @@ class PdvWebController extends Controller
                 ->where('parc_ate', '>=', $parcelas)
                 ->first();
 
-            $tax = null;
+            $tax_pos = null;
             if ($taxpos) {
-                $tax = $taxpos->tax;
+                $tax_pos = $taxpos->tax;
             }
 
             /////////////////////////////////////////////////////////////////////////////
@@ -133,38 +163,9 @@ class PdvWebController extends Controller
                 }
             }
 
-            // DADOS DOS PARÂMETROS DA EMPRESA
-            $vlr_pix = $empresaParam->vlr_pix ? $empresaParam->vlr_pix : 0;                            // Valor Pix
-            $vlr_boleto = $empresaParam->vlr_boleto ? $empresaParam->vlr_boleto : 0;                   // Valor Boleto
-            $tax_blt = $empresaParam->tax_blt ? $empresaParam->tax_blt : 0;                            // Taxa Boleto
-            $tax_pre = $empresaParam->tax_pre ? $empresaParam->tax_pre : 0;                            // Taxa Pré
-            $tax_gift = $empresaParam->tax_gift ? $empresaParam->tax_gift : 0;                         // Taxa Gift
-            $tax_fid = $empresaParam->tax_fid ? $empresaParam->tax_fid : 0;                            // Taxa Fidelidade
-            $tax_rebate = $empresaParam->tax_rebate ? $empresaParam->tax_rebate : 0;                   // Taxa Rebate
-            $tax_royalties = $empresaParam->tax_royalties ? $empresaParam->tax_royalties : 0;          // Taxa Royalties
-            $tax_comiss = $empresaParam->tax_comiss ? $empresaParam->tax_comiss : 0;                   // Taxa de Comissão
-
-
-            $taxa_bacen = $vlr_pix + $vlr_boleto;                                                      // Taxa Bacen (Pix + Boleto)
-            $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
-
-            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
-
-            $pp_particular = $empresaParam->pp_particular ? $empresaParam->pp_particular : 0;          // Pagamento Particular
-            $pp_franquia = $empresaParam->pp_franquia ? $empresaParam->pp_franquia : 0;                // Pagamento Franquia
-            $pp_mult = $empresaParam->pp_mult ? $empresaParam->pp_mult : 0;                            // Pagamento Multi Cartão
-            $pp_cashback = $empresaParam->pp_cashback ? $empresaParam->pp_cashback : 0;                // Pagamento Cashback
-            $tax_antmult = $empresaParam->tax_antmult ? $empresaParam->tax_antmult : 0;                // Taxa Antecipação Multi
-            $tax_antfundo = $empresaParam->tax_antfundo ? $empresaParam->tax_antfundo : 0;             // Taxa Antecipação Fundo
-            $perc_rec_ant = $empresaParam->perc_rec_ant ? $empresaParam->perc_rec_ant : 0;             // Percentual Recebido Antecipação
-            $rebate_emp = $empresaParam->rebate_emp ? $empresaParam->rebate_emp : 0;                   // Rebate Empresa
-
-            $royalties_emp = $empresaParam->royalties_emp ? $empresaParam->royalties_emp : 0;          // Royalties Empresa
-
-            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Empresa Comissionada
-
-
+            /////////////////////////////////////////////////////////////////////////////
             // FÓRMULAS
+            $taxa_bacen = $vlr_pix + $vlr_boleto;
             $user_id = $user->user_id;
             $vlr_brt = $checkout_subtotal * $proporcao_cobrado;
             $qtd_pts_utlz = $checkout_cashback * $proporcao_cobrado;
@@ -185,105 +186,14 @@ class PdvWebController extends Controller
             $pts_disp_mult = 0;
             $pts_disp_cash = 0;
 
-            // // REGRA DO PROGRAMA DE PONTOS - COMENTADO NESTE MOMENTO
-            // // VÁLIDO APENAS PARA COBRANÇA, MANTEMOS AQUI APENAS PARA CONHECIMENTO
-            // if ($tipoPagto === 'CM') {
-
-            //     $emp_pp = null;
-            //     // se programa de pontos particular ativo
-            //     if ($pp_particular) {
-            //         $emp_pp = $empresa->emp_id;
-            //         if ($emp_pp) {
-            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
-            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
-            //                 ->where('card_categ', $card_categ)
-            //                 ->where('prgpts_sts', '=', 'AT')
-            //                 ->first();
-
-            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
-            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
-
-            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
-            //                 // Calcula o valor do cashback com base na regra
-            //                 $pts_disp_part = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
-            //             }
-            //         }
-            //     }
-            //     // se programa de pontos da franquia ativo
-            //     if ($pp_franquia) {
-            //         $emp_pp = $empresa->emp_frqmst ?? null;
-            //         if ($emp_pp) {
-            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
-            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
-            //                 ->where('card_categ', $card_categ)
-            //                 ->where('prgpts_sts', '=', 'AT')
-            //                 ->first();
-
-            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
-            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
-
-            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
-            //                 // Calcula o valor do cashback com base na regra
-            //                 $pts_disp_fraq = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
-            //             }
-            //         }
-            //     }
-            //     // se programa de pontos multban ativo
-            //     if ($pp_mult) {
-            //         $emp_pp = 1;
-            //         if ($emp_pp) {
-            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
-            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
-            //                 ->where('card_categ', $card_categ)
-            //                 ->where('prgpts_sts', '=', 'AT')
-            //                 ->first();
-
-            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
-            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
-
-            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
-            //                 // Calcula o valor do cashback com base na regra
-            //                 $pts_disp_mult = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
-            //             }
-            //         }
-            //     }
-            //     // se programa de cashback multban ativo
-            //     if ($pp_cashback) {
-            //         $emp_pp = 1;
-            //         if ($emp_pp) {
-            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
-            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
-            //                 ->where('card_categ', $card_categ)
-            //                 ->where('prgpts_sts', '=', 'AT')
-            //                 ->first();
-
-            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
-            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
-
-            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
-            //                 // Calcula o valor do cashback com base na regra
-            //                 $pts_disp_cash = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
-            //             }
-            //         }
-            //     }
-
-            // } else if ($tipoPagto === 'BL') {
-            //     // Se houver regras, coloque aqui
-            // } else if ($tipoPagto === 'DN') {
-            //     // Se houver regras, coloque aqui
-            // } else if ($tipoPagto === 'PX') {
-            //     // Se houver regras, coloque aqui
-            // } else if ($tipoPagto === 'OT') {
-            //     // Se houver regras, coloque aqui
-            // }
-
+            /////////////////////////////////////////////////////////////////////////////
             // TAXA ADMINISTRATIVA
             $tax_adm = 0;
             if ($tipoPagto === 'CM') {
                 if ($card_tp === 'PRE') {
                     $tax_adm = $tax_pre;
                 } elseif ($card_mod === 'CRDT') {
-                    $tax_adm = $tax;
+                    $tax_adm = $tax_pos;
                 } elseif ($card_mod === 'GIFT') {
                     $tax_adm = $tax_gift;
                 } elseif ($card_mod === 'FIDL') {
@@ -298,6 +208,10 @@ class PdvWebController extends Controller
             } elseif ($tipoPagto === 'OT') {
                 $tax_adm = 0;
             }
+
+            /////////////////////////////////////////////////////////////////////////////
+            ///////////////// INÍCIO DO PROCESSO DE GRAVAÇÃO DAS VENDAS /////////////////
+            /////////////////////////////////////////////////////////////////////////////
 
             // RECEBE O TÍTULO DO REQUEST (PODE SER NULL NA PRIMEIRA COBRANÇA)
             $tituloRequest = $request->input('tituloAtual');
@@ -364,31 +278,101 @@ class PdvWebController extends Controller
             $hTitulo->save();
             $titulo = $hTitulo->titulo;
 
-            // ///////////////////////////////////////////////////////////
-            // GRAVA OS DADOS DAS PARCELAS NAS TABELAS
-            // TBTR_P_TITULOS_AB
-            // TBTR_P_TITULOS_CP
-            // TBTR_F_TITULOS
-            for ($parcela = 1; $parcela <= $parcelas; $parcela++) {
-                // Monte o array de dados da parcela
-                $dataParcela = [
-                    'emp_id'      => $emp_id,
-                    'user_id'     => $user_id,
-                    'titulo'      => $titulo,
-                    'nsu_titulo'  => (string) $nsu_titulo,
-                    'nsu_autoriz' => (string) $nsu_autoriz,
-                    'parcela'     => $parcela,
-                    // ... outros campos ...
-                    'criador'     => $user_id,
-                    'dthr_cr'     => now(),
-                    'modificador' => $user_id,
-                    'dthr_ch'     => now(),
-                ];
 
-                // Exemplo de salvar:
-                // $pTituloCp = new TbtrPTitulosCp($dataParcela);
-                // $pTituloCp->save();
-            }
+
+
+
+            // // ///////////////////////////////////////////////////////////
+            // // GRAVA OS DADOS DAS PARCELAS NAS TABELAS
+            // // TBTR_P_TITULOS_AB
+            // // TBTR_P_TITULOS_CP
+            // // TBTR_F_TITULOS
+            // for ($parcela = 1; $parcela <= $parcelas; $parcela++) {
+            //     // Monte o array de dados da parcela
+            //     $dataParcela = [
+            //         'emp_id'      => $emp_id,
+            //         'user_id'     => $user_id,
+            //         'titulo'      => $titulo,
+            //         'nsu_titulo'  => $nsu_titulo,
+            //         'nsu_autoriz' => $nsu_autoriz,
+            //         'qtd_parc'    => $parcelas,
+            //         'primeira_para' => $regra_parc ? $regra_parc : 1,
+            //         'cnd_pag'      => ($parcelas > 1) ? 2 : 1,
+            //         'cliente_id'   => $cliente_id,
+            //         'meio_pag_v'   => $tipoPagto,
+            //         'data_mov'    => now(),
+            //         'parcela'     => $parcela,
+            //         'nid_parcela' => (string) $nid_parcela,
+            //         'data_venc'   => now()->addMonths($parcela),
+            //         'parcela_sts' => 3,
+            //         'destvlr'     => 4,
+            //         'card_uuid'   => (string) $card_uuid,
+            //         'id_fatura'   => (string) $id_fatura,
+            //         'integ_bc'    => (string) $integ_bc,
+            //         'data_pgto'   => now(),
+            //         'meio_pag_t'  => (string) $meio_pag_t,
+            //         'nid_parcela_org' => (string) $nid_parcela_org,
+            //         'parcela_obs' => (string) $parcela_obs,
+            //         'parcela_ins_pg' => (string) $parcela_ins_pg,
+            //         'qtd_pts_utlz' => (int) $qtd_pts_utlz,
+            //         'tax_bacen'   => (float) $tax_bacen,
+            //         'vlr_dec'     => (float) $vlr_dec,
+            //         'vlr_dec_mn'  => (float) $vlr_dec_mn,
+            //         'vlr_bpar_split' => (float) $vlr_bpar_split,
+            //         'vlr_jurosp'  => (float) $vlr_jurosp,
+            //         'vlr_bpar_cj' => (float) $vlr_bpar_cj,
+            //         'vlr_atr_m'   => (float) $vlr_atr_m,
+            //         'vlr_atr_j'   => (float) $vlr_atr_j,
+            //         'isent_mj'    => (string) $isent_mj,
+            //         'protestado'  => (string) $protestado,
+            //         'negociacao'  => (string) $negociacao,
+            //         'vlr_acr_mn'  => (float) $vlr_acr_mn,
+            //         'vlr_cst_cob' => (float) $vlr_cst_cob,
+            //         'negociacao_obs' => (string) $negociacao_obs,
+            //         'negociacao_file' => (string) $negociacao_file,
+            //         'follow_dt' => (string) $follow_dt,
+            //         'check_ant' => (string) $check_ant,
+            //         'perct_ant' => (float) $perct_ant,
+            //         'ant_desc' => (float) $ant_desc,
+            //         'pgt_vlr' => (float) $pgt_vlr,
+            //         'pgt_desc' => (float) $pgt_desc,
+            //         'pgt_mtjr' => (float) $pgt_mtjr,
+            //         'vlr_rec' => (float) $vlr_rec,
+            //         'pts_disp_part' => (float) $pts_disp_part,
+            //         'pts_disp_fraq' => (float) $pts_disp_fraq,
+            //         'pts_disp_mult' => (float) $pts_disp_mult,
+            //         'pts_disp_cash' => (float) $pts_disp_cash,
+            //         'criador'      => (int) $criador,
+            //         'dthr_cr'      => (string) $dthr_cr,
+            //         'modificador'  => (int) $modificador,
+            //         'dthr_ch'     => (string) $dthr_ch,
+
+            //         'emp_id'      => $emp_id,
+            //         'user_id'     => $user_id,
+            //         'titulo'      => $titulo,
+            //         'nsu_titulo'  => (string) $nsu_titulo,
+            //         'nsu_autoriz' => (string) $nsu_autoriz,
+            //         'parcela'     => $parcela,
+            //         // ... outros campos ...
+            //         'criador'     => $user_id,
+            //         'dthr_cr'     => now(),
+            //         'modificador' => $user_id,
+            //         'dthr_ch'     => now(),
+            //     ];
+
+            //                     $hParcela = new TbtrPParcelas($dataParcela);
+            //     $hParcela->save();
+
+            //     // Exemplo de salvar:
+            //     // $pTituloCp = new TbtrPTitulosCp($dataParcela);
+            //     // $pTituloCp->save();
+            // }
+
+
+
+
+
+
 
             // //////////////////////////////////////////////////////////////////////////////////////
             // GRAVA OS DADOS NA TABELA TBTR_I_TITULOS E TBTR_S_TITULOS - PARA CADA ITEM DO CARRINHO
@@ -899,3 +883,96 @@ class PdvWebController extends Controller
         // return view('Multban.venda.pdv.index', compact('RegrasParc'));
     }
 }
+
+
+// // REGRA DO PROGRAMA DE PONTOS - COMENTADO NESTE MOMENTO
+            // // VÁLIDO APENAS PARA COBRANÇA, MANTEMOS AQUI APENAS PARA CONHECIMENTO
+            // if ($tipoPagto === 'CM') {
+
+            //     $emp_pp = null;
+            //     // se programa de pontos particular ativo
+            //     if ($pp_particular) {
+            //         $emp_pp = $empresa->emp_id;
+            //         if ($emp_pp) {
+            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+            //                 ->where('card_categ', $card_categ)
+            //                 ->where('prgpts_sts', '=', 'AT')
+            //                 ->first();
+
+            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+            //                 // Calcula o valor do cashback com base na regra
+            //                 $pts_disp_part = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+            //             }
+            //         }
+            //     }
+            //     // se programa de pontos da franquia ativo
+            //     if ($pp_franquia) {
+            //         $emp_pp = $empresa->emp_frqmst ?? null;
+            //         if ($emp_pp) {
+            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+            //                 ->where('card_categ', $card_categ)
+            //                 ->where('prgpts_sts', '=', 'AT')
+            //                 ->first();
+
+            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+            //                 // Calcula o valor do cashback com base na regra
+            //                 $pts_disp_fraq = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+            //             }
+            //         }
+            //     }
+            //     // se programa de pontos multban ativo
+            //     if ($pp_mult) {
+            //         $emp_pp = 1;
+            //         if ($emp_pp) {
+            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+            //                 ->where('card_categ', $card_categ)
+            //                 ->where('prgpts_sts', '=', 'AT')
+            //                 ->first();
+
+            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+            //                 // Calcula o valor do cashback com base na regra
+            //                 $pts_disp_mult = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+            //             }
+            //         }
+            //     }
+            //     // se programa de cashback multban ativo
+            //     if ($pp_cashback) {
+            //         $emp_pp = 1;
+            //         if ($emp_pp) {
+            //             // BUSCA A REGRA DO PROGRAMA DE PONTOS
+            //             $taxpos = ProgramaPts::where('emp_id', $emp_pp)
+            //                 ->where('card_categ', $card_categ)
+            //                 ->where('prgpts_sts', '=', 'AT')
+            //                 ->first();
+
+            //             $prgpts_valor = $taxpos->prgpts_valor ?? 0;
+            //             $prgpts_eq = $taxpos->prgpts_eq ?? 0;
+
+            //             if ($prgpts_valor > 0 && $prgpts_eq > 0) {
+            //                 // Calcula o valor do cashback com base na regra
+            //                 $pts_disp_cash = floor($vlr_btot_split / $prgpts_valor) * $prgpts_eq;
+            //             }
+            //         }
+            //     }
+
+            // } else if ($tipoPagto === 'BL') {
+            //     // Se houver regras, coloque aqui
+            // } else if ($tipoPagto === 'DN') {
+            //     // Se houver regras, coloque aqui
+            // } else if ($tipoPagto === 'PX') {
+            //     // Se houver regras, coloque aqui
+            // } else if ($tipoPagto === 'OT') {
+            //     // Se houver regras, coloque aqui
+            // }

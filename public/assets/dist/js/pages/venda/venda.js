@@ -435,21 +435,53 @@ function realizarCobranca(cobrancaDados) {
 }
 
 // Função para abrir um select2 de forma segura (destrói se já estiver inicializado)
+// function safeOpenSelect2(selector) {
+//     var $el = $(selector);
+//     // Destroi se já estiver inicializado
+//     if ($el.hasClass('select2-hidden-accessible')) {
+//         try { $el.select2('destroy'); } catch(e) {}
+//     }
+//     // Inicializa
+//     $el.select2({
+//         width: 'resolve',
+//         dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
+//         dropdownCssClass: 'parc-limit'
+//     });
+//     // Aguarda o próximo tick do JS para abrir
+//     setTimeout(function() {
+//         $el.select2('open');
+//     }, 0);
+// }
+
 function safeOpenSelect2(selector) {
     var $el = $(selector);
-    // Destroi se já estiver inicializado
-    if ($el.hasClass('select2-hidden-accessible')) {
-        try { $el.select2('destroy'); } catch(e) {}
+    if ($el.length === 0) return;
+    if (typeof $ === 'undefined' || typeof $.fn === 'undefined' || !$.fn.select2) return;
+
+    // Se não inicializado, inicializa com opções seguras
+    try {
+        if (!$el.hasClass('select2-hidden-accessible')) {
+            $el.select2({
+                width: 'resolve',
+                dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
+                dropdownCssClass: 'parc-limit'
+            });
+        }
+    } catch (e) {
+        // fallback silencioso
+        console.warn('safeOpenSelect2: init failed for', selector, e);
     }
-    // Inicializa
-    $el.select2({
-        width: 'resolve',
-        dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
-        dropdownCssClass: 'parc-limit'
-    });
-    // Aguarda o próximo tick do JS para abrir
+
+    // Abre de forma segura no próximo tick e com try/catch
     setTimeout(function() {
-        $el.select2('open');
+        try {
+            // checa novamente se foi inicializado antes de abrir
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('open');
+            }
+        } catch (err) {
+            console.warn('safeOpenSelect2: open failed for', selector, err);
+        }
     }, 0);
 }
 
@@ -490,37 +522,45 @@ function validarSubtotal() {
     return true;
 }
 
-// Atualiza o campo #valortotalacobrar a partir de um número (evita disparar o handler de input
-// que aplica a máscara calculadora e pode converter vírgula para ponto). Também recalcula saldo e troco.
-function atualizarCampoValortotalacobrar(valorNumero) {
+// Atualiza o campo #valortotalacobrar a partir do saldo a pagar
+function atualizarCampoValortotalacobrar(checkout_total) {
+
     var totalCarrinho = parseBRL($('#checkout_total').text());
     var tipoPagamento = $('.payment-box-active').data('identificacao') || $('#id_forma_pagto').val();
-    var valorCobrar = Number(valorNumero) || 0;
+    var valorCobrar = Number(checkout_total) || 0;
+
     // Para tipos diferentes de Dinheiro, não permitir cobrar mais que o total
     if (tipoPagamento !== 'DN' && valorCobrar > totalCarrinho) {
         valorCobrar = totalCarrinho;
     }
+
     // Atualiza campo com formatação brasileira
     $('#valortotalacobrar').val((typeof formatBRL === 'function') ? formatBRL(valorCobrar) : valorCobrar.toFixed(2).replace('.', ','));
+
     // Recalcula saldo e troco
     var saldo = totalCarrinho - valorCobrar;
-    if (valorCobrar > totalCarrinho) saldo = 0;
+    if (valorCobrar > totalCarrinho)
+        saldo = 0;
+
     $('#valorsaldo').val(formatBRL(saldo));
+
     var troco = 0;
     if (tipoPagamento === 'DN' && valorCobrar > totalCarrinho) {
         troco = valorCobrar - totalCarrinho;
     }
+
     $('#valortroco').val(formatBRL(troco));
+
 }
 
 // ATUALIZA OS VALORES DO CHECKOUT
 function atualizarCheckoutValores() {
-    var subtotal = $("#p_subtotal").text();
-    var desconto = $("#p_discount").text();
-    var totalCobrar = $("#valortotalacobrar").val();
-    $("#checkout_subtotal").text(subtotal);
-    $("#checkout_desconto").text(desconto);
-    $("#checkout_total").text(totalCobrar);
+    // var subtotal = $("#p_subtotal").text();
+    // var desconto = $("#p_discount").text();
+    // var totalCobrar = $("#valortotalacobrar").val();
+    // $("#checkout_subtotal").text(subtotal);
+    // $("#checkout_desconto").text(desconto);
+    // $("#checkout_total").text(totalCobrar);
 }
 
 // ATUALIZA AS PARCELAS QUE APARECEM COMO OPÇÕES NA VENDA POR BOLETO
@@ -665,19 +705,29 @@ function initParcelSelect2IfAvailable(selector) {
     if (typeof $ === 'undefined' || typeof $.fn === 'undefined' || !$.fn.select2) return;
     var $el = $(selector);
     if ($el.length === 0) return;
-    // se já inicializado, destroy antes para re-inicializar com as opções corretas
+
     try {
-        if ($el.hasClass('select2-hidden-accessible')) {
-            $el.select2('destroy');
+        // Se NÃO estiver inicializado, inicializa
+        if (!$el.hasClass('select2-hidden-accessible')) {
+            $el.select2({
+                width: 'resolve',
+                dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
+                dropdownCssClass: 'parc-limit'
+            });
+        } else {
+            // Já inicializado: apenas atualiza dropdownParent se necessário
+            try {
+                var inst = $el.data('select2');
+                if (inst && inst.options) {
+                    inst.options.set('dropdownParent', $('#checkout-modal').length ? $('#checkout-modal') : $(document.body));
+                }
+            } catch (e) {
+                console.warn('initParcelSelect2IfAvailable: unable to update instance options', e);
+            }
         }
     } catch (e) {
-        // ignore
+        console.warn('initParcelSelect2IfAvailable erro:', e);
     }
-    $el.select2({
-        width: 'resolve',
-        dropdownParent: $('#checkout-modal').length ? $('#checkout-modal') : $(document.body),
-        dropdownCssClass: 'parc-limit'
-    });
 }
 
 function formataNumeroTelefone(numero) {
@@ -1708,15 +1758,11 @@ $('#checkout-modal').on('shown.bs.modal', function() {
     $('#cliente_pts').text(formatBRL(parseFloat(window.clientPontos) || 0));
     $(".payment-box-active").removeClass("payment-box-active");
     $("#valortotalpago").val("0,00");
-    // $("#valorDescCento").val("0");
-    // $("#valorDesconto").val("0,00");
-    // var valorTotal = $("#total_amount_modal").html().replace("R$", "");
-    // $ ("#valorAPagar").val(valorTotal);
-    // $("#Dinheiro").addClass("payment-box-active");
     $("#valortroco").val("0,00");
     $("#valortotalpago").habilitar();
     $("#valortotalpago").focus();
     $("#valortotalpago").select();
+
     // Não seleciona nenhuma forma de pagamento por padrão
     $("#valortroco").val("0,00");
     $("#valortotalpago").habilitar();
@@ -1735,25 +1781,6 @@ $('#modalCliente').on('shown.bs.modal', function() {
             $("#idsearchphone").select2('open');
             $("#idsearchphone").select2('focus');
         },950);
-    }
-});
-
-$("body").on("click", ".payment-box", function() {
-    $(".payment-box-active").removeClass("payment-box-active");
-    $("#id_forma_pagto").val($(this).attr("data-identificacao"));
-    $("#id_forma_pagto").trigger('change');
-
-    $(this).addClass("payment-box-active");
-    if ($(this).attr("data-id") == "Dinheiro") {
-        $("#valortotalpago").val("0,00");
-        $("#valortroco").val("0,00");
-        $("#valortotalpago").habilitar();
-        $("#valortotalpago").focus();
-        $("#valortotalpago").select();
-    } else {
-        $("#valortotalpago").desabilitar();
-        $("#valortotalpago").val($("#valorAPagar").val());
-        $("#valortroco").val("0,00");
     }
 });
 
@@ -2379,10 +2406,10 @@ $(document).ready(function () {
 
     $('#confirmarResgatePontos').on('click', function() {
         // Pega o valor total selecionado (já formatado)
-        let totalResgatado = $('#totalPontosSelecionados').text();
+        let totalResgatado = parseBRL($('#totalPontosSelecionados').text());
 
         // Atualiza o campo de cashback e o campo de resgatado no modal checkout
-        $('#checkout_cashback').text(totalResgatado);
+        $('#checkout_cashback').text('R$ ' + formatBRL(totalResgatado));
 
         // Recalcula o total do checkout
         var totalCobrar = parseBRL($("#checkout_subtotal").text());
@@ -2390,7 +2417,6 @@ $(document).ready(function () {
         var totalDesconto = parseBRL($("#checkout_desconto").text());
         var totalPago = parseBRL($("#checkout_pago").text());
 
-        console.log(totalCobrar, checkout_cashback, totalDesconto);
         $("#checkout_total").text(formatBRL(totalCobrar - checkout_cashback - totalDesconto - totalPago));
         $("#valortotalacobrar").val(formatBRL(totalCobrar - checkout_cashback - totalDesconto - totalPago));
 
@@ -2399,6 +2425,7 @@ $(document).ready(function () {
 
         // Fecha o modal de resgate
         $('#modalResgatarPontos').modal('hide');
+
     });
 
     $(document).on('keyup blur', '.pontos-utilizar', function() {
@@ -2414,29 +2441,40 @@ $(document).ready(function () {
     });
 
     $('#parcelasCartao').on('change', function () {
-        // Pegue o valor total original (exemplo: do campo #checkout_total)
-        var valorTotal = parseFloat($('#valortotalacobrar').val().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
 
-        // Pegue o valor total com juros da opção selecionada (exemplo: pode estar em um data-attribute ou calculado via JS)
-        // Exemplo: <option value="2" data-total-com-juros="120.00">2x</option>
+        var valorTotal = parseFloat($('#valortotalacobrar').val().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
         var totalComJuros = parseFloat($('#parcelasCartao option:selected').data('total-com-juros')) || valorTotal;
+        var juros = totalComJuros - valorTotal;
+
+        var checkout_subtotal = parseFloat($("#checkout_subtotal").text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        var checkout_cashback = parseFloat($("#checkout_cashback").text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        var checkout_desconto = parseFloat($("#checkout_desconto").text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        var checkout_pago = parseFloat($("#checkout_pago").text().replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+
+        var checkout_total_check = checkout_subtotal - checkout_cashback - checkout_desconto - checkout_pago;
 
         // Só calcula se o checkbox NÃO estiver marcado
         if (!$('#vendaSemJurosCartao').is(':checked')) {
-            var juros = totalComJuros - valorTotal;
+
             // Verifica se o juros é maior que zero
             if (juros > 0) {
-                $('#checkout_juros').text('R$ ' + juros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                $('#checkout_total').text('R$ ' + totalComJuros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                if (valorTotal < checkout_total_check) {
+                    $('#checkout_total').text('R$ ' + (checkout_total_check + juros).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#checkout_juros').text('R$ ' + juros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                } else {
+                    // Se não houver juros, zera os campos
+                    $('#checkout_total').text('R$ ' + totalComJuros.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#checkout_total').text('R$ ' + checkout_total_check.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                }
+
             } else {
-                // Se não houver juros, zera os campos
-                $('#checkout_juros').text('R$ 0,00');
-                $('#checkout_total').text($("#valortotalacobrar").val());
+                $('#checkout_total').text('R$ ' + checkout_total_check.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#checkout_juros').text(' R$ 0,00');
             }
 
         } else {
             $('#checkout_juros').text(' R$ 0,00');
-            $('#checkout_total').text($("#valortotalacobrar").val());
+            $('#checkout_total').text('R$ ' + checkout_total_check.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         }
 
     });
@@ -2450,6 +2488,7 @@ $(document).ready(function () {
     function atualizarOpcoesPrimeiraParaCartao() {
         var $select = $('#PrimeiraParaCartao');
         var hoje = new Date();
+
         $select.find('option').each(function() {
             var val = $(this).val();
             if (val == '6') {
@@ -2545,29 +2584,40 @@ $(document).ready(function () {
 
     // Garante que toda vez que clicar no comboBox de parcelas do cartão, recalcula as parcelas
     $("body").on("mousedown", "#parcelasCartao", function(e) {
-        // Se não for Select2, recalcula normalmente
-        if (!$(this).hasClass('select2-hidden-accessible')) {
-            e.preventDefault(); // evita dropdown nativo
+        e.preventDefault(); // evita que o select2 tente abrir enquanto estamos reconfigurando
+        var $el = $(this);
+        try {
             atualizarCheckoutValores();
             atualizarParcelasCartao();
-        } else {
-            // Se for Select2, força recalcular antes de abrir o dropdown
-            atualizarCheckoutValores();
-            atualizarParcelasCartao();
+            // reinit + open de forma segura
+            if (typeof $.fn !== 'undefined' && $.fn.select2) {
+                // initParcelSelect2IfAvailable destrói e recria; safeOpenSelect2 garante open somente após init
+                try { initParcelSelect2IfAvailable('#parcelasCartao'); } catch (err) { console.warn(err); }
+                safeOpenSelect2('#parcelasCartao');
+            } else {
+                // não-Select2: devolve foco para abrir dropdown nativo
+                setTimeout(function() { $el.focus(); }, 0);
+            }
+        } catch (err) {
+            console.warn('parcelasCartao mousedown error:', err);
         }
     });
 
     // Garante que toda vez que clicar no comboBox de parcelas do boleto, recalcula as parcelas
     $("body").on("mousedown", "#parcelasBoleto", function(e) {
-        // Se não for Select2, recalcula normalmente
-        if (!$(this).hasClass('select2-hidden-accessible')) {
-            e.preventDefault(); // evita dropdown nativo
+        e.preventDefault();
+        var $el = $(this);
+        try {
             atualizarCheckoutValores();
             atualizarParcelasBoleto();
-        } else {
-            // Se for Select2, força recalcular antes de abrir o dropdown
-            atualizarCheckoutValores();
-            atualizarParcelasBoleto();
+            if (typeof $.fn !== 'undefined' && $.fn.select2) {
+                try { initParcelSelect2IfAvailable('#parcelasBoleto'); } catch (err) { console.warn(err); }
+                safeOpenSelect2('#parcelasBoleto');
+            } else {
+                setTimeout(function() { $el.focus(); }, 0);
+            }
+        } catch (err) {
+            console.warn('parcelasBoleto mousedown error:', err);
         }
     });
 
@@ -2664,14 +2714,16 @@ $(document).ready(function () {
         // Limpa opções dos selects de parcelas e destrói Select2 para forçar recálculo na próxima abertura
         try {
             var $pb = $("#parcelasBoleto");
-            $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            if ($pb.hasClass('select2-hidden-accessible')) { try { $pb.select2('destroy'); } catch(e) {} }
-        } catch(e) {}
+            $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change.select2');
+            // $pb.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+            // if ($pb.hasClass('select2-hidden-accessible')) { try { $pb.select2('destroy'); } catch(e) {} }
+        } catch(e) { console.warn(e); }
         try {
             var $pc = $("#parcelasCartao");
-            $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
-            if ($pc.hasClass('select2-hidden-accessible')) { try { $pc.select2('destroy'); } catch(e) {} }
-        } catch(e) {}
+            $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change.select2');
+            // $pc.empty().append('<option value="">Selecione...</option>').val("").trigger('change');
+            // if ($pc.hasClass('select2-hidden-accessible')) { try { $pc.select2('destroy'); } catch(e) {} }
+        } catch(e) { console.warn(e); }
     }
 
     // Ao selecionar um produto, salva o preço original
@@ -2770,14 +2822,49 @@ $(document).ready(function () {
 
     // Sempre que trocar o tipo de pagamento, ajusta o valorCobrar se necessário
     $('body').on('click', '.payment-box', function() {
-        var checkout_total = parseBRL($('#checkout_total').text());
-        var tipoPagamento = $(this).data('identificacao');
-        var valorCobrar = parseFloat($('#valortotalacobrar').val().replace(/\./g, '').replace(',', '.')) || 0;
 
-        if (tipoPagamento !== 'DN' && valorCobrar > checkout_total) {
+        $('#PrimeiraParaCartao').val("").trigger('change');
+        $('#PrimeiraParaBoleto').val("").trigger('change');
+        $('#dataPrimeiraParcelaCartao').val("");
+        $('#dataPrimeiraParcelaBoleto').val("");
+        $('#parcelasCartao').val("").trigger('change');
+        $('#parcelasBoleto').val("").trigger('change');
+        $('.payment-box-active').removeClass('payment-box-active');
+
+        $('#id_forma_pagto').val($(this).attr('data-identificacao'));
+        $('#id_forma_pagto').trigger('change');
+        $(this).addClass("payment-box-active");
+
+        var checkout_subtotal = parseBRL($('#checkout_subtotal').text());
+        var checkout_cashback = parseBRL($('#checkout_cashback').text());
+        var checkout_desconto = parseBRL($('#checkout_desconto').text());
+        var checkout_pago = parseBRL($('#checkout_pago').text());
+        var checkout_total = checkout_subtotal - checkout_cashback - checkout_desconto - checkout_pago;
+        var tipoPagamento = $(this).data('identificacao');
+        $('#id_forma_pagto').val(tipoPagamento).trigger('change');
+
+        if (tipoPagamento === "BL") {
+            $("#div-boleto").show();
+            $("#div-cartao").hide();
+            $("#payment-instructions").show();
+            atualizarParcelasBoleto();
+
+        } else if (tipoPagamento === "CM") {
+            $("#div-cartao").show();
+            $("#div-boleto").hide();
+            $("#payment-instructions").show();
+            atualizarParcelasCartao();
+        } else {
+            $("#div-boleto, #div-cartao").hide();
+            $("#payment-instructions").hide();
+        }
+
+        // if (tipoPagamento !== 'DN' && valorCobrar > checkout_total) {
+        if (tipoPagamento !== 'DN') {
             // atualiza via helper para evitar disparar o handler 'input' que pode reformatar indevidamente
             atualizarCampoValortotalacobrar(checkout_total);
         }
+
     });
 
     // Sempre que abrir o modal, o campo valortotalacobrar recebe o valor total do carrinho
@@ -3053,28 +3140,6 @@ $(document).ready(function () {
         },
     });
 
-    $("body").on("click", ".payment-box", function() {
-        $(".payment-box-active").removeClass("payment-box-active");
-        $(this).addClass("payment-box-active");
-        tipoPagamentoSelecionado = $(this).data("identificacao");
-        $("#id_forma_pagto").val(tipoPagamentoSelecionado).trigger('change');
-        // Exibe/oculta os blocos Blade conforme o tipo de pagamento
-        if (tipoPagamentoSelecionado === "BL") {
-            $("#div-boleto").show();
-            $("#div-cartao").hide();
-            $("#payment-instructions").show();
-            atualizarParcelasBoleto();
-        } else if (tipoPagamentoSelecionado === "CM") {
-            $("#div-cartao").show();
-            $("#div-boleto").hide();
-            $("#payment-instructions").show();
-            atualizarParcelasCartao();
-        } else {
-            $("#div-boleto, #div-cartao").hide();
-            $("#payment-instructions").hide();
-        }
-    });
-
     /////////////////////////////
     // REGRAS PARA O BOTÃO COBRAR
     /////////////////////////////
@@ -3109,24 +3174,45 @@ $(document).ready(function () {
         var vendaSemJuros = $('#vendaSemJurosCartao').is(':checked') ? "X" : null;                  // Indica se a venda é sem juros (X) ou não (null)
         var check_reembolso = $('#blt_ctr').is(':checked') ? "X" : null;                            // Indica se é reembolso (X) ou não (null)
 
-        // Coleta a categoria de primeira parecela selecionada
-        var tax_categCartao = $('#PrimeiraParaCartao option:selected').data('tax-categ') || null;
-        var tax_categBoleto = $('#PrimeiraParaBoleto option:selected').data('tax-categ') || null;
-        var tax_categ = null;
-        if (tax_categCartao) {
-            tax_categ = tax_categCartao;
-        } else if (tax_categBoleto) {
-            tax_categ = tax_categBoleto;
+        var dataPrimeiraParaCartao = $('#dataPrimeiraParcelaCartao').val();
+        var dataPrimeiraParaBoleto = $('#dataPrimeiraParcelaBoleto').val();
+        var dataPrimeiraParcela = null;
+        if (dataPrimeiraParaCartao) {
+            dataPrimeiraParcela = dataPrimeiraParaCartao;
+        } else if (dataPrimeiraParaBoleto) {
+            dataPrimeiraParcela = dataPrimeiraParaBoleto;
         }
 
-        // Coleta a categoria de primeira parecela selecionada
-        var regra_parcCartao = $('#PrimeiraParaCartao option:selected').data('regra-parc') || null;
-        var regra_parcBoleto = $('#PrimeiraParaBoleto option:selected').data('regra-parc') || null;
+        var diferencaDias = null;
+        if (dataPrimeiraParcela) {
+            // evita problemas de timezone forçando meia-noite local
+            var dataSelecionada = new Date(dataPrimeiraParcela + 'T00:00:00');
+            var hoje = new Date();
+            var hojeSemHora = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+            var diffMs = dataSelecionada - hojeSemHora;
+            var msPorDia = 1000 * 60 * 60 * 24;
+            diferencaDias = Math.round(diffMs / msPorDia); // >0: futura, 0: hoje, <0: passada
+        } else {
+            diferencaDias = null; // ou 0, se preferir
+        }
+
+        // Coleta a categoria e regra da primeira parecela selecionada
+        var $opt_primeira_cartao = $();
+        var $opt_primeira_boleto = $();
         var regra_parc = null;
-        if (regra_parcCartao) {
-            regra_parc = regra_parcCartao;
-        } else if (regra_parcBoleto) {
-            regra_parc = regra_parcBoleto;
+        var tax_categ = null;
+
+        if ($('#PrimeiraParaCartao').val()) {
+            $opt_primeira_cartao = $('#PrimeiraParaCartao option:selected');
+            regra_parc = $opt_primeira_cartao.data('regra') || $opt_primeira_cartao.attr('data-regra') || null;
+            tax_categ  = $opt_primeira_cartao.data('taxCateg') || $opt_primeira_cartao.attr('data-tax-categ') || null;
+        }
+
+        if ($('#PrimeiraParaBoleto').val()) {
+            $opt_primeira_boleto = $('#PrimeiraParaBoleto option:selected');
+            // boleto só define regra/tax se não houver vindo do cartão
+            regra_parc = regra_parc || $opt_primeira_boleto.data('regra') || $opt_primeira_boleto.attr('data-regra') || null;
+            tax_categ  = tax_categ  || $opt_primeira_boleto.data('taxCateg') || $opt_primeira_boleto.attr('data-tax-categ') || null;
         }
 
         // Cálculo dos Juros por parcela
@@ -3150,15 +3236,6 @@ $(document).ready(function () {
             parcelas = parcelasBoleto;
         } else if (parcelasCartao) {
             parcelas = parcelasCartao;
-        }
-
-        var dataPrimeiraParaCartao = $('#dataPrimeiraParcelaCartao').val();
-        var dataPrimeiraParaBoleto = $('#dataPrimeiraParcelaBoleto').val();
-        var dataPrimeiraParcela = null;
-        if (dataPrimeiraParaCartao) {
-            dataPrimeiraParcela = dataPrimeiraParaCartao;
-        } else if (dataPrimeiraParaBoleto) {
-            dataPrimeiraParcela = dataPrimeiraParaBoleto;
         }
 
         // Proporção do valor cobrado em relação ao total
