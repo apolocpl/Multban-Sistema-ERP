@@ -14,6 +14,7 @@ class TbtrfTitulos extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'emp_id',
         'id_fatura',
         'cliente_id',
         'card_uuid',

@@ -156,7 +156,7 @@ return new class extends Migration
             $table->index('card_uuid');
             $table->index('data_fech');
             // INDICES COMPOSTOS
-            $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts'], 'idx_id_cliente_sts');
+            $table->index(['emp_id', 'cliente_id', 'card_uuid', 'data_venc'], 'idx_encontra_fatura');
             $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_venc'], 'idx_id_cliente_stsdt1');
             $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_fech'], 'idx_id_cliente_stsdt2');
             $table->index(['emp_id', 'id_fatura', 'cliente_id', 'fatura_sts', 'data_pgto'], 'idx_id_cliente_stsdt3');

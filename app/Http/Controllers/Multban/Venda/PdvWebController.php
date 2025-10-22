@@ -12,17 +12,21 @@ use App\Models\Multban\Produto\ProdutoStatus;
 use App\Models\Multban\Produto\ProdutoTipo;
 use App\Models\Multban\Cliente\Cliente;
 use App\Models\Multban\Cliente\ClienteCard;
-use App\Models\Multban\ProgramaPts\ProgramaPts;
 use App\Models\Multban\TbTr\TbtrHTitulos;
 use App\Models\Multban\TbTr\TbtrITitulos;
 use App\Models\Multban\TbTr\TbtrPTitulosCp;
+use App\Models\Multban\TbTr\TbtrPTitulosAb;
 use App\Models\Multban\TbTr\TbtrSTitulos;
+use App\Models\Multban\TbTr\TbtrFTitulos;
 use App\Models\Multban\Venda\RegrasParc;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Laravel\Pail\ValueObjects\Origin\Console;
 
 class PdvWebController extends Controller
 {
@@ -37,9 +41,12 @@ class PdvWebController extends Controller
             /////////////////////////////////////////////////////////////////////////////
             // DADOS DO USUÁRIO LOGADO
             $user = Auth::user();
+            $user_param = User::find($user->user_id);
+            $user_comis = $user_param->user_comis;
+            $user_pcomis = $user_param->user_pcomis;
 
             /////////////////////////////////////////////////////////////////////////////
-            // DADOS RECEBIDOS DO REQUEST - PDV WEB
+            // DADOS RECEBIDOS DO REQUEST - PDV WEB / API / MANUTENÇÃO DE TÍTULOS
             $cliente_id = $request->input('cliente_id');
             $checkout_subtotal = $request->input('checkout_subtotal');            // Valor total do carrinho antes de descontos
             $checkout_cashback = $request->input('checkout_cashback');            // Valor total de cashback aplicado
@@ -57,6 +64,34 @@ class PdvWebController extends Controller
             $card_mod = $request->input('card_mod');                              // Modelo do cartão
             $card_tp = $request->input('card_tp');                                // Tipo do cartão
 
+            $vlr_dec_mn = 0;                                                           // Valor de desconto manual
+            $vlr_atr_m = 0;                                                            // Valor multa por atraso
+            $vlr_atr_j = 0;                                                            // Valor juros por atraso
+            $isent_mj = null;                                                          // Isentar Multa e Juros
+            $pts_disp_part = 0;                                                        // Pontos disponíveis Programa Particular
+            $pts_disp_fraq = 0;                                                        // Pontos disponíveis Programa da Franquia
+            $pts_disp_mult = 0;                                                        // Pontos disponíveis Programa Multban
+            $pts_disp_cash = 0;                                                        // Pontos disponíveis Programa de Cashback
+            $protestado = null;                                                        // Check de Protestado
+            $negociacao = null;                                                        // Check de Negociação
+            $vlr_acr_mn = 0;                                                           // Valor acréscimo manual
+            $vlr_cst_cob = 0;                                                          // Valor custo de cobrança
+            $negociacao_obs = null;                                                    // Observação da negociação
+            $negociacao_file = null;                                                   // Arquivos da negociação
+            $follow_dt = null;                                                         // Data do Follow Up
+            $integ_bc = null;                                                          // Código da Integração Bancária
+            $data_pgto = null;                                                         // Data do Pagamento do Título
+            $meio_pag_t = null;                                                        // Meio de Pagamento do Título
+            $nid_parcela_org = null;                                                   // ID da Parcela Original
+            $parcela_obs = null;                                                       // Observação da Parcela
+            $parcela_ins_pg = null;                                                    // Instrução de Pagamento da Parcela
+            $check_ant = null;                                                         // Check Valor Antecipado
+            $perct_ant = 0;                                                            // Taxa de Antecipação
+            $ant_desc = 0;                                                             // Valor Descontado pela Antecipação
+            $pgt_vlr = 0;                                                              // Valor Pago
+            $pgt_desc = 0;                                                             // Valor Descontado no Pagamento
+            $pgt_mtjr = 0;                                                             // Valor de Multa e Juros do Pagamento
+            $vlr_rec = 0;                                                              // Valor Recebido
 
 
 
@@ -75,7 +110,6 @@ class PdvWebController extends Controller
 
 
 
-
             /////////////////////////////////////////////////////////////////////////////
             // CARREGA DADOS DA EMPRESA DO USUÁRIO LOGADO
             $emp_id = $user->emp_id;
@@ -84,6 +118,7 @@ class PdvWebController extends Controller
             /////////////////////////////////////////////////////////////////////////////
             // DADOS DOS PARÂMETROS DA EMPRESA
             $empresaParam = EmpresaParam::find($emp_id);
+            $emp_destvlr = $empresaParam->emp_destvlr ? $empresaParam->emp_destvlr : 0;                // Data da primeira parcela
             $vlr_pix = $empresaParam->vlr_pix ? $empresaParam->vlr_pix : 0;                            // Valor Pix
             $vlr_boleto = $empresaParam->vlr_boleto ? $empresaParam->vlr_boleto : 0;                   // Valor Boleto
             $tax_blt = $empresaParam->tax_blt ? $empresaParam->tax_blt : 0;                            // Taxa Boleto
@@ -91,13 +126,19 @@ class PdvWebController extends Controller
             $tax_gift = $empresaParam->tax_gift ? $empresaParam->tax_gift : 0;                         // Taxa Gift
             $tax_fid = $empresaParam->tax_fid ? $empresaParam->tax_fid : 0;                            // Taxa Fidelidade
             $tax_rebate = $empresaParam->tax_rebate ? $empresaParam->tax_rebate : 0;                   // Taxa Rebate
+            $rebate_emp = $empresaParam->rebate_emp ? $empresaParam->rebate_emp : 0;                   // Rebate Empresa
             $tax_royalties = $empresaParam->tax_royalties ? $empresaParam->tax_royalties : 0;          // Taxa Royalties
+            $royalties_emp = $empresaParam->royalties_emp ? $empresaParam->royalties_emp : 0;          // Royalties Empresa
             $tax_comiss = $empresaParam->tax_comiss ? $empresaParam->tax_comiss : 0;                   // Taxa de Comissão
+            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Empresa Comissionada
+            $isnt_pixblt = $empresaParam->isnt_pixblt ? $empresaParam->isnt_pixblt : 0;                // Isenção Pix e Boleto
+            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
+
 
 
 
             $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
-            $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
+
             $pp_particular = $empresaParam->pp_particular ? $empresaParam->pp_particular : 0;          // Pagamento Particular
             $pp_franquia = $empresaParam->pp_franquia ? $empresaParam->pp_franquia : 0;                // Pagamento Franquia
             $pp_mult = $empresaParam->pp_mult ? $empresaParam->pp_mult : 0;                            // Pagamento Multi Cartão
@@ -105,17 +146,17 @@ class PdvWebController extends Controller
             $tax_antmult = $empresaParam->tax_antmult ? $empresaParam->tax_antmult : 0;                // Taxa Antecipação Multi
             $tax_antfundo = $empresaParam->tax_antfundo ? $empresaParam->tax_antfundo : 0;             // Taxa Antecipação Fundo
             $perc_rec_ant = $empresaParam->perc_rec_ant ? $empresaParam->perc_rec_ant : 0;             // Percentual Recebido Antecipação
-            $rebate_emp = $empresaParam->rebate_emp ? $empresaParam->rebate_emp : 0;                   // Rebate Empresa
-            $royalties_emp = $empresaParam->royalties_emp ? $empresaParam->royalties_emp : 0;          // Royalties Empresa
-            $comiss_emp = $empresaParam->comiss_emp ? $empresaParam->comiss_emp : 0;                   // Empresa Comissionada
+
 
             /////////////////////////////////////////////////////////////////////////////
             // CALCULA DIAS DE PRAZO, SE HOUVER
             $diasPrazo = null;
+            $data_venc = Carbon::today();
             if ($dataPrimeiraParcela) {
                 $dataPrimeira = Carbon::parse($dataPrimeiraParcela);
                 $hoje = Carbon::today();
                 $diasPrazo = $hoje->diffInDays($dataPrimeira, false);
+                $data_venc = Carbon::parse($dataPrimeiraParcela);
             }
 
             /////////////////////////////////////////////////////////////////////////////
@@ -164,27 +205,30 @@ class PdvWebController extends Controller
             }
 
             /////////////////////////////////////////////////////////////////////////////
+            // VARIÁVEIS
+            $cdg_multban = 2;
+
+            /////////////////////////////////////////////////////////////////////////////
             // FÓRMULAS
-            $taxa_bacen = $vlr_pix + $vlr_boleto;
             $user_id = $user->user_id;
             $vlr_brt = $checkout_subtotal * $proporcao_cobrado;
             $qtd_pts_utlz = $checkout_cashback * $proporcao_cobrado;
+            $qtd_pts_utlz_parcela = $qtd_pts_utlz / $parcelas;
             $perc_pts_utlz = $vlr_brt > 0 ? ($qtd_pts_utlz / $vlr_brt) * 100 : 0;
             $vlr_btot = $vlr_brt - $qtd_pts_utlz;
+            $vlr_btot_parcela = $vlr_btot / $parcelas;
             $vlr_dec = $checkout_desconto * $proporcao_cobrado;
+            $vlr_dec_parcela = $vlr_dec / $parcelas;
             $perc_desc = $vlr_brt > 0 ? ($vlr_dec / $vlr_brt) * 100 : 0;
-            $vlr_dec_mn = 0;
             $vlr_btot_split = $vlr_btot - $vlr_dec - $vlr_dec_mn;
+            $vlr_btot_split_parcela = $vlr_btot_split / $parcelas;
+            $taxa_bacen = ($vlr_btot_split_parcela <= $isnt_pixblt) ? ($vlr_pix + $vlr_boleto) : 0;
+
             $perc_juros = $vlr_brt > 0 ? ($jurosTotal / $vlr_brt) * 100 : 0;
             $vlr_juros = $jurosTotal;
+            $vlr_juros_parcela = $vlr_juros / $parcelas;
             $vlr_btot_cj = $vlr_btot_split + $vlr_juros;
-            $vlr_atr_m = 0;
-            $vlr_atr_j = 0;
-            $vlr_acr_mn = 0;
-            $pts_disp_part = 0;
-            $pts_disp_fraq = 0;
-            $pts_disp_mult = 0;
-            $pts_disp_cash = 0;
+            $vlr_btot_cj_parcela = $vlr_btot_cj / $parcelas;
 
             /////////////////////////////////////////////////////////////////////////////
             // TAXA ADMINISTRATIVA
@@ -201,12 +245,16 @@ class PdvWebController extends Controller
                 }
             } elseif ($tipoPagto === 'BL') {
                 $tax_adm = $tax_blt;
-            } elseif ($tipoPagto === 'DN') {
+            } elseif (in_array($tipoPagto, ['DN', 'PX', 'OT'], true)) {
                 $tax_adm = 0;
-            } elseif ($tipoPagto === 'PX') {
-                $tax_adm = 0;
-            } elseif ($tipoPagto === 'OT') {
-                $tax_adm = 0;
+            }
+
+            /////////////////////////////////////////////////////////////////////////////
+            // STATUS DOS LANÇAMENTOS DOS TÍTULOS ABERTOS E COMPENSADOS
+            if (in_array($tipoPagto, ['CM', 'BL'], true)) {
+                $parcela_sts = 'REG';
+            } else {
+                $parcela_sts = 'BXD';
             }
 
             /////////////////////////////////////////////////////////////////////////////
@@ -278,480 +326,694 @@ class PdvWebController extends Controller
             $hTitulo->save();
             $titulo = $hTitulo->titulo;
 
-
-
-
-
-            // // ///////////////////////////////////////////////////////////
-            // // GRAVA OS DADOS DAS PARCELAS NAS TABELAS
-            // // TBTR_P_TITULOS_AB
-            // // TBTR_P_TITULOS_CP
-            // // TBTR_F_TITULOS
-            // for ($parcela = 1; $parcela <= $parcelas; $parcela++) {
-            //     // Monte o array de dados da parcela
-            //     $dataParcela = [
-            //         'emp_id'      => $emp_id,
-            //         'user_id'     => $user_id,
-            //         'titulo'      => $titulo,
-            //         'nsu_titulo'  => $nsu_titulo,
-            //         'nsu_autoriz' => $nsu_autoriz,
-            //         'qtd_parc'    => $parcelas,
-            //         'primeira_para' => $regra_parc ? $regra_parc : 1,
-            //         'cnd_pag'      => ($parcelas > 1) ? 2 : 1,
-            //         'cliente_id'   => $cliente_id,
-            //         'meio_pag_v'   => $tipoPagto,
-            //         'data_mov'    => now(),
-            //         'parcela'     => $parcela,
-            //         'nid_parcela' => (string) $nid_parcela,
-            //         'data_venc'   => now()->addMonths($parcela),
-            //         'parcela_sts' => 3,
-            //         'destvlr'     => 4,
-            //         'card_uuid'   => (string) $card_uuid,
-            //         'id_fatura'   => (string) $id_fatura,
-            //         'integ_bc'    => (string) $integ_bc,
-            //         'data_pgto'   => now(),
-            //         'meio_pag_t'  => (string) $meio_pag_t,
-            //         'nid_parcela_org' => (string) $nid_parcela_org,
-            //         'parcela_obs' => (string) $parcela_obs,
-            //         'parcela_ins_pg' => (string) $parcela_ins_pg,
-            //         'qtd_pts_utlz' => (int) $qtd_pts_utlz,
-            //         'tax_bacen'   => (float) $tax_bacen,
-            //         'vlr_dec'     => (float) $vlr_dec,
-            //         'vlr_dec_mn'  => (float) $vlr_dec_mn,
-            //         'vlr_bpar_split' => (float) $vlr_bpar_split,
-            //         'vlr_jurosp'  => (float) $vlr_jurosp,
-            //         'vlr_bpar_cj' => (float) $vlr_bpar_cj,
-            //         'vlr_atr_m'   => (float) $vlr_atr_m,
-            //         'vlr_atr_j'   => (float) $vlr_atr_j,
-            //         'isent_mj'    => (string) $isent_mj,
-            //         'protestado'  => (string) $protestado,
-            //         'negociacao'  => (string) $negociacao,
-            //         'vlr_acr_mn'  => (float) $vlr_acr_mn,
-            //         'vlr_cst_cob' => (float) $vlr_cst_cob,
-            //         'negociacao_obs' => (string) $negociacao_obs,
-            //         'negociacao_file' => (string) $negociacao_file,
-            //         'follow_dt' => (string) $follow_dt,
-            //         'check_ant' => (string) $check_ant,
-            //         'perct_ant' => (float) $perct_ant,
-            //         'ant_desc' => (float) $ant_desc,
-            //         'pgt_vlr' => (float) $pgt_vlr,
-            //         'pgt_desc' => (float) $pgt_desc,
-            //         'pgt_mtjr' => (float) $pgt_mtjr,
-            //         'vlr_rec' => (float) $vlr_rec,
-            //         'pts_disp_part' => (float) $pts_disp_part,
-            //         'pts_disp_fraq' => (float) $pts_disp_fraq,
-            //         'pts_disp_mult' => (float) $pts_disp_mult,
-            //         'pts_disp_cash' => (float) $pts_disp_cash,
-            //         'criador'      => (int) $criador,
-            //         'dthr_cr'      => (string) $dthr_cr,
-            //         'modificador'  => (int) $modificador,
-            //         'dthr_ch'     => (string) $dthr_ch,
-
-            //         'emp_id'      => $emp_id,
-            //         'user_id'     => $user_id,
-            //         'titulo'      => $titulo,
-            //         'nsu_titulo'  => (string) $nsu_titulo,
-            //         'nsu_autoriz' => (string) $nsu_autoriz,
-            //         'parcela'     => $parcela,
-            //         // ... outros campos ...
-            //         'criador'     => $user_id,
-            //         'dthr_cr'     => now(),
-            //         'modificador' => $user_id,
-            //         'dthr_ch'     => now(),
-            //     ];
-
-            //                     $hParcela = new TbtrPParcelas($dataParcela);
-            //     $hParcela->save();
-
-            //     // Exemplo de salvar:
-            //     // $pTituloCp = new TbtrPTitulosCp($dataParcela);
-            //     // $pTituloCp->save();
-            // }
-
-
-
-
-
-
-
             // //////////////////////////////////////////////////////////////////////////////////////
-            // GRAVA OS DADOS NA TABELA TBTR_I_TITULOS E TBTR_S_TITULOS - PARA CADA ITEM DO CARRINHO
+            // GRAVA OS DADOS NAS TABELAS DE FATURA E PARCELAS
             // //////////////////////////////////////////////////////////////////////////////////////
-            $item_seq = 1;
+            for ($parcela = 1; $parcela <= $parcelas; $parcela++) {
 
-            foreach ($carrinho_venda as $item) {
-                $data = [];
-
-                $produto_tipo = $item['produto_tipo'];
-                $produto_id = $item['produto_id'];
-                $qtd_item = $item['qtd_item'];
-                $vlr_brt_item = $item['vlr_brut_item'] * $proporcao_cobrado;
-                $vlr_unit_item = $item['vlr_unit_item'];
-                $vlr_dec_item = $item['vlr_desc_item'] * $proporcao_cobrado;
-                $vlr_dec_mn = 0;
-                $vlr_base_item = $vlr_brt_item - $vlr_dec_item - $vlr_dec_mn;
-                $perc_toti = $item['proporcao_item'];
-                $qtd_pts_utlz_item = $perc_toti * $qtd_pts_utlz / 100;
-                $vlr_bpar_split_item = $vlr_base_item - $qtd_pts_utlz_item;
-                $vlr_jpar_item = $perc_toti * $jurosTotal / 100;
-                $vlr_bpar_cj_item = $vlr_bpar_split_item + $vlr_jpar_item;
-                $vlr_atrm_item = 0;
-                $vlr_atrj_item = 0;
-                $vlr_acr_mn = 0;
-                $ant_desc = 0;
-                $pgt_vlr = 0;
-                $pgt_desc = 0;
-                $pgt_mtjr = 0;
-                $pts_disp = 0;
-
-                // VALOR RECEBIDO
-                if ($tipoPagto === 'CM') {
-                    $vlr_rec = 0;
-                } elseif ($tipoPagto === 'BL') {
-                    $vlr_rec = 0;
-                } elseif ($tipoPagto === 'DN') {
-                    $vlr_rec = $vlr_bpar_cj_item;
-                } elseif ($tipoPagto === 'PX') {
-                    $vlr_rec = $vlr_bpar_cj_item;
-                } elseif ($tipoPagto === 'OT') {
-                    $vlr_rec = $vlr_bpar_cj_item;
+                // as demais parcelas são incrementadas de 1 mês
+                if ($parcela > 1) {
+                    $data_venc = $data_venc->copy()->addMonth();
                 }
 
-                // ///////////////
-                // TBTR_I_TITULOS
-                $data = [
-                    'emp_id'       => $emp_id,
-                    'user_id'      => $user_id,
-                    'titulo'       => $titulo,
-                    'nsu_titulo'   => (string) $nsu_titulo,
-                    'nsu_autoriz'  => (string) $nsu_autoriz,
-                    'item'         => $item_seq,
-                    'produto_tipo' => $produto_tipo,
-                    'produto_id'   => $produto_id,
+                // TBTR_F_TITULOS - Somente para cartão de crédito
+                // Verifica se já existe fatura para o cliente, cartão e data de vencimento
+                // se já existir, usa o id_fatura existente
+                // se não existir, cria uma nova fatura
+                $id_fatura = null;
+                if (in_array($tipoPagto, ['CM'], true)) {
+                    if ($emp_id && $cliente_id && $card_uuid && $data_venc) {
 
-                    'qtd_item'            => $qtd_item,
-                    'vlr_unit_item'       => $vlr_unit_item,
-                    'vlr_brt_item'        => $vlr_brt_item,
-                    'perc_toti'           => $perc_toti,
-                    'qtd_pts_utlz_item'   => $qtd_pts_utlz_item,
-                    'vlr_base_item'       => $vlr_base_item,
-                    'vlr_dec_item'        => $vlr_dec_item,
-                    'vlr_dec_mn'          => $vlr_dec_mn,
-                    'vlr_bpar_split_item' => $vlr_bpar_split_item,
-                    'vlr_jpar_item'       => $vlr_jpar_item,
-                    'vlr_bpar_cj_item'    => $vlr_bpar_cj_item,
-                    'vlr_atrm_item'       => $vlr_atrm_item,
-                    'vlr_atrj_item'       => $vlr_atrj_item,
-                    'vlr_acr_mn'          => $vlr_acr_mn,
-                    'ant_desc'            => $ant_desc,
-                    'pgt_vlr'             => $pgt_vlr,
-                    'pgt_desc'            => $pgt_desc,
-                    'pgt_mtjr'            => $pgt_mtjr,
-                    'vlr_rec'             => $vlr_rec,
-                    'card_pts_part'       => $pts_disp_part,
-                    'card_pts_fraq'       => $pts_disp_fraq,
-                    'card_pts_mult'       => $pts_disp_mult,
-                    'card_pts_cash'       => $pts_disp_cash,
-                    'criador'             => $user_id,
-                    'dthr_cr'             => now(),
-                    'modificador'         => $user_id,
-                    'dthr_ch'             => now(),
+                        Log::info("Verificando fatura para emp_id: $emp_id, cliente_id: $cliente_id, card_uuid: $card_uuid, data_venc: $data_venc");
+                        $fatura = TbtrFTitulos::where('emp_id', $emp_id)
+                            ->where('cliente_id', $cliente_id)
+                            ->where('card_uuid', $card_uuid)
+                            ->where('data_venc', $data_venc)
+                            ->first();
+
+                        if ($fatura) {
+                            $id_fatura = $fatura->id_fatura;
+                        } else {
+                            // cria nova fatura
+                            $id_fatura = (string) Str::uuid();
+                            $fatura = new TbtrFTitulos([
+                                'emp_id'      => $emp_id,
+                                'id_fatura'   => $id_fatura,
+                                'cliente_id'  => $cliente_id,
+                                'card_uuid'   => $card_uuid,
+                                'integ_bc'    => null,
+                                'fatura_sts'  => 1,
+                                'data_fech'   => ($data_venc instanceof Carbon)
+                                                ? $data_venc->copy()->subDays(10)
+                                                : Carbon::parse($data_venc)->subDays(10),
+                                'data_venc'   => $data_venc,
+                                'data_pgto'   => null,
+                                'vlr_tot'     => $vlr_btot_split_parcela ?? 0,
+                                'vlr_pgto'    => 0,
+                                'criador'     => $user_id,
+                                'dthr_cr'     => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch'     => now(),
+                            ]);
+                            $fatura->save();
+
+                        }
+                    }
+                }
+
+                // TBTR_P_TITULOS_AB
+                // TBTR_P_TITULOS_CP
+                $nid_parcela = Str::uuid();
+
+                $dataParcela = [
+                    'emp_id'      => $emp_id,
+                    'user_id'     => $user_id,
+                    'titulo'      => $titulo,
+                    'nsu_titulo'  => $nsu_titulo,
+                    'nsu_autoriz' => $nsu_autoriz,
+                    'qtd_parc'    => $parcelas,
+                    'primeira_para' => $regra_parc ? $regra_parc : 1,
+                    'cnd_pag'      => ($parcelas > 1) ? 2 : 1,
+                    'cliente_id'   => $cliente_id,
+                    'meio_pag_v'   => $tipoPagto,
+                    'data_mov'    => now(),
+                    'parcela'     => $parcela,
+                    'nid_parcela' => $nid_parcela,
+                    'data_venc'   => $data_venc,
+                    'parcela_sts' => $parcela_sts,
+                    'destvlr'     => $emp_destvlr,
+                    'card_uuid'   => $card_uuid,
+                    'id_fatura'   => $id_fatura,
+                    'integ_bc'    => $integ_bc,
+                    'data_pgto'   => $data_pgto,
+                    'meio_pag_t'  => $meio_pag_t,
+                    'nid_parcela_org' => $nid_parcela_org,
+                    'parcela_obs' => $parcela_obs,
+                    'parcela_ins_pg' => $parcela_ins_pg,
+                    'qtd_pts_utlz' => $qtd_pts_utlz_parcela,
+                    'tax_bacen'   => $taxa_bacen,
+                    'vlr_dec'     => $vlr_dec_parcela,
+                    'vlr_dec_mn'  => $vlr_dec_mn,
+                    'vlr_bpar_split' => $vlr_btot_split_parcela,
+                    'vlr_jurosp'  => $vlr_juros_parcela,
+                    'vlr_bpar_cj' => $vlr_btot_cj_parcela,
+                    'vlr_atr_m'   => $vlr_atr_m,
+                    'vlr_atr_j'   => $vlr_atr_j,
+                    'isent_mj'    => $isent_mj,
+                    'protestado'  => $protestado,
+                    'negociacao'  => $negociacao,
+                    'vlr_acr_mn'  => $vlr_acr_mn,
+                    'vlr_cst_cob' => $vlr_cst_cob,
+                    'negociacao_obs' => $negociacao_obs,
+                    'negociacao_file' => $negociacao_file,
+                    'follow_dt' => $follow_dt,
+                    'check_ant' => $check_ant,
+                    'perct_ant' => $perct_ant,
+                    'ant_desc' => $ant_desc,
+                    'pgt_vlr' => $pgt_vlr,
+                    'pgt_desc' => $pgt_desc,
+                    'pgt_mtjr' => $pgt_mtjr,
+                    'vlr_rec' => $vlr_rec,
+                    'pts_disp_part' => $pts_disp_part,
+                    'pts_disp_fraq' => $pts_disp_fraq,
+                    'pts_disp_mult' => $pts_disp_mult,
+                    'pts_disp_cash' => $pts_disp_cash,
+                    'criador'        => $user_id,
+                    'dthr_cr'        => now(),
+                    'modificador'    => $user_id,
+                    'dthr_ch'        => now(),
                 ];
 
-                $iTitulo = new TbtrITitulos($data);
-                $iTitulo->save();
-                $item_seq++;
+                if (in_array($tipoPagto, ['CM', 'BL'], true)) {
+                    $hParcela = new TbtrPTitulosAb($dataParcela);
+                    $hParcela->save();
 
-                //     /////////////////
-                //     // TBTR_S_TITULOS
+                } else {
+                    $hParcela = new TbtrPTitulosCp($dataParcela);
+                    $hParcela->save();
+                }
 
-                //     // CALCULO DE TAXA ADMINISTRATIVA
-                //     $vlr_tax = 0;
-                //     if ($tax_adm > 0) {
-                //         $vlr_tax = $vlr_bpar_split_item * $tax_adm / 100;
-                //     }
 
-                //     // CALCULO DE REBATE
-                //     $vlr_rebate = 0;
-                //     if ($rebate_emp && $tax_rebate && $tax_adm) {
-                //         $vlr_rebate = $vlr_tax * $tax_rebate / 100;
-                //         $vlr_tax = $vlr_tax - $vlr_rebate;
-                //     }
+                // //////////////////////////////////////////////////////////////////////////////////////
+                // GRAVA OS DADOS NA TABELA TBTR_I_TITULOS
+                //          Para cada item no carrinho
+                //          Apenas para a primeira parcela
+                // GRAVA OS DADOS NA TABELA TBTR_S_TITULOS
+                //          Para cada item no carrinho
+                // //////////////////////////////////////////////////////////////////////////////////////
+                $item_seq = 1;
 
-                //     // CALCULO DE ROYALTIES
-                //     $vlr_royalties = 0;
-                //     if ($royalties_emp && $tax_royalties) {
-                //         $vlr_royalties = $vlr_bpar_split_item * $tax_royalties / 100;
-                //     }
+                foreach ($carrinho_venda as $item) {
+                    $data = [];
 
-                //     // CALCULO DE COMISSÃO DE VENDAS
-                //     $vlr_comissao = 0;
-                //     if ($comiss_emp && $tax_comiss) {
-                //         $vlr_comissao = $vlr_bpar_split_item * $tax_comiss / 100;
-                //     }
+                    $produto_tipo = $item['produto_tipo'];
+                    $produto_id = $item['produto_id'];
+                    $qtd_item = $item['qtd_item'];
+                    $vlr_unit_item = $item['vlr_unit_item'];
+                    $perc_toti = $item['proporcao_item'];
+                    $vlr_brt_item = $item['vlr_brut_item'] * $proporcao_cobrado;
+                    $vlr_dec_item = $item['vlr_desc_item'] * $proporcao_cobrado;
+                    $vlr_dec_mn = 0;
 
-                //     if ($tipoPagto === 'CM') {
+                    $vlr_base_item = $vlr_brt_item - $vlr_dec_item - $vlr_dec_mn;
+                    $qtd_pts_utlz_item = $qtd_pts_utlz * $perc_toti / 100;
 
-                //     } else if ($tipoPagto === 'BL') {
+                    $vlr_bpar_split_item = ($vlr_base_item - $qtd_pts_utlz_item) / $parcelas;
+                    $vlr_jpar_item = ($jurosTotal * $perc_toti / 100) / $parcelas;
+                    $vlr_bpar_cj_item = $vlr_bpar_split_item + $vlr_jpar_item;
 
-                //     } else if ($tipoPagto === 'DN') {
-                //         $data = [
-                //             'emp_id' => $emp_id,
-                //             'user_id' => $user_id,
-                //             'titulo' => $titulo,
-                //             'nsu_titulo' => (string) $nsu_titulo,
-                //             'nsu_autoriz' => (string) $nsu_autoriz,
-                //             'parcela' => $parcela,
-                //             'produto_id' => $produto_id,
-                //             'lanc_tp' => 'DINHEIRO',
-                //             'recebedor' => $emp_id,
+                    // VALOR RECEBIDO
+                    if ($tipoPagto === 'CM') {
+                        $vlr_rec = 0;
+                    } elseif ($tipoPagto === 'BL') {
+                        $vlr_rec = 0;
+                    } elseif ($tipoPagto === 'DN') {
+                        $vlr_rec = $vlr_bpar_cj_item;
+                    } elseif ($tipoPagto === 'PX') {
+                        $vlr_rec = $vlr_bpar_cj_item;
+                    } elseif ($tipoPagto === 'OT') {
+                        $vlr_rec = $vlr_bpar_cj_item;
+                    }
 
-                //             'tax_adm' => 0,
-                //             'vlr_plan' => $vlr_bpar_split_item,
-                //             'perc_real' => 100,
-                //             'vlr_real' => $vlr_rec,
-                //             'criador' => $user_id,
-                //             'dthr_cr' => now(),
-                //             'modificador' => $user_id,
-                //             'dthr_ch' => now(),
-                //         ];
+                    $vlr_atrm_item = $vlr_atr_m * $perc_toti / 100;
+                    $vlr_atrj_item = $vlr_atr_j * $perc_toti / 100;
+                    $vlr_acr_mn = 0;
+                    $ant_desc_item = $ant_desc * $perc_toti / 100;
+                    $pgt_vlr_item = $pgt_vlr * $perc_toti / 100;
+                    $pgt_desc_item = $pgt_desc *  $perc_toti / 100;
+                    $pgt_mtjr_item = $pgt_mtjr * $perc_toti / 100;
+                    $vlr_rec_item = $vlr_rec * $perc_toti / 100;
+                    $pts_disp_part_item = $pts_disp_part * $perc_toti / 100;
+                    $pts_disp_fraq_item = $pts_disp_fraq * $perc_toti / 100;
+                    $pts_disp_mult_item = $pts_disp_mult * $perc_toti / 100;
+                    $pts_disp_cash_item = $pts_disp_cash * $perc_toti / 100;
 
-                //         $sTitulo = new TbtrSTitulos($data);
-                //         $sTitulo->save();
 
-                //     } else if ($tipoPagto === 'PX') {
-                //         $vlr_plan_repasse = $vlr_bpar_split_item * (1 - $vlr_pix / 100);
-                //         $vlr_real_repasse = $vlr_rec * (1 - $vlr_pix / 100);
-                //         $vlr_plan_vlr_pix = $vlr_bpar_split_item - $vlr_plan_repasse;
-                //         $vlr_real_vlr_pix = $vlr_rec - $vlr_real_repasse;
+                    // ///////////////
+                    // TBTR_I_TITULOS
+                    if ($parcela == 1) {
 
-                //         $data = [
-                //             'emp_id' => $emp_id,
-                //             'user_id' => $user_id,
-                //             'titulo' => $titulo,
-                //             'nsu_titulo' => (string) $nsu_titulo,
-                //             'nsu_autoriz' => (string) $nsu_autoriz,
-                //             'parcela' => $parcela,
-                //             'produto_id' => $produto_id,
-                //             'lanc_tp' => 'REPASSE',
-                //             'recebedor' => $emp_id,
+                        $data = [
+                            'emp_id'              => $emp_id,
+                            'user_id'             => $user_id,
+                            'titulo'              => $titulo,
+                            'nsu_titulo'          => $nsu_titulo,
+                            'nsu_autoriz'         => $nsu_autoriz,
+                            'item'                => $item_seq,
+                            'produto_tipo'        => $produto_tipo,
+                            'produto_id'          => $produto_id,
 
-                //             'tax_adm' => 0,
-                //             'vlr_plan' => $vlr_plan_repasse,
-                //             'perc_real' => 100,
-                //             'vlr_real' => $vlr_real_repasse,
-                //             'criador' => $user_id,
-                //             'dthr_cr' => now(),
-                //             'modificador' => $user_id,
-                //             'dthr_ch' => now(),
-                //         ];
+                            'qtd_item'            => $qtd_item,
+                            'vlr_unit_item'       => $vlr_unit_item,
+                            'vlr_brt_item'        => $vlr_brt_item,
+                            'perc_toti'           => $perc_toti,
+                            'qtd_pts_utlz_item'   => $qtd_pts_utlz_item,
+                            'vlr_base_item'       => $vlr_base_item,
+                            'vlr_dec_item'        => $vlr_dec_item,
+                            'vlr_dec_mn'          => $vlr_dec_mn,
+                            'vlr_bpar_split_item' => $vlr_bpar_split_item,
+                            'vlr_jpar_item'       => $vlr_jpar_item,
+                            'vlr_bpar_cj_item'    => $vlr_bpar_cj_item,
+                            'vlr_atrm_item'       => $vlr_atrm_item,
+                            'vlr_atrj_item'       => $vlr_atrj_item,
+                            'vlr_acr_mn'          => $vlr_acr_mn,
+                            'ant_desc'            => $ant_desc_item,
+                            'pgt_vlr'             => $pgt_vlr_item,
+                            'pgt_desc'            => $pgt_desc_item,
+                            'pgt_mtjr'            => $pgt_mtjr_item,
+                            'vlr_rec'             => $vlr_rec_item,
+                            'card_pts_part'       => $pts_disp_part_item,
+                            'card_pts_fraq'       => $pts_disp_fraq_item,
+                            'card_pts_mult'       => $pts_disp_mult_item,
+                            'card_pts_cash'       => $pts_disp_cash_item,
+                            'criador'             => $user_id,
+                            'dthr_cr'             => now(),
+                            'modificador'         => $user_id,
+                            'dthr_ch'             => now(),
+                        ];
 
-                //         $sTitulo = new TbtrSTitulos($data);
-                //         $sTitulo->save();
+                        $iTitulo = new TbtrITitulos($data);
+                        $iTitulo->save();
+                    }
 
-                //         // SE A EMPRESA FOR WHITE LABEL, PRECISAMOS PROPORCIONAR OS VALORES
-                //         // DE ACORDO COM A COMISSÃO DA MULTBAN
-                //         if ($emp_wlde && $emp_comwl) {
-                //             $vlr_plan_vlr_pix_wl = $vlr_plan_vlr_pix * (1 - $emp_comwl / 100);
-                //             $vlr_plan_vlr_pix = $vlr_plan_vlr_pix * ($emp_comwl / 100);
-                //             $vlr_real_vlr_pix_wl = $vlr_real_vlr_pix * (1 - $emp_comwl / 100);
-                //             $vlr_real_vlr_pix = $vlr_real_vlr_pix * ($emp_comwl / 100);
+                    ///////////////////////////////////
+                    // TBTR_S_TITULOS - CARTÃO E BOLETO
+                    if (in_array($tipoPagto, ['CM', 'BL'], true)) {
 
-                //             // MULTBAN
-                //             $data = [
-                //                 'emp_id' => $emp_id,
-                //                 'user_id' => $user_id,
-                //                 'titulo' => $titulo,
-                //                 'nsu_titulo' => (string) $nsu_titulo,
-                //                 'nsu_autoriz' => (string) $nsu_autoriz,
-                //                 'parcela' => $parcela,
-                //                 'produto_id' => $produto_id,
-                //                 'lanc_tp' => 'TAX_BAC',
-                //                 'recebedor' => 1,
+                        Log::info('Parcela ' . $parcela . ' - Item ' . $item_seq);
 
-                //                 'tax_adm' => 0,
-                //                 'vlr_plan' => $vlr_plan_vlr_pix,
-                //                 'perc_real' => 100,
-                //                 'vlr_real' => $vlr_real_vlr_pix,
-                //                 'criador' => $user_id,
-                //                 'dthr_cr' => now(),
-                //                 'modificador' => $user_id,
-                //                 'dthr_ch' => now(),
-                //             ];
+                        // TAXA BACEN
+                        $vlr_bacen = 0;
+                        if ($taxa_bacen > 0) {
 
-                //             $sTitulo = new TbtrSTitulos($data);
-                //             $sTitulo->save();
+                                $vlr_bacen = $vlr_bpar_split_item * $taxa_bacen / 100;
 
-                //             // EMPRESA WHITE LABEL
-                //             $data = [
-                //                 'emp_id' => $emp_id,
-                //                 'user_id' => $user_id,
-                //                 'titulo' => $titulo,
-                //                 'nsu_titulo' => (string) $nsu_titulo,
-                //                 'nsu_autoriz' => (string) $nsu_autoriz,
-                //                 'parcela' => $parcela,
-                //                 'produto_id' => $produto_id,
-                //                 'lanc_tp' => 'TAX_BAC',
-                //                 'recebedor' => 1,
+                                // Desconta Taxa Bacen da empresa
+                                $data = [
+                                    'emp_id' => $emp_id,
+                                    'user_id' => $user_id,
+                                    'titulo' => $titulo,
+                                    'nsu_titulo' => $nsu_titulo,
+                                    'nsu_autoriz' => $nsu_autoriz,
+                                    'parcela' => $parcela,
+                                    'produto_id' => $produto_id,
+                                    'lanc_tp' => 'TAXA_BAC',
+                                    'recebedor' => $emp_id,
 
-                //                 'tax_adm' => 0,
-                //                 'vlr_plan' => $vlr_plan_vlr_pix_wl,
-                //                 'perc_real' => 100,
-                //                 'vlr_real' => $vlr_real_vlr_pix_wl,
-                //                 'criador' => $user_id,
-                //                 'dthr_cr' => now(),
-                //                 'modificador' => $user_id,
-                //                 'dthr_ch' => now(),
-                //             ];
+                                    'tax_adm' => $taxa_bacen,
+                                    'vlr_plan' => -abs(floatval($vlr_bacen)),
+                                    'perc_real' => 0,
+                                    'vlr_real' => 0,
+                                    'criador' => $user_id,
+                                    'dthr_cr' => now(),
+                                    'modificador' => $user_id,
+                                    'dthr_ch' => now(),
+                                ];
 
-                //             $sTitulo = new TbtrSTitulos($data);
-                //             $sTitulo->save();
+                                $sTitulo = new TbtrSTitulos($data);
+                                $sTitulo->save();
 
-                //         } else {
-                //             $data = [
-                //                 'emp_id' => $emp_id,
-                //                 'user_id' => $user_id,
-                //                 'titulo' => $titulo,
-                //                 'nsu_titulo' => (string) $nsu_titulo,
-                //                 'nsu_autoriz' => (string) $nsu_autoriz,
-                //                 'parcela' => $parcela,
-                //                 'produto_id' => $produto_id,
-                //                 'lanc_tp' => 'TAX_BAC',
-                //                 'recebedor' => 1,
+                                // Acrescenta Taxa Bacen para Multban
+                                $data = [
+                                    'emp_id' => $emp_id,
+                                    'user_id' => $user_id,
+                                    'titulo' => $titulo,
+                                    'nsu_titulo' => $nsu_titulo,
+                                    'nsu_autoriz' => $nsu_autoriz,
+                                    'parcela' => $parcela,
+                                    'produto_id' => $produto_id,
+                                    'lanc_tp' => 'TAXA_BAC',
+                                    'recebedor' => $cdg_multban,
 
-                //                 'tax_adm' => 0,
-                //                 'vlr_plan' => $vlr_plan_vlr_pix,
-                //                 'perc_real' => 100,
-                //                 'vlr_real' => $vlr_real_vlr_pix,
-                //                 'criador' => $user_id,
-                //                 'dthr_cr' => now(),
-                //                 'modificador' => $user_id,
-                //                 'dthr_ch' => now(),
-                //             ];
-                //         }
+                                    'tax_adm' => $taxa_bacen,
+                                    'vlr_plan' => $vlr_bacen,
+                                    'perc_real' => 0,
+                                    'vlr_real' => 0,
+                                    'criador' => $user_id,
+                                    'dthr_cr' => now(),
+                                    'modificador' => $user_id,
+                                    'dthr_ch' => now(),
+                                ];
 
-                //         $sTitulo = new TbtrSTitulos($data);
-                //         $sTitulo->save();
+                                $sTitulo = new TbtrSTitulos($data);
+                                $sTitulo->save();
 
-                //     } else if ($tipoPagto === 'OT') {
-                //         $data = [
-                //             'emp_id' => $emp_id,
-                //             'user_id' => $user_id,
-                //             'titulo' => $titulo,
-                //             'nsu_titulo' => (string) $nsu_titulo,
-                //             'nsu_autoriz' => (string) $nsu_autoriz,
-                //             'parcela' => $parcela,
-                //             'produto_id' => $produto_id,
-                //             'lanc_tp' => 'OUTROS',
-                //             'recebedor' => $emp_id,
+                            }
 
-                //             'tax_adm' => 0,
-                //             'vlr_plan' => $vlr_bpar_split_item,
-                //             'perc_real' => 100,
-                //             'vlr_real' => $vlr_rec,
-                //             'criador' => $user_id,
-                //             'dthr_cr' => now(),
-                //             'modificador' => $user_id,
-                //             'dthr_ch' => now(),
-                //         ];
+                        // CALCULO DE TAXA ADMINISTRATIVA
+                        $vlr_tax = 0;
+                        if ($tax_adm > 0) {
+                            $vlr_tax = $vlr_bpar_split_item * $tax_adm / 100;
 
-                //         $sTitulo = new TbtrSTitulos($data);
-                //         $sTitulo->save();
+                            // CALCULO DE REBATE
+                            $vlr_rebate = 0;
+                            if ($rebate_emp && $tax_rebate && $tax_adm) {
+                                $tax_adm_rebate = $tax_adm - ($tax_adm * $tax_rebate / 100);
+                                $vlr_rebate = $vlr_tax * $tax_rebate / 100;
+                                $tax_adm = $tax_adm - $tax_adm_rebate;
+                                $vlr_tax = $vlr_tax - $vlr_rebate;
 
-                //     }
+                                // Acrescenta Rebate para a Empresa
+                                $data = [
+                                    'emp_id' => $emp_id,
+                                    'user_id' => $user_id,
+                                    'titulo' => $titulo,
+                                    'nsu_titulo' => $nsu_titulo,
+                                    'nsu_autoriz' => $nsu_autoriz,
+                                    'parcela' => $parcela,
+                                    'produto_id' => $produto_id,
+                                    'lanc_tp' => 'VLR_REBT',
+                                    'recebedor' => $rebate_emp,
 
+                                    'tax_adm' => $tax_adm_rebate,
+                                    'vlr_plan' => $vlr_rebate,
+                                    'perc_real' => 0,
+                                    'vlr_real' => 0,
+                                    'criador' => $user_id,
+                                    'dthr_cr' => now(),
+                                    'modificador' => $user_id,
+                                    'dthr_ch' => now(),
+                                ];
+
+                                $sTitulo = new TbtrSTitulos($data);
+                                $sTitulo->save();
+
+                            }
+
+                            // Acrescenta Taxa Adm para Multban
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'TAXA_ADM',
+                                'recebedor' => $cdg_multban,
+
+                                'tax_adm' => $tax_adm,
+                                'vlr_plan' => $vlr_tax,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // CALCULO DE ROYALTIES
+                        $vlr_royalties = 0;
+                        if ($royalties_emp && $tax_royalties) {
+                            $vlr_royalties = ($vlr_bpar_split_item - $vlr_tax - $vlr_rebate) * $tax_royalties / 100;
+
+                            // Acrescenta Royalties para a Empresa
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'VLR_ROTS',
+                                'recebedor' => $royalties_emp,
+
+                                'tax_adm' => $tax_royalties,
+                                'vlr_plan' => $vlr_royalties,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // CALCULO DE COMISSÃO DE VENDAS
+                        $vlr_comissao = 0;
+                        if ($comiss_emp && $tax_comiss) {
+                            $vlr_comissao = ($vlr_bpar_split_item - $vlr_tax - $vlr_rebate) * $tax_comiss / 100;
+
+                            // Acrescenta Comissão para a Empresa
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'VLR_CMIS',
+                                'recebedor' => $comiss_emp,
+
+                                'tax_adm' => $tax_comiss,
+                                'vlr_plan' => $vlr_comissao,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // CALCULO DE COMISSÃO DE FUNCIONARIO
+                        $vlr_comissao_func = 0;
+                        if ( $user_comis && $user_pcomis) {
+                            $vlr_comissao_func = ($vlr_bpar_split_item - $vlr_tax - $vlr_rebate) * $user_pcomis / 100;
+
+                            // Acrescenta Comissão para a Funcionário
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'VLR_CMIS',
+                                'recebedor' => $user_comis,
+
+                                'tax_adm' => $user_pcomis,
+                                'vlr_plan' => $vlr_comissao_func,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // REPASSE PARA A EMPRESA
+                        $vlr_plan_repasse = $vlr_bpar_split_item - $vlr_tax - $vlr_rebate - $vlr_royalties - $vlr_comissao - $vlr_comissao_func;
+                        if ($vlr_plan_repasse > 0) {
+
+                            // Acrescenta Comissão para a Funcionário
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'VLR_VNDA',
+                                'recebedor' => $emp_id,
+
+                                'tax_adm' => 0,
+                                'vlr_plan' => $vlr_plan_repasse,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // JUROS DA VENDA
+                        if ($vlr_jpar_item > 0) {
+                            $vlr_juros_empresa = $vlr_jpar_item * $parc_com_jrs / 100;
+                            $vlr_juros_multban = $vlr_jpar_item - $vlr_juros_empresa;
+
+                            // Acrescenta Valor dos Juros para a Empresa
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'DIV_JURS',
+                                'recebedor' => $emp_id,
+
+                                'tax_adm' => 0,
+                                'vlr_plan' => $vlr_juros_empresa,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+
+                            // Acrescenta Valor dos Juros para a Multban
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => $nsu_titulo,
+                                'nsu_autoriz' => $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'DIV_JURS',
+                                'recebedor' => $cdg_multban,
+
+                                'tax_adm' => 0,
+                                'vlr_plan' => $vlr_juros_multban,
+                                'perc_real' => 0,
+                                'vlr_real' => 0,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                    ///////////////////////////////////
+                    // TBTR_S_TITULOS - DINHEIRO
+                    } else if ($tipoPagto === 'DN') {
+                        $data = [
+                            'emp_id' => $emp_id,
+                            'user_id' => $user_id,
+                            'titulo' => $titulo,
+                            'nsu_titulo' => $nsu_titulo,
+                            'nsu_autoriz' => $nsu_autoriz,
+                            'parcela' => $parcela,
+                            'produto_id' => $produto_id,
+                            'lanc_tp' => 'DINHEIRO',
+                            'recebedor' => $emp_id,
+
+                            'tax_adm' => 0,
+                            'vlr_plan' => $vlr_bpar_split_item,
+                            'perc_real' => 100,
+                            'vlr_real' => $vlr_rec,
+                            'criador' => $user_id,
+                            'dthr_cr' => now(),
+                            'modificador' => $user_id,
+                            'dthr_ch' => now(),
+                        ];
+
+                        $sTitulo = new TbtrSTitulos($data);
+                        $sTitulo->save();
+
+                    ///////////////////////////////////
+                    // TBTR_S_TITULOS - PIX
+                    } else if ($tipoPagto === 'PX') {
+                        $vlr_plan_repasse = $vlr_bpar_split_item - $vlr_pix;
+                        $vlr_real_repasse = $vlr_rec - $vlr_pix;
+
+                        // SE A EMPRESA LOGADA FOR WHITE LABEL, PRECISAMOS PROPORCIONAR OS VALORES
+                        if ($emp_wlde && $emp_comwl) {
+                            $vlr_pix = $vlr_pix * ($emp_comwl / 100);
+                            $vlr_pix_wl = $vlr_pix * (1 - $emp_comwl / 100);
+
+                            // VALORES DA EMPRESA WHITE LABEL
+                            $data = [
+                                'emp_id' => $emp_id,
+                                'user_id' => $user_id,
+                                'titulo' => $titulo,
+                                'nsu_titulo' => (string) $nsu_titulo,
+                                'nsu_autoriz' => (string) $nsu_autoriz,
+                                'parcela' => $parcela,
+                                'produto_id' => $produto_id,
+                                'lanc_tp' => 'TAX_BAC',
+                                'recebedor' => $emp_wlde,
+
+                                'tax_adm' => 0,
+                                'vlr_plan' => $vlr_pix_wl,
+                                'perc_real' => 100,
+                                'vlr_real' => $vlr_pix_wl,
+                                'criador' => $user_id,
+                                'dthr_cr' => now(),
+                                'modificador' => $user_id,
+                                'dthr_ch' => now(),
+                            ];
+
+                            $sTitulo = new TbtrSTitulos($data);
+                            $sTitulo->save();
+                        }
+
+                        // VALOR DE REPASSE PARA A EMPRESA
+                        $data = [
+                            'emp_id' => $emp_id,
+                            'user_id' => $user_id,
+                            'titulo' => $titulo,
+                            'nsu_titulo' => (string) $nsu_titulo,
+                            'nsu_autoriz' => (string) $nsu_autoriz,
+                            'parcela' => $parcela,
+                            'produto_id' => $produto_id,
+                            'lanc_tp' => 'VLR_VNDA',
+                            'recebedor' => $emp_id,
+
+                            'tax_adm' => 0,
+                            'vlr_plan' => $vlr_plan_repasse,
+                            'perc_real' => 100,
+                            'vlr_real' => $vlr_real_repasse,
+                            'criador' => $user_id,
+                            'dthr_cr' => now(),
+                            'modificador' => $user_id,
+                            'dthr_ch' => now(),
+                        ];
+
+                        $sTitulo = new TbtrSTitulos($data);
+                        $sTitulo->save();
+
+                        // VALOR DA MULTBAN
+                        $data = [
+                            'emp_id' => $emp_id,
+                            'user_id' => $user_id,
+                            'titulo' => $titulo,
+                            'nsu_titulo' => (string) $nsu_titulo,
+                            'nsu_autoriz' => (string) $nsu_autoriz,
+                            'parcela' => $parcela,
+                            'produto_id' => $produto_id,
+                            'lanc_tp' => 'TAX_BAC',
+                            'recebedor' => $cdg_multban,
+
+                            'tax_adm' => 0,
+                            'vlr_plan' => $vlr_pix,
+                            'perc_real' => 100,
+                            'vlr_real' => $vlr_pix,
+                            'criador' => $user_id,
+                            'dthr_cr' => now(),
+                            'modificador' => $user_id,
+                            'dthr_ch' => now(),
+                        ];
+
+                        $sTitulo = new TbtrSTitulos($data);
+                        $sTitulo->save();
+
+                    ///////////////////////////////////
+                    // TBTR_S_TITULOS - OUTROS
+                    } else if ($tipoPagto === 'OT') {
+                        $data = [
+                            'emp_id' => $emp_id,
+                            'user_id' => $user_id,
+                            'titulo' => $titulo,
+                            'nsu_titulo' => (string) $nsu_titulo,
+                            'nsu_autoriz' => (string) $nsu_autoriz,
+                            'parcela' => $parcela,
+                            'produto_id' => $produto_id,
+                            'lanc_tp' => 'OUTROS',
+                            'recebedor' => $emp_id,
+
+                            'tax_adm' => 0,
+                            'vlr_plan' => $vlr_bpar_split_item,
+                            'perc_real' => 100,
+                            'vlr_real' => $vlr_rec,
+                            'criador' => $user_id,
+                            'dthr_cr' => now(),
+                            'modificador' => $user_id,
+                            'dthr_ch' => now(),
+                        ];
+
+                        $sTitulo = new TbtrSTitulos($data);
+                        $sTitulo->save();
+
+                    }
+
+                    // INCREMENTA O SEQUENCIAL DOS ITENS
+                    $item_seq++;
+                }
+
+            // FIM DO LOOP DAS PARCELAS
             }
-
-            // /////////////////////////////////////////////////////////////
-            // // GRAVA OS DADOS NA TABELA TBTR_P_TITULOS_CP - PARCELA ÚNICA
-            // /////////////////////////////////////////////////////////////
-            // $nid_parcela = Str::uuid();
-
-            // $data = [
-            //     'emp_id' => $emp_id,
-            //     'user_id' => $user_id,
-            //     'titulo' => $titulo,
-            //     'nsu_titulo' => (string) $nsu_titulo,
-            //     'nsu_autoriz' => (string) $nsu_autoriz,
-            //     'cliente_id' => $cliente_id,
-            //     'meio_pag_v' => $tipoPagto,
-            //     'data_mov' => now(),
-            //     'nid_parcela' => (string) $nid_parcela,
-            //     'data_venc' => now(),
-            //     'destvlr' => $empresaParam->emp_destvlr,
-            //     'data_pgto' => now(),
-            //     'meio_pag_t' => $tipoPagto,
-            //     'nid_parcela_org' => null,
-            //     'parcela_obs' => null,
-            //     'parcela_ins_pg' => null,
-            //     'qtd_pts_utlz' => $qtd_pts_utlz,
-            //     'vlr_dec' => $vlr_dec,
-            //     'vlr_dec_mn' => 0,
-            //     'vlr_bpar_split' => $vlr_btot_split,
-            //     'vlr_bpar_cj' => $vlr_btot_split,
-            //     'vlr_atr_m' => 0,
-            //     'vlr_atr_j' => 0,
-            //     'isent_mj' => null,
-            //     'negociacao' => null,
-            //     'vlr_acr_mn' => 0,
-            //     'negociacao_obs' => null,
-            //     'follow_dt' => null,
-            //     'perct_ant' => 0,
-            //     'ant_desc' => 0,
-            //     'pgt_vlr' => $vlr_btot_split,
-            //     'pgt_desc' => 0,
-            //     'pgt_mtjr' => 0,
-            //     'vlr_rec' => $vlr_btot_split,
-            //     'pts_disp_item' => 0,
-            //     'criador' => $user_id,
-            //     'dthr_cr' => now(),
-            //     'modificador' => $user_id,
-            //     'dthr_ch' => now(),
-            // ];
-
-            // if ($tipoPagto === 'CM') {
-
-            // } else if ($tipoPagto === 'BL') {
-
-            // } else if ($tipoPagto === 'DN') {
-            //     $data['qtd_parc'] = 1;
-            //     $data['primeira_para'] = 1;
-            //     $data['cnd_pag'] = 1;
-            //     $data['parcela'] = 1;
-            //     $data['parcela_sts'] = 'BDI';
-            //     $data['id_fatura'] = null;
-            //     $data['card_uuid'] = null;
-            //     $data['integ_bc'] = null;
-            //     $data['tax_bacen'] = 0;
-            //     $data['vlr_jurosp'] = 0;
-
-            // } else if ($tipoPagto === 'PX') {
-            //     $data['qtd_parc'] = 1;
-            //     $data['primeira_para'] = 1;
-            //     $data['cnd_pag'] = 1;
-            //     $data['parcela'] = 1;
-            //     $data['parcela_sts'] = 'BPX';
-            //     $data['id_fatura'] = null;
-            //     $data['card_uuid'] = null;
-            //     $data['integ_bc'] = null;
-            //     $data['tax_bacen'] = $taxa_bacen;
-            //     $data['vlr_jurosp'] = 0;
-
-            // } else if ($tipoPagto === 'OT') {
-            //     $data['qtd_parc'] = 1;
-            //     $data['primeira_para'] = 1;
-            //     $data['cnd_pag'] = 1;
-            //     $data['parcela'] = 1;
-            //     $data['parcela_sts'] = 'BOT';
-            //     $data['id_fatura'] = null;
-            //     $data['card_uuid'] = null;
-            //     $data['integ_bc'] = null;
-            //     $data['tax_bacen'] = 0;
-            //     $data['vlr_jurosp'] = 0;
-            // }
-
-            // $pTituloCp = new TbtrPTitulosCp($data);
-            // $pTituloCp->save();
 
             DB::connection('dbsysclient')->commit();
 
