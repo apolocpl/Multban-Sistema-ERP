@@ -2,11 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Multban\Cliente\Cliente;
 use App\Models\Multban\Empresa\Empresa;
+use App\Policies\ClientePolicy;
+use App\Support\Tenancy\TenantManager;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -21,7 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(TenantManager::class, function () {
+            return new TenantManager;
+        });
     }
 
     /**
@@ -34,6 +41,14 @@ class AppServiceProvider extends ServiceProvider
         if (env('APP_ENV') === 'production') {
             URL::forceScheme('https');
         }
+
+        Gate::policy(Cliente::class, ClientePolicy::class);
+
+        Blade::if('canView', function (string $key) {
+            $permissions = request()->attributes->get('frontendAcl', View::shared('frontendAcl') ?? []);
+
+            return (bool) data_get($permissions, $key, false);
+        });
 
         View::composer('*', function ($view) {
             if (Auth::check()) {
