@@ -362,11 +362,14 @@
                                                 class="form-control select2 select2-hidden-accessible"
                                                 data-placeholder="Pesquise a cidade" style="width: 100%;"
                                                 aria-hidden="true">
-                                                @if($cliente->cidade)
-                                                <option value="{{$cliente->cidade->cidade}}">
-                                                    {{$cliente->cidade->cidade_desc}}</option>
-
-                                                @endif
+                                                <option value="" data-estado="">Selecione</option>
+                                                @foreach($cidades as $cidadeOption)
+                                                    <option value="{{ $cidadeOption->cidade }}"
+                                                        data-estado="{{ $cidadeOption->cidade_est }}"
+                                                        @selected((string) old('cliente_endcid', $cliente->cliente_endcid) === (string) $cidadeOption->cidade)>
+                                                        {{ $cidadeOption->cidade }} - {{ $cidadeOption->cidade_desc }}
+                                                    </option>
+                                                @endforeach
                                             </select>
                                         </div>
 
@@ -376,12 +379,13 @@
                                                 class="form-control select2 select2-hidden-accessible"
                                                 data-placeholder="Pesquise o estado" style="width: 100%;"
                                                 aria-hidden="true">
-                                                @if($cliente->estado)
-                                                <option value="{{$cliente->estado->estado}}">
-                                                    {{$cliente->estado->estado}} - {{$cliente->estado->estado_desc}}
-                                                </option>
-
-                                                @endif
+                                                <option value="">Selecione</option>
+                                                @foreach($estados as $estadoOption)
+                                                    <option value="{{ $estadoOption->estado }}"
+                                                        @selected(old('cliente_endest', $cliente->cliente_endest) === $estadoOption->estado)>
+                                                        {{ $estadoOption->estado }} - {{ $estadoOption->estado_desc }}
+                                                    </option>
+                                                @endforeach
                                             </select>
                                         </div>
 
