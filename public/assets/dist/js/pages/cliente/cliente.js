@@ -1,9 +1,126 @@
 
 ns.comboBoxSelect("cliente_endpais", "/empresa/obter-pais", "pais");
-ns.comboBoxSelect("cliente_endest", "/empresa/obter-estado", "estado");
-ns.comboBoxSelect("cliente_endcid", "/empresa/obter-cidade", "cidade_ibge");
 ns.comboBoxSelect("emp_id", "/empresa/obter-empresas", "emp_id", "", "", "modalCriarCartao");
 var gridprotocolo;
+
+(function () {
+    const estadoSelector = '#cliente_endest';
+    const cidadeSelector = '#cliente_endcid';
+    let isSyncingCity = false;
+
+    $(function () {
+        const $estado = $(estadoSelector);
+        const $cidade = $(cidadeSelector);
+
+        if (!$estado.length || !$cidade.length) {
+            return;
+        }
+
+        const placeholderEstado = ($estado.data('placeholder') || $estado.find('option[value=""]').first().text() || 'Selecione').trim();
+        const placeholderCidade = ($cidade.data('placeholder') || $cidade.find('option[value=""]').first().text() || 'Selecione').trim();
+
+        const cidadeOptions = [];
+        const cidadeMap = {};
+
+        $cidade.find('option').each(function () {
+            const $option = $(this);
+            const value = $option.val();
+            const text = $option.text();
+            const estado = $option.data('estado') || '';
+
+            cidadeOptions.push({ value, text, estado });
+
+            if (value) {
+                cidadeMap[value] = { value, text, estado };
+            }
+        });
+
+        function rebuildCidadeOptions(stateValue, preserveCity) {
+            isSyncingCity = true;
+            const currentCity = preserveCity ? $cidade.val() : '';
+
+            $cidade.empty();
+
+            const placeholderOption = new Option(placeholderCidade, '', false, false);
+            $(placeholderOption).attr('data-estado', '');
+            $cidade.append(placeholderOption);
+
+            cidadeOptions.forEach(function (option) {
+                if (!option.value) {
+                    return;
+                }
+
+                if (!stateValue || option.estado === stateValue) {
+                    const shouldSelect = preserveCity && currentCity === option.value;
+                    const optionElement = new Option(option.text, option.value, false, shouldSelect);
+                    $(optionElement).attr('data-estado', option.estado);
+                    $cidade.append(optionElement);
+                }
+            });
+
+            const hasCurrentCity = currentCity && $cidade.find('option[value="' + currentCity + '"]').length > 0;
+            const newValue = preserveCity && hasCurrentCity ? currentCity : '';
+
+            $cidade.val(newValue).trigger('change.select2');
+            isSyncingCity = false;
+        }
+
+        $estado.select2({
+            placeholder: placeholderEstado,
+            allowClear: true,
+            width: 'resolve',
+        });
+
+        $cidade.select2({
+            placeholder: placeholderCidade,
+            allowClear: true,
+            width: 'resolve',
+        });
+
+        $estado.on('change', function (event, data) {
+            const preserveCity = data && data.preserveCity === true;
+            rebuildCidadeOptions($(this).val(), preserveCity);
+        });
+
+        $cidade.on('change', function () {
+            if (isSyncingCity) {
+                return;
+            }
+
+            const selectedCity = $(this).val();
+
+            if (!selectedCity) {
+                return;
+            }
+
+            const cityInfo = cidadeMap[selectedCity];
+
+            if (cityInfo && cityInfo.estado && $estado.val() !== cityInfo.estado) {
+                $estado.val(cityInfo.estado).trigger('change', { preserveCity: true });
+            }
+        });
+
+        const initialState = $estado.val();
+
+        if (initialState) {
+            rebuildCidadeOptions(initialState, true);
+        } else {
+            const initialCity = $cidade.val();
+
+            if (initialCity) {
+                const cityInfo = cidadeMap[initialCity];
+
+                if (cityInfo && cityInfo.estado) {
+                    $estado.val(cityInfo.estado).trigger('change', { preserveCity: true });
+                } else {
+                    rebuildCidadeOptions('', true);
+                }
+            } else {
+                rebuildCidadeOptions('', false);
+            }
+        }
+    });
+})();
 
 function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
@@ -35,6 +152,49 @@ var colunasConfiguracao = [
 $(function () {
     "use strict";
 
+    const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+    const DATETIME_REGEX = /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/;
+
+    function normalizeDateValue(value) {
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        if (DATE_ONLY_REGEX.test(value)) {
+            const [year, month, day] = value.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        const match = value.match(DATETIME_REGEX);
+        if (match) {
+            const [, year, month, day, hour, minute, second] = match;
+            const time = `${hour}:${minute}${second ? `:${second}` : ''}`;
+            return `${day}/${month}/${year} ${time}`;
+        }
+
+        return value;
+    }
+
+    function normalizeFieldValue(input, value) {
+        if (value === null || value === undefined || value === '') {
+            return value ?? '';
+        }
+
+        const element = input;
+        const type = (element.type || '').toLowerCase();
+        const dataFormat = (element.getAttribute('data-format') || '').toLowerCase();
+
+        if (type === 'date' || dataFormat === 'date') {
+            return normalizeDateValue(value);
+        }
+
+        if (type === 'datetime-local' || dataFormat === 'datetime' || dataFormat === 'datetime-local') {
+            return normalizeDateValue(value);
+        }
+
+        return value;
+    }
+
     window.clientejs = ({
         submitFormPrt: function (formId, btnSubmit, btnPesquisar, url, modal) {
             $(btnSubmit).text("Salvando...");
@@ -59,22 +219,31 @@ $(function () {
 
                 formData.append("cliente_id", $("#cliente_id").val());
                 inputElements.forEach(input => {
+                    const fieldName = input.name;
+                    if (!fieldName) {
+                        return;
+                    }
 
                     if (input.type === 'checkbox') {
-                        formData.append(input.name, input.checked ? 'x' : '');
-                    } else if (input.type === 'file') {
+                        formData.append(fieldName, input.checked ? 'x' : '');
+                        return;
+                    }
+
+                    if (input.type === 'file') {
                         const file = input.files[0];
-                        if (input.value.length > 0) {
-                            // Append the file to the FormData object
-                            formData.append(input.name, file, file.name);
-
+                        if (file) {
+                            formData.append(fieldName, file, file.name);
                         }
+                        return;
                     }
 
-                    else {
-                        formData.append(input.name, !isNumeric(input.value.replace("%", "").replace(".", "").replace(",", ".")) ? input.value : $.tratarValor(input.value));
-                    }
+                    const value = $(input).val();
 
+                    if (Array.isArray(value)) {
+                        value.forEach(item => formData.append(fieldName + '[]', normalizeFieldValue(input, item ?? '')));
+                    } else {
+                        formData.append(fieldName, normalizeFieldValue(input, value ?? ''));
+                    }
                 });
 
                 $.ajax({
@@ -566,22 +735,31 @@ $(function () {
 
                 formData.append("cliente_id", $("#cliente_id").val());
                 inputElements.forEach(input => {
+                    const fieldName = input.name;
+                    if (!fieldName) {
+                        return;
+                    }
 
                     if (input.type === 'checkbox') {
-                        formData.append(input.name, input.checked ? 'x' : '');
-                    } else if (input.type === 'file') {
+                        formData.append(fieldName, input.checked ? 'x' : '');
+                        return;
+                    }
+
+                    if (input.type === 'file') {
                         const file = input.files[0];
-                        if (input.value.length > 0) {
-                            // Append the file to the FormData object
-                            formData.append(input.name, file, file.name);
-
+                        if (file) {
+                            formData.append(fieldName, file, file.name);
                         }
+                        return;
                     }
 
-                    else {
-                        formData.append(input.name, !isNumeric(input.value.replace("%", "").replace(".", "").replace(",", ".")) ? input.value : $.tratarValor(input.value));
-                    }
+                    const value = $(input).val();
 
+                    if (Array.isArray(value)) {
+                        value.forEach(item => formData.append(fieldName + '[]', normalizeFieldValue(input, item ?? '')));
+                    } else {
+                        formData.append(fieldName, normalizeFieldValue(input, value ?? ''));
+                    }
                 });
 
                 // Append files from Dropzone queue manually

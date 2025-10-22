@@ -16,6 +16,8 @@ use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\Multban\Empresa\Empresa;
+use App\Models\Multban\Endereco\Cidade;
+use App\Models\Multban\Endereco\Estados;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -64,6 +66,33 @@ class ClienteController extends Controller
     }
 
     /**
+     * Normalize incoming date values to the database default format.
+     */
+    private function normalizeDate(?string $value, string $targetFormat = 'Y-m-d'): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        $knownFormats = ['d/m/Y', 'Y-m-d', 'd-m-Y', 'Y/m/d'];
+        foreach ($knownFormats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $value)->format($targetFormat);
+            } catch (\Throwable $e) {
+                // keep trying with the next format
+            }
+        }
+
+        try {
+            return Carbon::parse($value)->format($targetFormat);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -73,8 +102,28 @@ class ClienteController extends Controller
         $status = ClienteStatus::all();
         $tipos = ClienteTipo::all();
         $filters = session('cliente_filters', []);
+        $nomeMultbanOptions = [];
 
-        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters'));
+        try {
+            $empresaId = $this->tenantManager->ensure();
+            $empresaAtual = Empresa::select('emp_nmult')->find($empresaId);
+
+            if ($empresaAtual && ! empty($empresaAtual->emp_nmult)) {
+                $nomeMultbanOptions[] = $empresaAtual->emp_nmult;
+            }
+        } catch (\Throwable $e) {
+            // Caso o tenant não esteja disponível ainda, apenas ignore e siga sem opções pré-carregadas.
+        }
+
+        if (! empty($filters['nome_multban']) && ! in_array($filters['nome_multban'], $nomeMultbanOptions, true)) {
+            $nomeMultbanOptions[] = $filters['nome_multban'];
+        }
+
+        $nomeMultbanOptions = array_values(array_filter(array_unique($nomeMultbanOptions), function ($value) {
+            return $value !== null && $value !== '';
+        }));
+
+        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters', 'nomeMultbanOptions'));
     }
 
     /**
@@ -94,6 +143,8 @@ class ClienteController extends Controller
         $cardCateg = CardCateg::all();
         $cliente = new Cliente;
         $convenios = TbDmConvenios::all();
+        $estados = Estados::orderBy('estado_desc')->get();
+        $cidades = Cidade::orderBy('cidade_desc')->get();
         $users = User::with('cargo')->get(); // ou sua query customizada
 
         $canChangeStatus = false;
@@ -113,6 +164,8 @@ class ClienteController extends Controller
             'cardCateg',
             'canChangeStatus',
             'convenios',
+            'estados',
+            'cidades',
             'users'
         ));
     }
@@ -124,9 +177,9 @@ class ClienteController extends Controller
      */
     public function store(Request $request)
     {
+        
         DB::beginTransaction();
         try {
-
             $emp_id = $this->tenantManager->ensure();
 
             $userRole = Auth::user()->roles->pluck('name', 'name')->all();
@@ -165,7 +218,7 @@ class ClienteController extends Controller
             $cliente->cliente_tipo = $request->cliente_tipo;
             $cliente->convenio_id = $request->convenio_id;
             $cliente->carteirinha = $request->carteirinha;
-            $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
+            $cliente->cliente_dt_nasc = $this->normalizeDate($request->cliente_dt_nasc);
             $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
             $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
             $cliente->cliente_pasprt = $request->cliente_pasprt;
@@ -284,6 +337,8 @@ class ClienteController extends Controller
         $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
 
         $convenios = TbDmConvenios::all();
+        $estados = Estados::orderBy('estado_desc')->get();
+        $cidades = Cidade::orderBy('cidade_desc')->get();
         $prontuarios = ClienteProntuario::where('cliente_id', $cliente->cliente_id)
             ->where('emp_id', $emp_id)
             ->get();
@@ -361,6 +416,8 @@ class ClienteController extends Controller
             'cardCateg',
             'canChangeStatus',
             'convenios',
+            'estados',
+            'cidades',
             'clienteProntuarios',
             'users',
         ));

@@ -1062,6 +1062,65 @@ function notify(type, message) {
             $(".alert-dismissible").alert("close");
         });
 
+    function formatDateToBr(value) {
+        if (!value || typeof value !== 'string') {
+            return value;
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const [year, month, day] = value.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        const matchDateTime = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/);
+        if (matchDateTime) {
+            const [, year, month, day, hour, minute, second] = matchDateTime;
+            const time = `${hour}:${minute}${second ? `:${second}` : ''}`;
+            return `${day}/${month}/${year} ${time}`;
+        }
+
+        return value;
+    }
+
+    function normalizeFormDateFields(formElement, formData) {
+        if (!formElement || !formData) {
+            return;
+        }
+
+        const dateSelectors = [
+            'input[type="date"]',
+            'input[data-format="date"]'
+        ];
+
+        const datetimeSelectors = [
+            'input[type="datetime-local"]',
+            'input[data-format="datetime"]',
+            'input[data-format="datetime-local"]'
+        ];
+
+        formElement.querySelectorAll(dateSelectors.join(',')).forEach(input => {
+            if (!input.name) {
+                return;
+            }
+
+            const formatted = formatDateToBr(input.value);
+            if (formatted) {
+                formData.set(input.name, formatted);
+            }
+        });
+
+        formElement.querySelectorAll(datetimeSelectors.join(',')).forEach(input => {
+            if (!input.name) {
+                return;
+            }
+
+            const formatted = formatDateToBr(input.value);
+            if (formatted) {
+                formData.set(input.name, formatted);
+            }
+        });
+    }
+
     $("body").on("click", "#btnSalvar", function () {
 
         var visualizar = document.URL.split("/")[5] == "visualizar";
@@ -1093,8 +1152,11 @@ function notify(type, message) {
 
             e.preventDefault();
 
-            var url = $(this).attr("action");
-            var formData = new FormData(document.getElementById("formPrincipal"));
+        var formElement = document.getElementById("formPrincipal");
+        var url = $(this).attr("action");
+        var formData = new FormData(formElement);
+
+        normalizeFormDateFields(formElement, formData);
 
             if (pedido_item.length > 0) {
                 createFormData(formData, 'itens', pedido_item);

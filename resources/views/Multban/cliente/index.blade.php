@@ -36,8 +36,15 @@
                 <!-- FILTRO DO NOME MULTBAN -->
                 <div class="form-group col-md-3">
                     <label for="nome_multban">Nome Multban:</label>
+                    @php
+                        $selectedNomeMultban = $filters['nome_multban'] ?? ($nomeMultbanOptions[0] ?? ($empresa->emp_nmult ?? null));
+                    @endphp
                     <select id="nome_multban" name="nome_multban" class="form-control select2 select2-hidden-accessible"
                         data-placeholder="Pesquise o Nome Multban" style="width: 100%;" aria-hidden="true">
+                        <option></option>
+                        @foreach($nomeMultbanOptions as $option)
+                            <option value="{{ $option }}" @selected($selectedNomeMultban === $option)>{{ strtoupper($option) }}</option>
+                        @endforeach
                     </select>
                 </div>
 
