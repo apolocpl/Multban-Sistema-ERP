@@ -222,7 +222,7 @@ class ClienteController extends Controller
             $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
             $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
             $cliente->cliente_pasprt = $request->cliente_pasprt;
-            $cliente->cliente_sts = ! $canChangeStatus ? 'NA' : $request->cliente_sts; /* Cliente nasce com o status "Em Análise" */
+            $cliente->cliente_sts = EmpresaStatusEnum::EMANALISE; /* Cliente nasce com o status "Em Análise" */
             $cliente->cliente_uuid = Str::uuid()->toString();
             $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
             $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
@@ -657,6 +657,59 @@ class ClienteController extends Controller
         return [
             'clientes' => $clientes->toArray(),
         ];
+    }
+
+    public function verificarDocumento(Request $request)
+    {
+        $documento = removerCNPJ($request->query('doc', ''));
+        if (empty($documento)) {
+            return response()->json([
+                'exists' => false,
+            ]);
+        }
+
+        $empresaId = $this->tenantManager->ensure();
+
+        $cliente = Cliente::where('cliente_doc', $documento)->first();
+        if (! $cliente) {
+            return response()->json([
+                'exists' => false,
+            ]);
+        }
+
+        $empresasRelacionadas = DB::connection('dbsysclient')
+            ->table('tbdm_clientes_emp as ce')
+            ->join('tbdm_empresa_geral as eg', 'eg.emp_id', '=', 'ce.emp_id')
+            ->select('ce.emp_id', 'eg.emp_nmult', 'eg.emp_rzsoc')
+            ->where('ce.cliente_id', $cliente->cliente_id)
+            ->get();
+
+        $mesmaEmpresa = $empresasRelacionadas->contains(function ($empresa) use ($empresaId) {
+            return (int) $empresa->emp_id === (int) $empresaId;
+        });
+
+        $outrasEmpresas = $empresasRelacionadas
+            ->filter(function ($empresa) use ($empresaId) {
+                return (int) $empresa->emp_id !== (int) $empresaId;
+            })
+            ->map(function ($empresa) {
+                return [
+                    'emp_id'   => (int) $empresa->emp_id,
+                    'emp_nmult'=> $empresa->emp_nmult,
+                    'emp_rzsoc'=> $empresa->emp_rzsoc,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'exists'          => true,
+            'cliente'         => [
+                'id'   => $cliente->cliente_id,
+                'nome' => $cliente->cliente_nome,
+            ],
+            'same_company'    => $mesmaEmpresa,
+            'other_companies' => $outrasEmpresas,
+        ]);
     }
 
     // public function getClient(Request $request)

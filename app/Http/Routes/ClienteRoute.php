@@ -20,6 +20,7 @@ class ClienteRoute
         Route::post('cliente/inactive/{id}', [ClienteController::class, 'inactive']); // ->middleware('permission:empresa.inactive')->name('empresa.inactive');
 
         Route::get('cliente/get-client', [ClienteController::class, 'getClient']);
+        Route::get('cliente/verificar-documento', [ClienteController::class, 'verificarDocumento'])->middleware('permission:cliente.create|cliente.edit');
 
         Route::post('cliente/obtergridpesquisa', [ClienteController::class, 'postObterGridPesquisa']);
         Route::post('cliente/obtergridpesquisa-protocolo', [ClienteController::class, 'postObterGridPesquisaProtocolo']);
