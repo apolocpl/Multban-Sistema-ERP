@@ -1,7 +1,7 @@
 
 ns.comboBoxSelect("cliente_endpais", "/empresa/obter-pais", "pais");
 ns.comboBoxSelect("emp_id", "/empresa/obter-empresas", "emp_id", "", "", "modalCriarCartao");
-var gridprotocolo;
+let gridprotocolo;
 
 (function () {
     const estadoSelector = '#cliente_endest';
@@ -126,7 +126,7 @@ function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-var colunas = [
+let colunas = [
 
     {
         data: 'protocolo',
@@ -146,9 +146,92 @@ var colunas = [
     }
 ];
 
-var colunasConfiguracao = [
+let colunasConfiguracao = [
 
 ];
+
+$(function () {
+    let lastVerifiedDocument = null;
+
+    function shouldVerifyDocument() {
+        return $('#is_edit').val() === '0';
+    }
+
+    function normalizeDocument(value) {
+        return (value || '').replace(/\D/g, '');
+    }
+
+    $('#cliente_doc').on('blur', function () {
+        if (!shouldVerifyDocument()) {
+            return;
+        }
+
+        const rawValue = $(this).val();
+        const normalized = normalizeDocument(rawValue);
+
+        if (!normalized || normalized.length < 11) {
+            return;
+        }
+
+        if (lastVerifiedDocument === normalized) {
+            return;
+        }
+
+        lastVerifiedDocument = normalized;
+
+        $.getJSON('/cliente/verificar-documento', { doc: rawValue })
+            .done(function (response) {
+                if (!response || !response.exists) {
+                    return;
+                }
+
+                if (response.same_company) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Cliente já cadastrado',
+                        text: 'Este CPF já está cadastrado na sua empresa.',
+                    }).then(function () {
+                        $('#cliente_doc').focus();
+                    });
+
+                    return;
+                }
+
+                if (response.other_companies && response.other_companies.length) {
+                    const companyList = response.other_companies
+                        .map(function (empresa) {
+                            return `<li><strong>${empresa.emp_nmult}</strong> - ${empresa.emp_rzsoc}</li>`;
+                        })
+                        .join('');
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cliente já cadastrado',
+                        html: `
+                            <p>Este CPF pertence ao cliente <strong>${response.cliente.nome}</strong> que já possui cadastro nas empresas:</p>
+                            <ul class="text-left">${companyList}</ul>
+                            <p class="mt-2">Deseja solicitar acesso aos dados do cliente?</p>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Solicitar acesso',
+                        cancelButtonText: 'Cancelar',
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Solicitação registrada',
+                                text: 'Sua solicitação de acesso foi registrada. Nossa equipe entrará em contato.',
+                            });
+                        }
+                    });
+                }
+            })
+            .fail(function () {
+                lastVerifiedDocument = null;
+            });
+    });
+});
+
 $(function () {
     "use strict";
 
@@ -209,8 +292,8 @@ $(function () {
                 const myDiv = document.getElementById(formId);
                 const inputElements = myDiv.querySelectorAll('input, select, textarea, file');
 
-                var formData = new FormData();
-                var isEdit = $('#is_edit').val();
+                let formData = new FormData();
+                let isEdit = $('#is_edit').val();
                 if (isEdit === "0") {
                     formData.append("emp_id", $("#empresa_id").val());
                 } else {
@@ -375,7 +458,7 @@ $(function () {
 
             gridprotocolo.on('select.dt', function (e, dt, type, indexes) {
                 if (type === 'row') {
-                    var data = gridprotocolo.rows(indexes).data().toArray();
+                    let data = gridprotocolo.rows(indexes).data().toArray();
 
                     $('#texto_anm').text(data[0].texto_anm);
                     $('#texto_anm').summernote('code', data[0].texto_anm);
@@ -402,7 +485,7 @@ $(function () {
                     $('#listaFotosAnexadas').empty();
                     $('#listaDocsAnexados').empty();
 
-                    var html = '<div class="row">';
+                    let html = '<div class="row">';
                     $.each(data[0].images, function (index, file) {
                         html += `
                             <div class="col-md-1">
@@ -490,7 +573,7 @@ $(function () {
 
             gridprotocolo = $('#gridprotocolo').DataTable();
             gridprotocolo.clear().destroy();
-            var url = "/cliente/obtergridpesquisa-protocolo";
+            let url = "/cliente/obtergridpesquisa-protocolo";
 
             gridprotocolo = $("#gridprotocolo")
                 .on("processing.dt", function (e, settings, processing) {
@@ -562,8 +645,8 @@ $(function () {
                             console.log(d);
                             const myDiv = document.getElementById('filtro-prontuario');
                             const inputElements = myDiv.querySelectorAll('input, select, textarea,file');
-                            var token = $('meta[name="csrf-token"]').attr("content");
-                            var formData = new FormData();
+                            let token = $('meta[name="csrf-token"]').attr("content");
+                            let formData = new FormData();
                             formData.append("emp_id", $("#empresa_id").val());
                             formData.append("cliente_id", $("#cliente_id").val());
                             formData.append("_token", token);
@@ -572,7 +655,7 @@ $(function () {
                             });
 
                             // Append DataTables' parameters to your custom FormData
-                            // for (var key in d) {
+                            // for (let key in d) {
                             //     if (d.hasOwnProperty(key)) {
                             //         formData.append(key, d[key]);
                             //     }
@@ -604,7 +687,7 @@ $(function () {
 
             gridprotocolo.on('select.dt', function (e, dt, type, indexes) {
                 if (type === 'row') {
-                    var data = gridprotocolo.rows({ selected: true }).data().toArray();
+                    let data = gridprotocolo.rows({ selected: true }).data().toArray();
                     console.log('Selected rows:', data);
 
                     $('#texto_anm').text(data[0].texto_anm);
@@ -633,7 +716,7 @@ $(function () {
                     $('#listaDocsAnexados').empty();
                     $('#tabs-anamnese-tab').trigger('click');
 
-                    var html = '<div class="row">';
+                    let html = '<div class="row">';
                     $.each(data[0].images, function (index, file) {
                         html += `
                             <div class="col-md-1">
@@ -730,7 +813,7 @@ $(function () {
                 const myDiv = document.getElementById(formId);
                 const inputElements = myDiv.querySelectorAll('input, select, textarea, file');
 
-                var formData = new FormData();
+                let formData = new FormData();
                 formData.append("emp_id", $("#empresa_id").val());
 
                 formData.append("cliente_id", $("#cliente_id").val());
@@ -869,7 +952,7 @@ $(function () {
 
             console.log('gridDataTable', url, id, formId);
 
-            var dataTable = $("#" + id)
+            let dataTable = $("#" + id)
                 .on("processing.dt", function (e, settings, processing) {
                     if (processing) {
                         Pace.stop();
@@ -936,8 +1019,8 @@ $(function () {
                             console.log(d);
                             const myDiv = document.getElementById(formId);
                             const inputElements = myDiv.querySelectorAll('input, select, textarea,file');
-                            var token = $('meta[name="csrf-token"]').attr("content");
-                            var formData = new FormData();
+                            let token = $('meta[name="csrf-token"]').attr("content");
+                            let formData = new FormData();
                             formData.append("emp_id", $("#empresa_id").val());
                             formData.append("cliente_id", $("#cliente_id").val());
                             formData.append("_token", token);
@@ -946,7 +1029,7 @@ $(function () {
                             });
 
                             // Append DataTables' parameters to your custom FormData
-                            // for (var key in d) {
+                            // for (let key in d) {
                             //     if (d.hasOwnProperty(key)) {
                             //         formData.append(key, d[key]);
                             //     }
@@ -971,14 +1054,14 @@ $(function () {
         },
     });
 
-    var observer = window.ResizeObserver ? new ResizeObserver(function (entries) {
+    let observer = window.ResizeObserver ? new ResizeObserver(function (entries) {
         entries.forEach(function (entry) {
             $(entry.target).DataTable().columns.adjust();
         });
     }) : null;
 
     // Function to add a datatable to the ResizeObserver entries array
-    var resizeHandler = function ($table) {
+    let resizeHandler = function ($table) {
         if (observer)
             observer.observe($table[0]);
     };
@@ -986,7 +1069,7 @@ $(function () {
     $('body').on('click', '#btnCriarCartao', function () {
         $("#is_edit").val("0");
 
-        var modal = $(this).data('modal');
+        let modal = $(this).data('modal');
         $('#modalCriarCartaoLabel').html('Criar Novo Cartão');
 
         const myDiv = document.getElementById(modal);
@@ -1011,8 +1094,8 @@ $(function () {
 
 
     $('body').on('click', '#btnAdicionarMed', function () {
-        var currentContent = $('#texto_rec').summernote('code');
-        var textoToAdd = $('#rec_detalhes_posologia').val();
+        let currentContent = $('#texto_rec').summernote('code');
+        let textoToAdd = $('#rec_detalhes_posologia').val();
         if (textoToAdd.trim() === "") {
             return;
         }
@@ -1024,8 +1107,8 @@ $(function () {
     $('body').on('click', '#btnSalvarCartao', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        var isEdit = $("#is_edit").val();
-        var url = "/cliente/update-card";
+        let isEdit = $("#is_edit").val();
+        let url = "/cliente/update-card";
         if (isEdit === "0") {
             url = "/cliente/store-card";
         }
@@ -1042,10 +1125,10 @@ $(function () {
         e.preventDefault();
         e.stopImmediatePropagation();
 
-        var grid = $("#gridprotocolo");
-        var linha = grid.obterLinhaGridItemWithID('gridprotocolo');
+        let grid = $("#gridprotocolo");
+        let linha = grid.obterLinhaGridItemWithID('gridprotocolo');
 
-        var url = "/cliente/store-prontuario";
+        let url = "/cliente/store-prontuario";
         if (linha != null) {
             url = "/cliente/update-prontuario/" + linha.protocolo;
         }
@@ -1057,18 +1140,18 @@ $(function () {
 
     $('body').on('click', '.btn-edit', function () {
 
-        var id = $(this).data('id');
-        var name = $(this).data('name');
+        let id = $(this).data('id');
+        let name = $(this).data('name');
         $('#is_edit').val("1");
         $('#t_name').val(name);
         $('#v_id').val(id);
         $('#formTbDm .modal-body').html('');
         Pace.restart();
         Pace.track(function () {
-            var token = $('meta[name="csrf-token"]').attr(
+            let token = $('meta[name="csrf-token"]').attr(
                 "content"
             );
-            var url = "/config-sistema-multmais/edit-dados-mestre";
+            let url = "/config-sistema-multmais/edit-dados-mestre";
             console.log(url)
             $.ajax({
                 header: {
@@ -1164,7 +1247,7 @@ $(function () {
     $("#btnCarregaCliente").on("click", function (e) {
         e.preventDefault();
         if (parseInt($("#cliente_cdg").val()) > 0) {
-            var url = "/cliente/" + $("#cliente_cdg").val() + "/alterar"
+            let url = "/cliente/" + $("#cliente_cdg").val() + "/alterar"
             window.open(url, "_self");
         } else {
             Swal.fire(
@@ -1187,8 +1270,8 @@ $(function () {
     });
 
 
-    var setClienteTipo = function () {
-        var inserir = document.URL.split("/")[4] == "inserir";
+    let setClienteTipo = function () {
+        let inserir = document.URL.split("/")[4] == "inserir";
         //console.log('inserir', inserir)
         if (inserir) {
 
@@ -1202,8 +1285,8 @@ $(function () {
 
     }
 
-    var searchClient = function () {
-        var inserir = document.URL.split("/")[4] == "inserir";
+    let searchClient = function () {
+        let inserir = document.URL.split("/")[4] == "inserir";
         //console.log('inserir', inserir)
         if (inserir) {
             $("#serachClient").hide();
@@ -1211,8 +1294,8 @@ $(function () {
         }
     }
 
-    var verificaPais = function () {
-        var visualizar = document.URL.split("/")[5] == "visualizar";
+    let verificaPais = function () {
+        let visualizar = document.URL.split("/")[5] == "visualizar";
 
         if (visualizar) {
             return false;
@@ -1257,7 +1340,7 @@ $(function () {
 
     $('body').on('click', '#btnInativar', function (e) {
         console.log($(this).text())
-        var status = $(this).text().trim();
+        let status = $(this).text().trim();
 
         e.preventDefault();
         Pace.restart();
@@ -1281,10 +1364,10 @@ $(function () {
         });
     });
 
-    var changeClienteTipo = function () {
-        var labelCnpj = $("#labelcliente_doc");
-        var cliente_doc = $("#cliente_doc");
-        var clientetipo = $("#cliente_tipo").val();
+    let changeClienteTipo = function () {
+        let labelCnpj = $("#labelcliente_doc");
+        let cliente_doc = $("#cliente_doc");
+        let clientetipo = $("#cliente_tipo").val();
         console.log(clientetipo);
         //Cliente Física
         if (clientetipo == 1) {
@@ -1301,10 +1384,10 @@ $(function () {
         }
     };
 
-    var clienteTipo = function () {
-        var labelCnpj = $("#labelcliente_doc");
-        var cliente_doc = $("#cliente_doc");
-        var clientetipo = $("#cliente_tipo").val();
+    let clienteTipo = function () {
+        let labelCnpj = $("#labelcliente_doc");
+        let cliente_doc = $("#cliente_doc");
+        let clientetipo = $("#cliente_tipo").val();
 
         //Cliente Física
         if (clientetipo == 1) {
@@ -1323,8 +1406,8 @@ $(function () {
     searchClient();
     setClienteTipo();
 
-    var alterar = document.URL.split("/")[5] == "alterar";
-    var colunasConfiguracao = [
+    let alterar = document.URL.split("/")[5] == "alterar";
+    let colunasConfiguracao = [
         { width: 120, targets: 0 },
         { width: "auto", targets: 1 },
         { width: "auto", targets: 2 },
@@ -1403,12 +1486,14 @@ $(function () {
     Dropzone.autoDiscover = false
 
     // Get the template HTML and remove it from the doumenthe template HTML and remove it from the doument
-    var previewNode = document.querySelector("#template")
+    let previewNode;
+    let previewTemplate;
+    previewNode = document.querySelector("#template")
     previewNode.id = ""
-    var previewTemplate = previewNode.parentNode.innerHTML
+    previewTemplate = previewNode.parentNode.innerHTML
     previewNode.parentNode.removeChild(previewNode)
 
-    var myDropzone = new Dropzone("#dropzone-fotos", { // Make the whole body a dropzone
+    let myDropzone = new Dropzone("#dropzone-fotos", { // Make the whole body a dropzone
         url: "#", // Set the url
         //paramName: "fotoUpload",
         thumbnailWidth: 80,
@@ -1464,12 +1549,12 @@ $(function () {
     // DropzoneJS Demo Code Start
     Dropzone.autoDiscover = false
     // Get the template HTML and remove it from the doumenthe template HTML and remove it from the doument
-    var previewNode = document.querySelector("#template-documentos")
+    previewNode = document.querySelector("#template-documentos")
     previewNode.id = ""
-    var previewTemplate = previewNode.parentNode.innerHTML
+    previewTemplate = previewNode.parentNode.innerHTML
     previewNode.parentNode.removeChild(previewNode)
 
-    var myDropzoneDocs = new Dropzone("#dropzone-documentos", { // Make the whole body a dropzone
+    let myDropzoneDocs = new Dropzone("#dropzone-documentos", { // Make the whole body a dropzone
         url: "#", // Set the url
         thumbnailWidth: 80,
         thumbnailHeight: 80,
