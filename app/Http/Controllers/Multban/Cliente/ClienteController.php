@@ -99,8 +99,8 @@ class ClienteController extends Controller
      */
     public function index()
     {
-        $status = ClienteStatus::all();
-        $tipos = ClienteTipo::all();
+        $status = ClienteStatus::orderBy('cliente_sts_desc')->get();
+        $tipos = ClienteTipo::orderBy('cliente_tipo_desc')->get();
         $filters = session('cliente_filters', []);
         $nomeMultbanOptions = [];
 
@@ -595,9 +595,10 @@ class ClienteController extends Controller
             ];
         }
 
-        $query = Cliente::whereHas('clienteEmp', function ($q) use ($emp_id) {
-            $q->where('emp_id', $emp_id);
-        });
+        $query = Cliente::join('tbdm_clientes_emp', function ($join) use ($emp_id) {
+            $join->on('tbdm_clientes_emp.cliente_id', '=', 'tbdm_clientes_geral.cliente_id')
+                ->where('tbdm_clientes_emp.emp_id', '=', $emp_id);
+        })->distinct();
 
         if (is_numeric($parametro)) {
             $query->where('cliente_doc', 'LIKE', '%' . $parametro . '%');
@@ -606,7 +607,12 @@ class ClienteController extends Controller
         }
 
         $clientes = $query->select(
-            DB::raw('cliente_id as id, cliente_id, cliente_doc, cliente_sts, cliente_dt_fech, UPPER(cliente_nome) as text')
+            DB::raw('tbdm_clientes_geral.cliente_id as id'),
+            'tbdm_clientes_geral.cliente_id',
+            'tbdm_clientes_geral.cliente_doc',
+            'tbdm_clientes_geral.cliente_sts',
+            'tbdm_clientes_geral.cliente_dt_fech',
+            DB::raw('UPPER(tbdm_clientes_geral.cliente_nome) as text')
         )->get();
 
         foreach ($clientes as $cliente) {
@@ -985,6 +991,16 @@ class ClienteController extends Controller
             ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.emp_id')
             ->where('tbdm_clientes_emp.emp_id', $empresaId);
 
+        session([
+            'cliente_filters' => $request->only([
+                'nome_multban',
+                'cliente_sts',
+                'cliente_tipo',
+                'cliente_id',
+                'cliente_doc',
+            ]),
+        ]);
+
         if ($request->filled('cliente_sts')) {
             $clientesQuery->where('tbdm_clientes_geral.cliente_sts', $request->cliente_sts);
         }
@@ -1006,13 +1022,9 @@ class ClienteController extends Controller
         }
 
         if ($request->filled('nome_multban')) {
-            $empresaMatches = Empresa::where('emp_id', $empresaId)
-                ->where('emp_nmult', 'like', '%' . $request->nome_multban . '%')
-                ->exists();
-
-            if (! $empresaMatches) {
-                $clientesQuery->whereRaw('1 = 0');
-            }
+            $clientesQuery->whereHas('empresa', function ($query) use ($request) {
+                $query->where('emp_nmult', 'like', '%' . $request->nome_multban . '%');
+            });
         }
 
         $data = $clientesQuery->get();

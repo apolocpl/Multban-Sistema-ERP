@@ -121,6 +121,25 @@ function notify(type, message) {
                 dropdownParent: modal ? $('#' + modal) : $('body'),
                 tags: true,
                 allowClear: true,
+                selectOnClose: true,
+                createTag: function (params) {
+                    var term = $.trim(params.term);
+
+                    if (term === '') {
+                        return null;
+                    }
+
+                    return {
+                        id: term,
+                        text: term,
+                        newTag: true,
+                    };
+                },
+                insertTag: function (data, tag) {
+                    if (tag.newTag) {
+                        data.unshift(tag);
+                    }
+                },
                 ajax: {
                     url: url,
                     delay: 500,
@@ -161,7 +180,34 @@ function notify(type, message) {
                 escapeMarkup: function (markup) {
                     return markup;
                 },
-                minimumInputLength: 2,
+                minimumInputLength: 0,
+            });
+
+            elemento.on('select2:close', function () {
+                var select2Data = elemento.data('select2');
+                if (!select2Data || !select2Data.dropdown) {
+                    return;
+                }
+
+                var searchBox = select2Data.dropdown.$search;
+                if ((!searchBox || !searchBox.length) && select2Data.$dropdown && select2Data.$dropdown.find) {
+                    searchBox = select2Data.$dropdown.find('.select2-search__field');
+                }
+
+                var searchTerm = $.trim(searchBox && searchBox.length ? searchBox.val() : "");
+
+                if (searchTerm === "") {
+                    return;
+                }
+
+                var exists = elemento.find('option').filter(function () {
+                    return $(this).val() === searchTerm;
+                }).length > 0;
+
+                if (!exists) {
+                    var option = new Option(searchTerm, searchTerm, true, true);
+                    elemento.append(option).trigger('change');
+                }
             });
         },
         comboBoxSelect: function (id, url, ident = 'id', pad = 5, parametros, modal = null) {

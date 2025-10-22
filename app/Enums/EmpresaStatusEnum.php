@@ -14,8 +14,6 @@ abstract class EmpresaStatusEnum
 
     const EMANALISE = 'NA';
 
-    const INADIMPLENTE = 'IN';
-
     const ONBOARDING = 'ON';
 
     const ABERTURADECONTA = 'AC';

@@ -45,30 +45,39 @@
                         @foreach($nomeMultbanOptions as $option)
                             <option value="{{ $option }}" @selected($selectedNomeMultban === $option)>{{ strtoupper($option) }}</option>
                         @endforeach
+                        @if(! empty($selectedNomeMultban) && ! in_array($selectedNomeMultban, $nomeMultbanOptions ?? [], true))
+                            <option value="{{ $selectedNomeMultban }}" selected>{{ strtoupper($selectedNomeMultban) }}</option>
+                        @endif
                     </select>
                 </div>
 
                 <div class="form-group col-md-2">
                     <label id="cliente_sts">Status:</label>
+                    @php
+                        $selectedStatusFiltro = $filters['cliente_sts'] ?? null;
+                    @endphp
                     <select class="form-control select2" id="cliente_sts" name="cliente_sts"
                         data-placeholder="Selecione o Status" style="width: 100%;">
                         <option></option>
                         @foreach($status as $key => $sta)
-                        <option value="{{$sta->cliente_sts}}">{{$sta->cliente_sts_desc}}</option>
+                        <option value="{{ $sta->cliente_sts }}" @selected($selectedStatusFiltro === $sta->cliente_sts)>{{ $sta->cliente_sts_desc }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="form-group col-md-2">
                     <label for="cliente_tipo">Tipo de cliente:*</label>
+                    @php
+                        $selectedTipoFiltro = $filters['cliente_tipo'] ?? null;
+                    @endphp
                     <select class="form-control select2" name="cliente_tipo" id="cliente_tipo"
                         data-placeholder="Selecione o tipo" style="width: 100%;">
                         <option></option>
                         @foreach($tipos as $key => $tipo)
-                        <option value="{{$tipo->cliente_tipo}}">{{$tipo->cliente_tipo_desc}}</option>
+                        <option value="{{ $tipo->cliente_tipo }}" @selected($selectedTipoFiltro === $tipo->cliente_tipo)>{{ $tipo->cliente_tipo_desc }}</option>
                         @endforeach
-                    </select>
-                </div>
+                </select>
+            </div>
 
             </div>
 
@@ -77,8 +86,14 @@
 
                 <div class="form-group col-md-3">
                     <label id="cliente">Nome do Cliente:</label>
+                    @php
+                        $selectedClienteFiltro = $filters['cliente_id'] ?? null;
+                    @endphp
                     <select id="cliente_id" name="cliente_id" class="form-control select2 select2-hidden-accessible"
                         data-placeholder="Pesquise o Cliente" style="width: 100%;" aria-hidden="true">
+                        @if(! empty($selectedClienteFiltro))
+                            <option value="{{ $selectedClienteFiltro }}" selected>{{ $selectedClienteFiltro }}</option>
+                        @endif
                     </select>
                 </div>
 
@@ -130,23 +145,23 @@
                 </table>
             </div>
 
-            TROCAR O FILTRO EMPRESA PARA NOME MULTBAN, CAMPO EMP_NMULT DA TABELA TBDM_EMPRESA_GERAL</br>
+            <s>TROCAR O FILTRO EMPRESA PARA NOME MULTBAN, CAMPO EMP_NMULT DA TABELA TBDM_EMPRESA_GERAL</s></br>
             </br>
-            OS FILTROS NOME MULTBAN E NOME DO CLIENTE TEM QUE SER NO MESMO ESQUEMA DAS TAGS, ONDE A TAG DIGITADA TB PODE
-            SER UMA OPÇÃO PARA FILTRAR
+            <s>OS FILTROS NOME MULTBAN E NOME DO CLIENTE TEM QUE SER NO MESMO ESQUEMA DAS TAGS, ONDE A TAG DIGITADA TB PODE
+            SER UMA OPÇÃO PARA FILTRAR</s>
             </br>
-            O FILTRO STATUS DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_TP</br>
+            <s>O FILTRO STATUS DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_TP (ACREDITO QUE ESTÁ INVERTIDO)</s></br>
             </br>
-            O FILTRO TIPO DE CLIENTE DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_STS</br>
+            <s>O FILTRO TIPO DE CLIENTE DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_STS (ACREDITO QUE ESTÁ INVERTIDO)</s></br>
             </br>
-            AO CADASTRAR UM NOVO CLIENTE, O SISTEMA PRECISA GRAVAR OS DADOS NA TABELA TBDM_CLIENTES_EMP, ESTA TABELA
+            <s>AO CADASTRAR UM NOVO CLIENTE, O SISTEMA PRECISA GRAVAR OS DADOS NA TABELA TBDM_CLIENTES_EMP, ESTA TABELA
             INDICA</br>
             O RELACIONAMENTO ENTRE UM CLIENTE E UMA EMPRESA, ISSO É PARA QUE UMA EMPRESA SÓ POSSA ACESSAR OS CLIENTES
             QUE ELA CADASTROU</br>
             AO PESQUISAR UM CLIENTE, O SISTEMA DEVE FAZER OBRIGATORIAMENTE UM JOIN ENTRE AS TABELAS TBDM_CLIENTES_GERAL
             E TBDM_CLIENTES_EMP,</br>
             SE O CLIENTE NÃO ESTIVER RELACIONADO A EMPRESA DO USUÁRIO LOGADO, ELE NÃO PODE APARECER COMO UMA OPÇÃO DE
-            FILTRO</br>
+            FILTRO</s></br>
             </br>
             AO CRIAR UM NOVO CLIENTE, O STATUS DEVE NASCER SEMPRE "EM ANÁLISE", AO CLICAR EM "SALVAR", O SISTEMA DEVE
             ENVIAR UM EMAIL E UM WHATS</br>

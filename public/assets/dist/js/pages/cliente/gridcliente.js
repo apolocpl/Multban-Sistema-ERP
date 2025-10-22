@@ -3,9 +3,15 @@ $(document).ready(function () {
 
         "use strict";
 
-        $('.select2').select2();
+        $('#cliente_sts, #cliente_tipo').select2({
+            allowClear: true,
+            placeholder: function () {
+                return $(this).data('placeholder') || '';
+            },
+            width: 'resolve',
+        });
         ns.comboBoxSelectTags("nome_multban", "/empresa/obter-empresas", "emp_id", "", "emp_nmult");
-        ns.comboBoxSelectTags("cliente_id", "/cliente/get-client", "cliente_id");
+        ns.comboBoxSelectTags("cliente_id", "/cliente/get-client", "cliente_id", "", "cliente_nome");
 
         $('#btnPesquisar').click(function () {
             var totaliza = {};
