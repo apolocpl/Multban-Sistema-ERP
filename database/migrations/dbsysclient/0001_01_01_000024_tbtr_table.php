@@ -75,7 +75,7 @@ return new class extends Migration
             $table->index(['emp_id', 'data_mov'], 'idx_emp_data');
             // FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign('user_id')->references('user_id')->on('u630533599_dmb_db_sys_app.tbsy_user');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
         });
@@ -125,7 +125,7 @@ return new class extends Migration
             $table->index(['emp_id', 'produto_tipo', 'produto_id'], 'idx_emp_prod');
             // FOREIGN KEYS
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign('user_id')->references('user_id')->on('u630533599_dmb_db_sys_app.tbsy_user');
             $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('produto_id')->references('produto_id')->on('tbdm_produtos_geral');
         });
@@ -233,7 +233,7 @@ return new class extends Migration
             $table->index(['emp_id', 'titulo', 'parcela_sts'], 'idx_emp_tit_parcela_sts');
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign('user_id')->references('user_id')->on('u630533599_dmb_db_sys_app.tbsy_user');
             $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
@@ -307,7 +307,7 @@ return new class extends Migration
             $table->index(['emp_id', 'titulo', 'parcela_sts'], 'idx_emp_tit_parcela_sts');
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign('user_id')->references('user_id')->on('u630533599_dmb_db_sys_app.tbsy_user');
             $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('cliente_id')->references('cliente_id')->on('tbdm_clientes_geral');
             $table->foreign('card_uuid')->references('card_uuid')->on('tbdm_clientes_card');
@@ -338,7 +338,7 @@ return new class extends Migration
             $table->primary(['emp_id', 'user_id', 'titulo', 'nsu_titulo', 'nsu_autoriz', 'parcela', 'produto_id', 'lanc_tp','recebedor']);
             //FOREIGN KEY
             $table->foreign('emp_id')->references('emp_id')->on('tbdm_empresa_geral');
-            $table->foreign('user_id')->references('user_id')->on('db_sys_app.tbsy_user');
+            // $table->foreign('user_id')->references('user_id')->on('u630533599_dmb_db_sys_app.tbsy_user');
             $table->foreign(['titulo', 'nsu_titulo', 'nsu_autoriz'])->references(['titulo', 'nsu_titulo', 'nsu_autoriz'])->on('tbtr_h_titulos');
             $table->foreign('produto_id')->references('produto_id')->on('tbdm_produtos_geral');
             $table->foreign('recebedor')->references('emp_id')->on('tbdm_empresa_geral');

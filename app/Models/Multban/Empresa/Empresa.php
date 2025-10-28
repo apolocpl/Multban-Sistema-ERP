@@ -15,7 +15,7 @@ class Empresa extends Model
 {
     use DbSysClientTrait, HasFactory;
 
-    protected $table = 'tbdm_empresa_geral';
+    protected $table = 'u630533599_dmb_db_sys_cli.tbdm_empresa_geral';
 
     public $timestamps = false;
 
@@ -75,7 +75,7 @@ class Empresa extends Model
     {
         return [
             'emp_rzsoc'   => 'required|max:255',
-            'emp_cnpj'    => 'min:14|max:14|string|required|unique:dbsysclient.tbdm_empresa_geral,emp_cnpj, ' . $id . ',emp_id',
+            'emp_cnpj'    => 'min:14|max:14|string|required|unique:tbdm_empresa_geral,emp_cnpj, ' . $id . ',emp_id',
             'emp_sts'     => 'required',
             'emp_nfant'   => 'required|max:255',
             'emp_nmult'   => 'required|max:15',
