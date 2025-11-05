@@ -2003,6 +2003,57 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalEditCard" tabindex="-1" role="dialog" aria-labelledby="modalEditCardLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditCardLabel">Editar Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formEditCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="editCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Cartão selecionado</span>
+                        <strong id="editCardLabel">-</strong>
+                    </div>
+
+                    <input type="hidden" name="card_uuid" id="edit_card_uuid">
+                    <input type="hidden" name="emp_id" id="edit_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+
+                    <div class="form-group">
+                        <label for="edit_card_desc">Descrição do cartão</label>
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               id="edit_card_desc"
+                               name="card_desc"
+                               maxlength="255"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_card_limite">Limite do cartão</label>
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               id="edit_card_limite"
+                               name="card_limite"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="editCardSubmit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalResetCardPassword" tabindex="-1" role="dialog" aria-labelledby="modalResetCardPasswordLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -2210,6 +2261,16 @@
         const $deleteCardUuid = $('#delete_card_uuid');
         const $deleteCardEmpId = $('#delete_card_emp_id');
 
+        const $modalEditCard = $('#modalEditCard');
+        const $editCardForm = $('#formEditCard');
+        const $editCardAlert = $('#editCardAlert');
+        const $editCardSubmit = $('#editCardSubmit');
+        const $editCardLabel = $('#editCardLabel');
+        const $editCardUuid = $('#edit_card_uuid');
+        const $editCardEmpId = $('#edit_card_emp_id');
+        const $editCardDesc = $('#edit_card_desc');
+        const $editCardLimite = $('#edit_card_limite');
+
         const $modalResetCardPassword = $('#modalResetCardPassword');
         const $resetCardPasswordForm = $('#formResetCardPassword');
         const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
@@ -2262,6 +2323,18 @@
             $deleteCardForm.find('.is-invalid').removeClass('is-invalid');
             if ($deleteCardAlert.length) {
                 $deleteCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearEditCardValidation() {
+            if (!$editCardForm.length) {
+                return;
+            }
+
+            $editCardForm.find('.is-invalid').removeClass('is-invalid');
+            $editCardForm.find('.invalid-feedback').text('');
+            if ($editCardAlert.length) {
+                $editCardAlert.addClass('d-none').text('');
             }
         }
 
@@ -2376,6 +2449,15 @@
 
             $deleteCardForm.trigger('reset');
             clearDeleteCardValidation();
+        }
+
+        function resetEditCardForm() {
+            if (!$editCardForm.length) {
+                return;
+            }
+
+            $editCardForm.trigger('reset');
+            clearEditCardValidation();
         }
 
         function resetResetCardPasswordForm() {
@@ -2898,6 +2980,193 @@
                 });
             });
         }
+
+        function applyEditCardLimitMask() {
+            if (typeof $.fn.mask === 'function') {
+                $editCardLimite.unmask && $editCardLimite.unmask();
+                $editCardLimite.mask('#.##0,00', { reverse: true });
+            }
+        }
+
+        if ($modalEditCard.length && $editCardForm.length) {
+            $(document).on('click', '.btn-edit-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetEditCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $editCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $editCardEmpId.val(empIdData);
+                }
+
+                if ($editCardLabel.length) {
+                    $editCardLabel.text(cardLabel);
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($editCardUuid.val()) + '/card-details';
+                const originalText = $editCardSubmit.data('original-text') || $editCardSubmit.text();
+
+                $editCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Carregando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'GET',
+                    data: {
+                        emp_id: $editCardEmpId.val()
+                    },
+                    success: function (response) {
+                        if (response && response.data) {
+                            $editCardDesc.val(response.data.card_desc || '');
+                            $editCardLimite.val(response.data.card_limite || '');
+                        }
+
+                        applyEditCardLimitMask();
+                        $modalEditCard.modal('show');
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível carregar os dados do cartão.';
+                        if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if (window.toastr) {
+                            toastr.error(message);
+                        } else {
+                            alert(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $editCardSubmit.data('original-text') || 'Salvar';
+                        $editCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+
+            $modalEditCard.on('shown.bs.modal', function () {
+                applyEditCardLimitMask();
+                $editCardDesc.trigger('focus');
+            });
+
+            $modalEditCard.on('hidden.bs.modal', function () {
+                resetEditCardForm();
+            });
+
+            function markEditCardFieldInvalid($input, message) {
+                if (!$input || !$input.length) {
+                    return;
+                }
+
+                $input.addClass('is-invalid');
+                const $feedback = $input.siblings('.invalid-feedback');
+                if ($feedback.length) {
+                    $feedback.text(message);
+                }
+            }
+
+            $editCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearEditCardValidation();
+
+                const description = ($editCardDesc.val() || '').trim();
+                const limitValue = ($editCardLimite.val() || '').trim();
+                let hasError = false;
+
+                if (!description) {
+                    markEditCardFieldInvalid($editCardDesc, 'Informe a descrição do cartão.');
+                    hasError = true;
+                }
+
+                if (!limitValue) {
+                    markEditCardFieldInvalid($editCardLimite, 'Informe o limite do cartão.');
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    return;
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($editCardUuid.val()) + '/card-details';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $editCardSubmit.data('original-text') || $editCardSubmit.text();
+
+                $editCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Salvando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'PATCH',
+                    data: {
+                        emp_id: $editCardEmpId.val(),
+                        card_desc: description,
+                        card_limite: limitValue,
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalEditCard.modal('hide');
+                        resetEditCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível atualizar o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($editCardAlert.length) {
+                            $editCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $editCardSubmit.data('original-text') || 'Salvar';
+                        $editCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
 
         // Chama ao trocar de aba
         $('#custom-tabs-prt-tab .nav-link').on('shown.bs.tab', function () {
