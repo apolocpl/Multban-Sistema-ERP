@@ -400,9 +400,14 @@ class ClienteController extends Controller
             $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" title="Resetar Senha"><i class="fas fa-key"></i></button>';
         }
 
+        $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
+        $isActive = $card->card_sts === 'AT';
+        $activateDisabled = $isActive ? 'disabled' : '';
+        $isBlocked = $card->card_sts === 'BL';
+        $blockDisabled = $isBlocked ? 'disabled' : '';
         $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
-        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
-        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-activate-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Ativar" ' . $activateDisabled . '><i class="far fa-check-circle"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-block-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Bloquear" ' . $blockDisabled . '><i class="fas fa-ban"></i></button>';
         $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
         return implode('', $buttons);
@@ -1022,6 +1027,138 @@ class ClienteController extends Controller
             return response()->json([
                 'title' => 'Sucesso',
                 'text'  => 'Senha do cartão atualizada com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function activateCard(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id' => ['required', 'integer'],
+                ],
+                [
+                    'emp_id.required' => 'Empresa obrigatória para ativar o cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            if ($card->card_sts === 'AT') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão já encontra-se ativo.',
+                    'type'  => 'info',
+                ]);
+            }
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_sts'     => 'AT',
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão ativado com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function blockCard(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id' => ['required', 'integer'],
+                ],
+                [
+                    'emp_id.required' => 'Empresa obrigatória para bloquear o cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            if ($card->card_sts === 'BL') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão já está bloqueado.',
+                    'type'  => 'info',
+                ]);
+            }
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_sts'     => 'BL',
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão bloqueado com sucesso.',
                 'type'  => 'success',
             ]);
         } catch (ModelNotFoundException $exception) {
@@ -2136,8 +2273,23 @@ class ClienteController extends Controller
                 }
 
                 $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
+
+                $maskedCardNumber = formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
+                $activateDisabled = ($row->card_sts === 'AT') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-activate-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $activateDisabled . ' title="Ativar"><i class="far fa-check-circle"></i></button>';
+
+                $blockDisabled = ($row->card_sts === 'BL') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-block-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $blockDisabled . ' title="Bloquear"><i class="fas fa-ban"></i></button>';
                 $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
                 return $btn;

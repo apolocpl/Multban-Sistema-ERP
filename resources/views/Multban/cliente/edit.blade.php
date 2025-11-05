@@ -1909,6 +1909,66 @@
 <!-- /.content -->
 @endsection
 
+<div class="modal fade" id="modalActivateCard" tabindex="-1" role="dialog" aria-labelledby="modalActivateCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalActivateCardLabel">Ativar Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formActivateCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="activateCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma a ativação do cartão
+                        <strong id="activateCardLabel">-</strong>?
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="activate_card_uuid">
+                    <input type="hidden" name="emp_id" id="activate_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="activateCardSubmit">Ativar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBlockCard" tabindex="-1" role="dialog" aria-labelledby="modalBlockCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBlockCardLabel">Bloquear Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formBlockCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="blockCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma o bloqueio do cartão
+                        <strong id="blockCardLabel">-</strong>?
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="block_card_uuid">
+                    <input type="hidden" name="emp_id" id="block_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="blockCardSubmit">Bloquear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalResetCardPassword" tabindex="-1" role="dialog" aria-labelledby="modalResetCardPasswordLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -2092,6 +2152,22 @@
         let cardPasswordToken = null;
         let cardPasswordCryptoKey = null;
 
+        const $modalActivateCard = $('#modalActivateCard');
+        const $activateCardForm = $('#formActivateCard');
+        const $activateCardAlert = $('#activateCardAlert');
+        const $activateCardSubmit = $('#activateCardSubmit');
+        const $activateCardLabel = $('#activateCardLabel');
+        const $activateCardUuid = $('#activate_card_uuid');
+        const $activateCardEmpId = $('#activate_card_emp_id');
+
+        const $modalBlockCard = $('#modalBlockCard');
+        const $blockCardForm = $('#formBlockCard');
+        const $blockCardAlert = $('#blockCardAlert');
+        const $blockCardSubmit = $('#blockCardSubmit');
+        const $blockCardLabel = $('#blockCardLabel');
+        const $blockCardUuid = $('#block_card_uuid');
+        const $blockCardEmpId = $('#block_card_emp_id');
+
         const $modalResetCardPassword = $('#modalResetCardPassword');
         const $resetCardPasswordForm = $('#formResetCardPassword');
         const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
@@ -2100,6 +2176,17 @@
         const $resetCardPasswordInput = $('#reset_card_password');
         const $resetCardPasswordConfirmationInput = $('#reset_card_password_confirmation');
         const $resetCardPasswordTokenInput = $('#reset_card_password_token');
+
+        function clearActivateCardValidation() {
+            if (!$activateCardForm.length) {
+                return;
+            }
+
+            $activateCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($activateCardAlert.length) {
+                $activateCardAlert.addClass('d-none').text('');
+            }
+        }
 
         function clearResetCardPasswordValidation() {
             if (!$resetCardPasswordForm.length) {
@@ -2111,6 +2198,17 @@
 
             if ($resetCardPasswordAlert.length) {
                 $resetCardPasswordAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearBlockCardValidation() {
+            if (!$blockCardForm.length) {
+                return;
+            }
+
+            $blockCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($blockCardAlert.length) {
+                $blockCardAlert.addClass('d-none').text('');
             }
         }
 
@@ -2198,6 +2296,24 @@
             );
 
             return arrayBufferToBase64(encrypted);
+        }
+
+        function resetActivateCardForm() {
+            if (!$activateCardForm.length) {
+                return;
+            }
+
+            $activateCardForm.trigger('reset');
+            clearActivateCardValidation();
+        }
+
+        function resetBlockCardForm() {
+            if (!$blockCardForm.length) {
+                return;
+            }
+
+            $blockCardForm.trigger('reset');
+            clearBlockCardValidation();
         }
 
         function resetResetCardPasswordForm() {
@@ -2407,6 +2523,212 @@
                         const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Salvar';
                         $resetCardPasswordSubmit.prop('disabled', false).text(recoveryText);
                         clearCardPasswordCryptoMaterials();
+                    }
+                });
+            });
+        }
+
+        if ($modalActivateCard.length && $activateCardForm.length) {
+            $(document).on('click', '.btn-activate-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetActivateCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $activateCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $activateCardEmpId.val(empIdData);
+                }
+
+                if ($activateCardLabel.length) {
+                    $activateCardLabel.text(cardLabel);
+                }
+
+                $modalActivateCard.modal('show');
+            });
+
+            $modalActivateCard.on('hidden.bs.modal', function () {
+                resetActivateCardForm();
+            });
+
+            $activateCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearActivateCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($activateCardUuid.val()) + '/activate-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $activateCardSubmit.data('original-text') || $activateCardSubmit.text();
+
+                $activateCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Ativando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $activateCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalActivateCard.modal('hide');
+                        resetActivateCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível ativar o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($activateCardAlert.length) {
+                            $activateCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $activateCardSubmit.data('original-text') || 'Ativar';
+                        $activateCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
+        if ($modalBlockCard.length && $blockCardForm.length) {
+            $(document).on('click', '.btn-block-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetBlockCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $blockCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $blockCardEmpId.val(empIdData);
+                }
+
+                if ($blockCardLabel.length) {
+                    $blockCardLabel.text(cardLabel);
+                }
+
+                $modalBlockCard.modal('show');
+            });
+
+            $modalBlockCard.on('hidden.bs.modal', function () {
+                resetBlockCardForm();
+            });
+
+            $blockCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearBlockCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($blockCardUuid.val()) + '/block-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $blockCardSubmit.data('original-text') || $blockCardSubmit.text();
+
+                $blockCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Bloqueando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $blockCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalBlockCard.modal('hide');
+                        resetBlockCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível bloquear o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($blockCardAlert.length) {
+                            $blockCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $blockCardSubmit.data('original-text') || 'Bloquear';
+                        $blockCardSubmit.prop('disabled', false).text(recoveryText);
                     }
                 });
             });
