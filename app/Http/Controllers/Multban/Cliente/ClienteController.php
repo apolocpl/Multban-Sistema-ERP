@@ -19,6 +19,7 @@ use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Endereco\Cidade;
 use App\Models\Multban\Endereco\Estados;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -26,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -393,7 +395,8 @@ class ClienteController extends Controller
         $buttons = [];
 
         if ($canResetPassword) {
-            $buttons[] = '<button class="btn btn-sm btn-primary mr-1" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" title="Resetar Senha"><i class="fas fa-key"></i></button>';
+            $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
+            $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" title="Resetar Senha"><i class="fas fa-key"></i></button>';
         }
 
         $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
@@ -402,6 +405,40 @@ class ClienteController extends Controller
         $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
         return implode('', $buttons);
+    }
+
+    /**
+     * Determine whether a 4-digit card password is considered weak (sequential or repeated digits).
+     */
+    private function isWeakCardPassword(string $password): bool
+    {
+        if (! preg_match('/^\d{4}$/', $password)) {
+            return true;
+        }
+
+        $digits = str_split($password);
+
+        if (count(array_unique($digits)) === 1) {
+            return true;
+        }
+
+        $ascending = true;
+        $descending = true;
+
+        for ($index = 1; $index < count($digits); $index++) {
+            $previous = (int) $digits[$index - 1];
+            $current = (int) $digits[$index];
+
+            if ($current !== (($previous + 1) % 10)) {
+                $ascending = false;
+            }
+
+            if ($current !== (($previous + 9) % 10)) {
+                $descending = false;
+            }
+        }
+
+        return $ascending || $descending;
     }
 
     /**
@@ -812,6 +849,83 @@ class ClienteController extends Controller
             return response()->json([
                 'message'   => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resetCardPassword(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id'                => ['required', 'integer'],
+                    'password'              => ['required', 'digits:4'],
+                    'password_confirmation' => ['required', 'same:password'],
+                ],
+                [
+                    'password.digits'              => 'A nova senha deve conter exatamente 4 dígitos numéricos.',
+                    'password.required'            => 'Informe a nova senha do cartão.',
+                    'password_confirmation.same'   => 'A confirmação da senha deve ser igual à senha informada.',
+                    'password_confirmation.required' => 'Confirme a nova senha do cartão.',
+                ],
+                [
+                    'password'              => 'nova senha',
+                    'password_confirmation' => 'confirmação da senha',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validator->validated();
+
+            if ($this->isWeakCardPassword($validated['password'])) {
+                return response()->json([
+                    'message' => [
+                        'password' => ['Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validated['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_pass'   => Hash::make($validated['password']),
+                    'modificador' => Auth::user()->user_id,
+                    'dthr_ch'     => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Senha do cartão atualizada com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -1587,6 +1701,27 @@ class ClienteController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
+            $cardPassword = $request->card_pass;
+            $cardPassword = $cardPassword === null ? null : trim((string) $cardPassword);
+
+            if ($cardPassword !== null && $cardPassword !== '') {
+                if (! preg_match('/^\d{4}$/', $cardPassword)) {
+                    return response()->json([
+                        'message' => [
+                            'card_pass' => ['A senha do cartão deve conter exatamente 4 dígitos numéricos.'],
+                        ],
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                if ($this->isWeakCardPassword($cardPassword)) {
+                    return response()->json([
+                        'message' => [
+                            'card_pass' => ['Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).'],
+                        ],
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+            }
+
             DB::beginTransaction();
 
             $empresa = Empresa::find($empresaId);
@@ -1605,6 +1740,11 @@ class ClienteController extends Controller
             // Você pode ajustar o prefixo conforme necessário para outros tipos de cartões
             // Gera um número de cartão de crédito com 16 dígitos
             $numeroCartao = $this->gerarNumeroCartaoCredito($cnpj, $cpf, $request->card_mod, $request->card_tp);
+
+            if ($cardPassword === null || $cardPassword === '') {
+                $cardPassword = (string) random_int(100000, 999999);
+            }
+            $cardPasswordHash = Hash::make($cardPassword);
 
             $dadosCartao = [
                 'emp_id'           => $empresaId,
@@ -1625,7 +1765,7 @@ class ClienteController extends Controller
                 'card_pts_fraq'    => 0,
                 'card_pts_mult'    => 0,
                 'card_pts_cash'    => 0,
-                'card_pass'        => $request->card_pass ?? null,
+                'card_pass'        => $cardPasswordHash,
                 'criador'          => Auth::user()->user_id,
                 'dthr_cr'          => Carbon::now(),
                 'modificador'      => Auth::user()->user_id,
@@ -1877,10 +2017,12 @@ class ClienteController extends Controller
 
                 if (in_array('cliente.edit', $this->permissions)) {
 
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1"';
+                    $maskedCardNumber = formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
+                    $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
-                    $btn .= 'data-uuid="' . $row->card_uuid . '" ';
-                    $btn .= ' title="Resetar Senha"><i class="fas fa-key"></i></button>';
+                    $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                    $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                    $btn .= 'title="Resetar Senha"><i class="fas fa-key"></i></button>';
                 }
 
                 $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';

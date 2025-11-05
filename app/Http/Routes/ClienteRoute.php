@@ -26,6 +26,7 @@ class ClienteRoute
 
         // cartão
         Route::post('cliente/store-card', [ClienteController::class, 'storeCard']);
+        Route::post('cliente/{card_uuid}/reset-card-password', [ClienteController::class, 'resetCardPassword']);
         Route::get('cliente/create-card', [ClienteController::class, 'createCard']);
         Route::get('cliente/{emp_id}/edit-card', [ClienteController::class, 'editCard']);
         Route::patch('cliente/update-card', [ClienteController::class, 'updateCard']);

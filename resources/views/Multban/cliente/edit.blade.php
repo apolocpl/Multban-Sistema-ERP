@@ -1909,6 +1909,66 @@
 <!-- /.content -->
 @endsection
 
+<div class="modal fade" id="modalResetCardPassword" tabindex="-1" role="dialog" aria-labelledby="modalResetCardPasswordLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalResetCardPasswordLabel">Atualizar Senha do Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formResetCardPassword" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="resetCardPasswordAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Cartão selecionado</span>
+                        <strong id="resetCardPasswordCardLabel">-</strong>
+                    </div>
+
+                    <input type="hidden" name="card_uuid" id="reset_card_password_card_uuid">
+                    <input type="hidden" name="emp_id" id="reset_card_password_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+
+                    <div class="form-group">
+                        <label for="reset_card_password">Nova senha (4 dígitos)</label>
+                        <input type="password"
+                               class="form-control form-control-sm"
+                               id="reset_card_password"
+                               name="password"
+                               minlength="4"
+                               maxlength="4"
+                               pattern="\d{4}"
+                               inputmode="numeric"
+                               autocomplete="new-password"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reset_card_password_confirmation">Confirmar nova senha</label>
+                        <input type="password"
+                               class="form-control form-control-sm"
+                               id="reset_card_password_confirmation"
+                               name="password_confirmation"
+                               minlength="4"
+                               maxlength="4"
+                               pattern="\d{4}"
+                               inputmode="numeric"
+                               autocomplete="new-password"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="resetCardPasswordSubmit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 
 
@@ -2027,6 +2087,205 @@
 
         // Chama ao carregar
         toggleBtnImprimir();
+
+        const $modalResetCardPassword = $('#modalResetCardPassword');
+        const $resetCardPasswordForm = $('#formResetCardPassword');
+        const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
+        const $resetCardPasswordSubmit = $('#resetCardPasswordSubmit');
+        const $resetCardPasswordCardLabel = $('#resetCardPasswordCardLabel');
+        const $resetCardPasswordInput = $('#reset_card_password');
+        const $resetCardPasswordConfirmationInput = $('#reset_card_password_confirmation');
+
+        function clearResetCardPasswordValidation() {
+            if (!$resetCardPasswordForm.length) {
+                return;
+            }
+
+            $resetCardPasswordForm.find('.is-invalid').removeClass('is-invalid');
+            $resetCardPasswordForm.find('.invalid-feedback').text('');
+
+            if ($resetCardPasswordAlert.length) {
+                $resetCardPasswordAlert.addClass('d-none').text('');
+            }
+        }
+
+        function resetResetCardPasswordForm() {
+            if (!$resetCardPasswordForm.length) {
+                return;
+            }
+
+            $resetCardPasswordForm.trigger('reset');
+            clearResetCardPasswordValidation();
+        }
+
+        if ($modalResetCardPassword.length && $resetCardPasswordForm.length) {
+            $(document).on('click', '.btn-reset-card-password', function (event) {
+                event.preventDefault();
+                resetResetCardPasswordForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $('#reset_card_password_card_uuid').val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $('#reset_card_password_emp_id').val(empIdData);
+                }
+
+                if ($resetCardPasswordCardLabel.length) {
+                    $resetCardPasswordCardLabel.text(cardLabel);
+                }
+
+                $modalResetCardPassword.modal('show');
+            });
+
+            $modalResetCardPassword.on('hidden.bs.modal', function () {
+                resetResetCardPasswordForm();
+            });
+
+            function markResetCardPasswordFieldInvalid($input, message) {
+                if (!$input || !$input.length) {
+                    return;
+                }
+
+                $input.addClass('is-invalid');
+
+                const $feedback = $input.siblings('.invalid-feedback');
+                if ($feedback.length) {
+                    $feedback.text(message);
+                }
+            }
+
+            function isWeakCardResetPin(pin) {
+                if (!/^\d{4}$/.test(pin)) {
+                    return true;
+                }
+
+                const digits = pin.split('').map(function (char) {
+                    return parseInt(char, 10);
+                });
+
+                const allSame = digits.every(function (digit) {
+                    return digit === digits[0];
+                });
+
+                if (allSame) {
+                    return true;
+                }
+
+                let ascending = true;
+                let descending = true;
+
+                for (let index = 1; index < digits.length; index += 1) {
+                    const previous = digits[index - 1];
+                    const current = digits[index];
+
+                    if (current !== ((previous + 1) % 10)) {
+                        ascending = false;
+                    }
+
+                    if (current !== ((previous + 9) % 10)) {
+                        descending = false;
+                    }
+                }
+
+                return ascending || descending;
+            }
+
+            $resetCardPasswordForm.on('submit', function (event) {
+                event.preventDefault();
+                clearResetCardPasswordValidation();
+
+                const password = ($resetCardPasswordInput.val() || '').trim();
+                const confirmation = ($resetCardPasswordConfirmationInput.val() || '').trim();
+                const digitRegex = /^\d{4}$/;
+                const invalidDigitsMessage = 'Informe exatamente 4 dígitos numéricos.';
+                const mismatchMessage = 'As senhas informadas não coincidem.';
+                const weakDigitsMessage = 'Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).';
+
+                let hasError = false;
+
+                if (!digitRegex.test(password)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, invalidDigitsMessage);
+                    hasError = true;
+                }
+
+                if (!digitRegex.test(confirmation)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, invalidDigitsMessage);
+                    hasError = true;
+                }
+
+                if (!hasError && password !== confirmation) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, mismatchMessage);
+                    hasError = true;
+                }
+
+                if (!hasError && isWeakCardResetPin(password)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, weakDigitsMessage);
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    return;
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($('#reset_card_password_card_uuid').val()) + '/reset-card-password';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalButtonText = $resetCardPasswordSubmit.data('original-text') || $resetCardPasswordSubmit.text();
+
+                $resetCardPasswordSubmit
+                    .data('original-text', originalButtonText)
+                    .prop('disabled', true)
+                    .text('Salvando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $('#reset_card_password_emp_id').val(),
+                        password: password,
+                        password_confirmation: confirmation,
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalResetCardPassword.modal('hide');
+                        resetResetCardPasswordForm();
+                        if (window.toastr) {
+                            toastr.success(response && response.text ? response.text : 'Senha do cartão atualizada com sucesso.');
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível atualizar a senha do cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($resetCardPasswordAlert.length) {
+                            $resetCardPasswordAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Salvar';
+                        $resetCardPasswordSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
 
         // Chama ao trocar de aba
         $('#custom-tabs-prt-tab .nav-link').on('shown.bs.tab', function () {
