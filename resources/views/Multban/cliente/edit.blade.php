@@ -725,11 +725,13 @@
 
                                     <!-- AÇÕES -->
                                     <div class="form-row">
+                                        @if ($canManageRelatedData)
                                         <div class="col-md-2">
                                             <button type="button" class="btn btn-primary btn-sm"
                                                 data-modal="modalCriarCartao" id="btnCriarCartao">Criar Novo
                                                 Cartão</button>
                                         </div>
+                                        @endif
 
                                         <div class="col-md-8">
                                             <div class="form-group d-inline-block">
@@ -767,6 +769,30 @@
                                                 <th>Saldo de Pontos</th>
                                             </tr>
                                         </thead>
+                                        <tbody>
+                                            @forelse($cartoes as $cartao)
+                                            <tr>
+                                                <td>{!! $cartao['actions'] !== '' ? $cartao['actions'] : '<span class="text-muted">-</span>' !!}</td>
+                                                <td>{{ $cartao['empresa'] }}</td>
+                                                <td>{{ $cartao['numero'] }}</td>
+                                                <td>{{ $cartao['cv'] }}</td>
+                                                <td>{!! $cartao['status_badge'] !!}</td>
+                                                <td>{{ $cartao['tipo_label'] }}</td>
+                                                <td>{{ $cartao['modalidade'] }}</td>
+                                                <td>{!! $cartao['categoria_badge'] !!}</td>
+                                                <td>{{ $cartao['descricao'] }}</td>
+                                                <td>{{ $cartao['saldo_valor'] }}</td>
+                                                <td>{{ $cartao['limite_valor'] }}</td>
+                                                <td>{{ $cartao['saldo_pontos'] }}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="12" class="text-center text-muted">
+                                                    Nenhum cartão encontrado para este cliente.
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
                                     </table>
 
 
@@ -838,6 +864,22 @@
                                                 <th>Anexo</th>
                                             </tr>
                                         </thead>
+                                        <tbody>
+                                            @forelse($prontuarios as $prontuario)
+                                            <tr>
+                                                <td>{{ $prontuario['protocolo'] }}</td>
+                                                <td>{!! $prontuario['protocolo_tp'] !!}</td>
+                                                <td>{{ $prontuario['medico'] }}</td>
+                                                <td>{!! $prontuario['anexo'] !!}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">
+                                                    Nenhum prontuário encontrado para este cliente.
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
                                     </table>
                                 </div>
 
@@ -2081,11 +2123,7 @@
     $(function () {
         "use strict";
 
-        @if(!empty($clienteProntuarios))
-            var dataSet = {{Js::from($clienteProntuarios)}};
-            console.log(dataSet.original.data);
-            clientejs.loadDatatablePrt(dataSet.original.data);
-        @endif
+        clientejs.loadDatatablePrt({!! Js::from($prontuarios) !!});
     });
 
 </script>

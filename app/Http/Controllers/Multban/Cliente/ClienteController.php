@@ -330,6 +330,190 @@ class ClienteController extends Controller
     }
 
     /**
+     * Load cartões vinculados ao cliente no contexto da empresa.
+     */
+    private function loadCartoesForCliente(Cliente $cliente, int $empresaId, bool $canManageRelatedData)
+    {
+        if (! $canManageRelatedData) {
+            return collect();
+        }
+
+        $cards = ClienteCard::where('emp_id', $empresaId)
+            ->where('cliente_id', $cliente->cliente_id)
+            ->get();
+
+        if ($cards->isEmpty()) {
+            return collect();
+        }
+
+        $empresaNome = Empresa::select('emp_nmult')->find($empresaId)?->emp_nmult ?? 'Empresa não encontrada';
+        $permissions = $this->resolvePermissions();
+        $canResetPassword = in_array('cliente.edit', $permissions, true);
+
+        $statusLookup = CardStatus::all()->keyBy('card_sts');
+        $categoriaLookup = CardCateg::all()->keyBy('card_categ');
+
+        return $cards->map(function (ClienteCard $card) use ($empresaNome, $statusLookup, $categoriaLookup, $canManageRelatedData, $canResetPassword) {
+            $statusModel = $statusLookup->get($card->card_sts);
+            $statusDesc = $statusModel?->card_sts_desc ?? ($card->card_sts ?? 'Sem status');
+            $statusBadge = $this->formatCardStatusBadge($card->card_sts, $statusDesc);
+
+            $categoriaBadge = '';
+            if ($categoriaLookup->has($card->card_categ)) {
+                $categoriaBadge = '<span class="badge badge-info">' . e($categoriaLookup->get($card->card_categ)->card_categ_desc) . '</span>';
+            }
+
+            return [
+                'actions'         => $canManageRelatedData ? $this->buildCartaoActions($card, $canResetPassword) : '',
+                'empresa'         => $empresaNome,
+                'numero'          => formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4)),
+                'cv'              => $card->cliente_cardcv,
+                'status_badge'    => $statusBadge,
+                'tipo_label'      => $card->card_tp === 'PRE' ? 'Pré-pago' : 'Pós-pago',
+                'modalidade'      => $this->translateCardModalidade($card->card_mod),
+                'categoria_badge' => $categoriaBadge,
+                'descricao'       => mb_strtoupper(rtrim($card->card_desc ?? ''), 'UTF-8'),
+                'saldo_valor'     => formatarDecimalParaTexto($card->card_saldo_vlr ?? 0),
+                'limite_valor'    => formatarDecimalParaTexto($card->card_limite ?? 0),
+                'saldo_pontos'    => formatarDecimalParaTexto($card->card_saldo_pts ?? 0),
+            ];
+        })->values();
+    }
+
+    /**
+     * Build action buttons for cartão rows.
+     */
+    private function buildCartaoActions(ClienteCard $card, bool $canResetPassword): string
+    {
+        $buttons = [];
+
+        if ($canResetPassword) {
+            $buttons[] = '<button class="btn btn-sm btn-primary mr-1" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" title="Resetar Senha"><i class="fas fa-key"></i></button>';
+        }
+
+        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
+        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
+        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
+        $buttons[] = '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+
+        return implode('', $buttons);
+    }
+
+    /**
+     * Format the cartão status badge.
+     */
+    private function formatCardStatusBadge(?string $statusCode, string $statusDesc): string
+    {
+        if (! $statusCode) {
+            return '<span class="badge badge-secondary">Sem status</span>';
+        }
+
+        switch ($statusCode) {
+            case 'AT':
+                $class = 'success';
+                break;
+            case 'IN':
+            case 'EX':
+            case 'BL':
+                $class = 'danger';
+                break;
+            default:
+                $class = 'secondary';
+                break;
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($statusDesc) . '</span>';
+    }
+
+    /**
+     * Translate the cartão modalidade code into a human readable label.
+     */
+    private function translateCardModalidade(?string $codigo): string
+    {
+        switch ($codigo) {
+            case 'CRDT':
+                return 'Crédito';
+            case 'DEBT':
+                return 'Débito';
+            case 'GIFT':
+                return 'Gift Card';
+            case 'FID':
+                return 'Fidelidade';
+            default:
+                return $codigo ?? '-';
+        }
+    }
+
+    /**
+     * Load prontuários vinculados ao cliente.
+     */
+    private function loadProntuariosForCliente(Cliente $cliente, int $empresaId, bool $canManageRelatedData)
+    {
+        if (! $canManageRelatedData) {
+            return collect();
+        }
+
+        $prontuarios = ClienteProntuario::with(['user', 'tipo'])
+            ->where('emp_id', $empresaId)
+            ->where('cliente_id', $cliente->cliente_id)
+            ->orderByDesc('protocolo')
+            ->get();
+
+        return $prontuarios->map(function (ClienteProntuario $row) {
+            $badge = '';
+            if (! empty($row->tipo)) {
+                switch ($row->tipo->protocolo_tp) {
+                    case 1:
+                        $badge = '<span class="badge badge-info">' . e($row->tipo->prt_tp_desc) . '</span>';
+                        break;
+                    case 2:
+                    case 3:
+                    case 4:
+                        $badge = '<span class="badge badge-success">' . e($row->tipo->prt_tp_desc) . '</span>';
+                        break;
+                    default:
+                        $badge = '<span class="badge badge-secondary">' . e($row->tipo->prt_tp_desc ?? $row->protocolo_tp) . '</span>';
+                        break;
+                }
+            }
+
+            $anexo = $row->anexo === 'x'
+                ? '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>'
+                : '<span class="badge badge-secondary">Sem Anexo</span>';
+
+            return [
+                'id'             => $row->id,
+                'protocolo'      => str_pad((string) $row->protocolo, 12, '0', STR_PAD_LEFT),
+                'protocolo_raw'  => $row->protocolo,
+                'protocolo_tp'   => $badge,
+                'medico'         => $row->user->user_name ?? 'Sem Médico',
+                'crm_medico'     => $row->user->user_crm ?? 'Sem CRM',
+                'anexo'          => $anexo,
+                'texto_anm'      => $row->texto_anm ?? '',
+                'texto_prt'      => $row->texto_prt ?? '',
+                'texto_prv'      => $row->texto_prv ?? '',
+                'texto_rec'      => $row->texto_rec ?? '',
+                'texto_exm'      => $row->texto_exm ?? '',
+                'texto_atd'      => $row->texto_atd ?? '',
+                'images'         => $this->listPublicFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails'),
+                'docs'           => $this->listPublicFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo),
+            ];
+        })->values();
+    }
+
+    /**
+     * Helper to list files from the public storage disk safely.
+     */
+    private function listPublicFiles(string $path): array
+    {
+        if (! Storage::disk('public')->exists($path)) {
+            return [];
+        }
+
+        return Storage::disk('public')->allFiles($path);
+    }
+
+    /**
      * Load score entries for the cliente.
      */
     private function loadScoreEntriesForCliente(Cliente $cliente)
@@ -460,6 +644,9 @@ class ClienteController extends Controller
        $users = User::with('cargo')->get(); // ou sua query customizada
         $compras = collect();
         $scoreEntries = collect();
+        $cartoes = collect();
+        $prontuarios = collect();
+        $canManageRelatedData = true;
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -482,7 +669,10 @@ class ClienteController extends Controller
             'cidades',
             'users',
             'compras',
-            'scoreEntries'
+            'scoreEntries',
+            'cartoes',
+            'prontuarios',
+            'canManageRelatedData'
         ));
     }
 
@@ -652,71 +842,18 @@ class ClienteController extends Controller
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
         $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
+        $canManageRelatedData = Auth::user()?->can('manageRelatedData', $cliente) ?? false;
         $compras = $this->loadComprasForCliente($cliente, $emp_id);
         $scoreEntries = $this->loadScoreEntriesForCliente($cliente);
+        $cartoes = $this->loadCartoesForCliente($cliente, $emp_id, $canManageRelatedData);
+        $prontuarios = $this->loadProntuariosForCliente($cliente, $emp_id, $canManageRelatedData);
 
         $convenios = TbDmConvenios::all();
         $estados = Estados::orderBy('estado_desc')->get();
         $cidades = Cidade::orderBy('cidade_desc')->get();
-        $prontuarios = ClienteProntuario::where('cliente_id', $cliente->cliente_id)
-            ->where('emp_id', $emp_id)
-            ->get();
         $dbsysclient = DB::connection('dbsysclient');
         $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
             ->where('user_func_grp', '=', 'consulta')->get();
-
-        $clienteProntuarios = DataTables::of($prontuarios)
-            ->addIndexColumn()
-            ->editColumn('anexo', function ($row) {
-                if ($row->anexo == 'x') {
-                    return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
-                }
-
-                return '<span class="badge badge-secondary">Sem Anexo</span>';
-            })
-            ->addColumn('medico', function ($row) {
-                if (! empty($row->user)) {
-                    return $row->user->user_name;
-                }
-
-                return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
-            })
-            ->addColumn('crm_medico', function ($row) {
-                if (! empty($row->user)) {
-                    return $row->user->user_crm;
-                }
-
-                return 'Sem CRM';
-            })
-            ->addColumn('images', function ($row) {
-                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails');
-            })
-            ->addColumn('docs', function ($row) {
-                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
-            })
-            ->editColumn('protocolo', function ($row) {
-                return str_pad($row->protocolo, 12, '0', STR_PAD_LEFT);
-            })
-            ->editColumn('protocolo_tp', function ($row) {
-                $badge = '';
-                if (! empty($row->tipo)) {
-
-                    switch ($row->tipo->protocolo_tp) {
-                        case 1:
-                            $badge = '<span class="badge badge-info">' . $row->tipo->prt_tp_desc . '</span>';
-                            break;
-                        case 2:
-                        case 3:
-                        case 4:
-                            $badge = '<span class="badge badge-success">' . $row->tipo->prt_tp_desc . '</span>';
-                            break;
-                    }
-                }
-
-                return $badge;
-            })
-            ->rawColumns(['anexo', 'medico', 'action', 'protocolo_tp'])
-            ->make(true);
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -737,10 +874,12 @@ class ClienteController extends Controller
             'convenios',
             'estados',
             'cidades',
-            'clienteProntuarios',
             'users',
             'compras',
             'scoreEntries',
+            'cartoes',
+            'prontuarios',
+            'canManageRelatedData',
         ));
     }
 
