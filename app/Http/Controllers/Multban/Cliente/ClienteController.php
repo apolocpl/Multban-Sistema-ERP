@@ -12,6 +12,7 @@ use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
 use App\Models\Multban\Cliente\ClienteCard;
 use App\Models\Multban\Cliente\ClienteProntuario;
+use App\Models\Multban\Cliente\ClienteScore;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
@@ -35,7 +36,7 @@ use App\Support\Tenancy\TenantManager;
 
 class ClienteController extends Controller
 {
-    private $permissions;
+    private ?array $permissions = null;
 
     public function __construct(private readonly TenantManager $tenantManager) {}
 
@@ -93,6 +94,285 @@ class ClienteController extends Controller
     }
 
     /**
+     * Resolve and cache the authenticated user's permissions.
+     */
+    private function resolvePermissions(): array
+    {
+        if ($this->permissions !== null) {
+            return $this->permissions;
+        }
+
+        $user = Auth::user();
+
+        if (! $user) {
+            return $this->permissions = [];
+        }
+
+        if (method_exists($user, 'getAllPermissions')) {
+            return $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
+        }
+
+        $rolePerms = collect();
+        foreach ($user->roles as $role) {
+            if (method_exists($role, 'permissions') || isset($role->permissions)) {
+                $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
+            }
+        }
+
+        $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
+
+        return $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+    }
+
+    /**
+     * Build the action buttons for cliente listings.
+     */
+    private function buildClienteActions(Cliente $cliente, array $permissions): string
+    {
+        $buttons = [];
+
+        if (in_array('cliente.edit', $permissions, true)) {
+            $buttons[] = '<a href="cliente/' . $cliente->cliente_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
+        }
+
+        $statusCode = optional($cliente->status)->cliente_sts;
+
+        $disabled = '';
+        if ($statusCode === EmpresaStatusEnum::ATIVO) {
+            $disabled = 'disabled';
+        }
+
+        $buttons[] = '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="active_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Ativar"><i class="far fa-check-circle"></i></button>';
+
+        $disabled = '';
+        if ($statusCode === EmpresaStatusEnum::INATIVO) {
+            $disabled = 'disabled';
+        }
+
+        $buttons[] = '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="inactive_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Inativar"><i class="fas fa-ban"></i></button>';
+
+        if (in_array('cliente.destroy', $permissions, true)) {
+            $disabled = '';
+            if ($statusCode === EmpresaStatusEnum::EXCLUIDO) {
+                $disabled = 'disabled';
+            }
+
+            $buttons[] = '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+        }
+
+        return implode('', $buttons);
+    }
+
+    /**
+     * Format cliente status badge.
+     */
+    private function buildClienteStatusBadge(Cliente $cliente): string
+    {
+        $status = $cliente->status;
+
+        if (! $status) {
+            return '<span class="badge badge-secondary">Sem status</span>';
+        }
+
+        switch ($status->cliente_sts) {
+            case EmpresaStatusEnum::ATIVO:
+                $class = 'success';
+                break;
+            case EmpresaStatusEnum::EMANALISE:
+                $class = 'warning';
+                break;
+            case EmpresaStatusEnum::INATIVO:
+            case EmpresaStatusEnum::EXCLUIDO:
+            case EmpresaStatusEnum::BLOQUEADO:
+                $class = 'danger';
+                break;
+            default:
+                $class = 'secondary';
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($status->cliente_sts_desc ?? $status->cliente_sts) . '</span>';
+    }
+
+    /**
+     * Format cliente tipo badge.
+     */
+    private function buildClienteTipoBadge(Cliente $cliente): string
+    {
+        $tipo = $cliente->tipo;
+
+        if (! $tipo) {
+            return '<span class="badge badge-secondary">Sem tipo</span>';
+        }
+
+        switch ($tipo->cliente_tipo) {
+            case 1:
+                $class = 'info';
+                break;
+            case 2:
+            case 3:
+            case 4:
+                $class = 'success';
+                break;
+            default:
+                $class = 'secondary';
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($tipo->cliente_tipo_desc ?? (string) $tipo->cliente_tipo) . '</span>';
+    }
+
+    /**
+     * Format CPF/CNPJ.
+     */
+    private function formatClienteDocumento(?string $documento): string
+    {
+        if (empty($documento)) {
+            return '-';
+        }
+
+        $limpo = preg_replace('/\D/', '', $documento);
+        if (strlen($limpo) > 11) {
+            return formatarCNPJ($limpo);
+        }
+
+        return formatarCPF($limpo);
+    }
+
+    private function formatCurrency($valor): string
+    {
+        if ($valor === null || $valor === '') {
+            return '-';
+        }
+
+        return formatarDecimalParaTexto((float) $valor);
+    }
+
+    private function formatDate(?string $value, string $format = 'd/m/Y'): string
+    {
+        if (empty($value)) {
+            return '-';
+        }
+
+        try {
+            return Carbon::parse($value)->format($format);
+        } catch (\Throwable $throwable) {
+            return (string) $value;
+        }
+    }
+
+    private function mapParcelaStatusBadge(?string $codigo): string
+    {
+        switch ($codigo) {
+            case 'BXD':
+            case 'BXI':
+                return 'success';
+            case 'REG':
+                return 'warning';
+            case 'IND':
+                return 'danger';
+            default:
+                return 'secondary';
+        }
+    }
+
+    /**
+     * Load compras realizadas for the cliente/empresa context.
+     */
+    private function loadComprasForCliente(Cliente $cliente, int $empresaId)
+    {
+        $rows = DB::connection('dbsysclient')
+            ->table('tbtr_p_titulos_cp as parcelas')
+            ->leftJoin('tbdm_parcela_sts as status', function ($join) {
+                $join->on('parcelas.parcela_sts', '=', 'status.parcela_sts')
+                    ->where('status.langu', '=', 'PORT');
+            })
+            ->select([
+                'parcelas.emp_id as emp_id',
+                'parcelas.titulo as titulo',
+                'parcelas.parcela as parcela',
+                'parcelas.vlr_bpar_split as valor_inicial',
+                'parcelas.vlr_jurosp as valor_juros',
+                'parcelas.vlr_bpar_cj as valor_total',
+                'parcelas.meio_pag_v as meio_pagamento',
+                'parcelas.data_mov as data_venda',
+                'parcelas.data_venc as data_vencimento',
+                'parcelas.parcela_sts as status_codigo',
+                'parcelas.nid_parcela as identificador',
+                'status.parcela_sts_desc as status_descricao',
+            ])
+            ->where('parcelas.emp_id', $empresaId)
+            ->where('parcelas.cliente_id', $cliente->cliente_id)
+            ->orderByDesc('parcelas.data_mov')
+            ->orderByDesc('parcelas.parcela')
+            ->get();
+
+        return $rows->map(function ($row) use ($cliente) {
+            $statusClass = $this->mapParcelaStatusBadge($row->status_codigo);
+            $statusDesc = $row->status_descricao ?? $row->status_codigo;
+
+            return [
+                'identificador'    => $row->identificador,
+                'emp_id'           => $row->emp_id,
+                'titulo'           => $row->titulo,
+                'cliente'          => $cliente->cliente_nome,
+                'parcela'          => $row->parcela,
+                'valor_inicial'    => $this->formatCurrency($row->valor_inicial),
+                'valor_juros'      => $this->formatCurrency($row->valor_juros),
+                'valor_total'      => $this->formatCurrency($row->valor_total),
+                'meio_pagamento'   => $row->meio_pagamento,
+                'data_venda'       => $this->formatDate($row->data_venda),
+                'data_vencimento'  => $this->formatDate($row->data_vencimento),
+                'status'           => [
+                    'descricao' => $statusDesc,
+                    'classe'    => $statusClass,
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Load score entries for the cliente.
+     */
+    private function loadScoreEntriesForCliente(Cliente $cliente)
+    {
+        return ClienteScore::where('cliente_id', $cliente->cliente_id)
+            ->orderByDesc('dthr_cr')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'numero'        => $row->cliente_proc_num,
+                    'tipo'          => $row->cliente_proc_tipo,
+                    'descricao'     => $row->cliente_proc_desc,
+                    'status'        => $row->cliente_proc_sts,
+                    'data_consulta' => $this->formatDate($row->cliente_proc_dtc),
+                    'data_inicio'   => $this->formatDate($row->cliente_proc_dti),
+                    'data_fim'      => $this->formatDate($row->cliente_proc_dtf),
+                    'valor'         => $this->formatScoreValor($row->cliente_proc_vlr),
+                ];
+            });
+    }
+
+    private function formatScoreValor(?string $valor): string
+    {
+        if ($valor === null || $valor === '') {
+            return '-';
+        }
+
+        $normalizado = preg_replace('/[^\d,.-]/', '', $valor);
+        if ($normalizado === '' || $normalizado === null) {
+            return $valor;
+        }
+
+        $normalizado = str_replace('.', '', $normalizado);
+        $normalizado = str_replace(',', '.', $normalizado);
+
+        if (! is_numeric($normalizado)) {
+            return $valor;
+        }
+
+        return formatarDecimalParaTexto((float) $normalizado);
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -103,14 +383,39 @@ class ClienteController extends Controller
         $tipos = ClienteTipo::all();
         $filters = session('cliente_filters', []);
         $nomeMultbanOptions = [];
+        $clientesRecentes = collect();
+        $empresa = null;
 
         try {
             $empresaId = $this->tenantManager->ensure();
-            $empresaAtual = Empresa::select('emp_nmult')->find($empresaId);
+            $empresa = Empresa::select('emp_id', 'emp_nmult', 'emp_cnpj')->find($empresaId);
 
-            if ($empresaAtual && ! empty($empresaAtual->emp_nmult)) {
-                $nomeMultbanOptions[] = $empresaAtual->emp_nmult;
+            if ($empresa && ! empty($empresa->emp_nmult)) {
+                $nomeMultbanOptions[] = $empresa->emp_nmult;
             }
+
+            $recentes = Cliente::with(['status', 'tipo'])
+                ->whereHas('clienteEmp', function ($query) use ($empresaId) {
+                    $query->where('emp_id', $empresaId);
+                })
+                ->orderByDesc('cliente_id')
+                ->limit(10)
+                ->get();
+
+            $permissions = $this->resolvePermissions();
+
+            $clientesRecentes = $recentes->map(function (Cliente $cliente) use ($permissions) {
+                return [
+                    'action'               => $this->buildClienteActions($cliente, $permissions),
+                    'cliente_id'           => $cliente->cliente_id,
+                    'cliente_nome'         => $cliente->cliente_nome,
+                    'cliente_doc'          => $this->formatClienteDocumento($cliente->cliente_doc),
+                    'cliente_tipo_badge'   => $this->buildClienteTipoBadge($cliente),
+                    'cliente_email'        => $cliente->cliente_email ?? '-',
+                    'cliente_cel'          => $cliente->cliente_cel ? formatarTelefone($cliente->cliente_cel) : '-',
+                    'cliente_status_badge' => $this->buildClienteStatusBadge($cliente),
+                ];
+            });
         } catch (\Throwable $e) {
             // Caso o tenant não esteja disponível ainda, apenas ignore e siga sem opções pré-carregadas.
         }
@@ -123,7 +428,14 @@ class ClienteController extends Controller
             return $value !== null && $value !== '';
         }));
 
-        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters', 'nomeMultbanOptions'));
+        return response()->view('Multban.cliente.index', compact(
+            'status',
+            'tipos',
+            'filters',
+            'nomeMultbanOptions',
+            'clientesRecentes',
+            'empresa'
+        ));
     }
 
     /**
@@ -143,9 +455,11 @@ class ClienteController extends Controller
         $cardCateg = CardCateg::all();
         $cliente = new Cliente;
         $convenios = TbDmConvenios::all();
-        $estados = Estados::orderBy('estado_desc')->get();
-        $cidades = Cidade::orderBy('cidade_desc')->get();
-        $users = User::with('cargo')->get(); // ou sua query customizada
+       $estados = Estados::orderBy('estado_desc')->get();
+       $cidades = Cidade::orderBy('cidade_desc')->get();
+       $users = User::with('cargo')->get(); // ou sua query customizada
+        $compras = collect();
+        $scoreEntries = collect();
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -166,7 +480,9 @@ class ClienteController extends Controller
             'convenios',
             'estados',
             'cidades',
-            'users'
+            'users',
+            'compras',
+            'scoreEntries'
         ));
     }
 
@@ -336,6 +652,8 @@ class ClienteController extends Controller
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
         $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
+        $compras = $this->loadComprasForCliente($cliente, $emp_id);
+        $scoreEntries = $this->loadScoreEntriesForCliente($cliente);
 
         $convenios = TbDmConvenios::all();
         $estados = Estados::orderBy('estado_desc')->get();
@@ -421,6 +739,8 @@ class ClienteController extends Controller
             'cidades',
             'clienteProntuarios',
             'users',
+            'compras',
+            'scoreEntries',
         ));
     }
 
@@ -1018,19 +1338,7 @@ class ClienteController extends Controller
 
         $data = $clientesQuery->get();
 
-        $user = Auth::user();
-        if ($user && is_callable([$user, 'getAllPermissions'])) {
-            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
-        } else {
-            $rolePerms = collect();
-            foreach ($user->roles as $role) {
-                if (method_exists($role, 'permissions') || isset($role->permissions)) {
-                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
-                }
-            }
-            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
-            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
-        }
+        $this->permissions = $this->resolvePermissions();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -1408,29 +1716,26 @@ class ClienteController extends Controller
             abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = DB::connection('dbsysclient')->table('tbdm_clientes_card')->where(
-            'emp_id',
-            '=',
-            1
-        )->where(
-            'cliente_id',
-            '=',
-            $request->cliente_id
-        )->get();
+        $empresaId = $this->authenticatedEmpresaId(
+            $request->filled('emp_id') ? (int) $request->input('emp_id') : null
+        );
 
-        $user = Auth::user();
-        if (method_exists($user, 'getAllPermissions')) {
-            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
-        } else {
-            $rolePerms = collect();
-            foreach ($user->roles as $role) {
-                if (method_exists($role, 'permissions') || isset($role->permissions)) {
-                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
-                }
-            }
-            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
-            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+        $clienteId = (int) $request->input('cliente_id');
+
+        if ($clienteId <= 0) {
+            return DataTables::of(collect())->make(true);
         }
+
+        // Garantir que o cliente pertence à empresa autenticada antes de carregar os cartões
+        $this->getClienteForUserOrFail($clienteId, 'view');
+
+        $data = DB::connection('dbsysclient')
+            ->table('tbdm_clientes_card')
+            ->where('emp_id', $empresaId)
+            ->where('cliente_id', $clienteId)
+            ->get();
+
+        $this->permissions = $this->resolvePermissions();
 
         return DataTables::of($data)
             ->addIndexColumn()

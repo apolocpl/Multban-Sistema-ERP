@@ -127,6 +127,24 @@
                             <th>Status</th>
                         </tr>
                     </thead>
+                    <tbody>
+                        @forelse($clientesRecentes as $clienteRow)
+                        <tr>
+                            <td>{!! $clienteRow['action'] !!}</td>
+                            <td>{{ $clienteRow['cliente_id'] }}</td>
+                            <td>{{ $clienteRow['cliente_nome'] }}</td>
+                            <td>{{ $clienteRow['cliente_doc'] }}</td>
+                            <td>{!! $clienteRow['cliente_tipo_badge'] !!}</td>
+                            <td>{{ $clienteRow['cliente_email'] }}</td>
+                            <td>{{ $clienteRow['cliente_cel'] }}</td>
+                            <td>{!! $clienteRow['cliente_status_badge'] !!}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Nenhum cliente encontrado.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
         </div>

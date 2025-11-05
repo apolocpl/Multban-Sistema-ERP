@@ -585,160 +585,67 @@
                                                     <th>Data Venc.</th>
                                                     <th>Status</th>
                                                 </tr>
-
-                                                <!-- Exemplo de dados estáticos -->
-                                            <tbody>
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" class="mr-2" />
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Imprimir Comprovante">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Manutenção de Título">
-                                                            <i class="fas fa-wrench"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Pagar">
-                                                            <i class="fas fa-usd-square"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Baixa Manual">
-                                                            <i class="fas fa-hands-usd"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cobrança">
-                                                            <i class="far fa-file-invoice-dollar"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>1</td>
-                                                    <td>12345</td>
-                                                    <td>Cliente Teste</td>
-                                                    <td>2</td>
-                                                    <td>R$ 100,00</td>
-                                                    <td>R$ 1,50</td>
-                                                    <th>R$ 101,50</th>
-                                                    <td>Cartão</td>
-                                                    <td>10/05/2025</td>
-                                                    <td>10/07/2025</td>
-                                                    <td><span class="badge badge-success">Pago</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" class="mr-2" />
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Imprimir Comprovante">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Manutenção de Título">
-                                                            <i class="fas fa-wrench"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Pagar">
-                                                            <i class="fas fa-usd-square"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Baixa Manual">
-                                                            <i class="fas fa-hands-usd"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cobrança">
-                                                            <i class="far fa-file-invoice-dollar"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>1</td>
-                                                    <td>12345</td>
-                                                    <td>Cliente Teste</td>
-                                                    <td>2</td>
-                                                    <td>R$ 100,00</td>
-                                                    <td>R$ 1,50</td>
-                                                    <th>R$ 101,50</th>
-                                                    <td>Cartão</td>
-                                                    <td>10/05/2025</td>
-                                                    <td>10/07/2025</td>
-                                                    <td><span class="badge badge-danger">Vencido</span></td>
-                                                </tr>
-
-                                            </tbody>
                                             </thead>
+                                            <tbody>
+                                                @forelse($compras as $compra)
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" class="mr-2"
+                                                            value="{{ $compra['identificador'] }}">
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Imprimir Comprovante">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Manutenção de Título">
+                                                            <i class="fas fa-wrench"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Pagar">
+                                                            <i class="fas fa-usd-square"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cancelar">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Baixa Manual">
+                                                            <i class="fas fa-hands-usd"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                            title="Cobrança">
+                                                            <i class="far fa-file-invoice-dollar"></i>
+                                                        </button>
+                                                    </td>
+                                                    <td>{{ $compra['emp_id'] }}</td>
+                                                    <td>{{ $compra['titulo'] }}</td>
+                                                    <td>{{ $compra['cliente'] }}</td>
+                                                    <td>{{ $compra['parcela'] }}</td>
+                                                    <td>{{ $compra['valor_inicial'] }}</td>
+                                                    <td>{{ $compra['valor_juros'] }}</td>
+                                                    <td>{{ $compra['valor_total'] }}</td>
+                                                    <td>{{ $compra['meio_pagamento'] ?? '-' }}</td>
+                                                    <td>{{ $compra['data_venda'] }}</td>
+                                                    <td>{{ $compra['data_vencimento'] }}</td>
+                                                    <td>
+                                                        <span
+                                                            class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
+                                                            {{ data_get($compra, 'status.descricao', '-') }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                @empty
+                                                <tr>
+                                                    <td colspan="13" class="text-center text-muted">
+                                                        Nenhuma compra encontrada para este cliente.
+                                                    </td>
+                                                </tr>
+                                                @endforelse
+                                            </tbody>
                                         </table>
                                     </div>
-
-                                    O CAMPO EMPRESA DEVERÁ VIR PREENCHIDO COM A EMPRESA DO USUÁRIO LOGADO, SOMENTE<br>
-                                    NO CASO DO USUÁRIO SER DA MULTBAN OU DE UMA EMPRESA WHITE LABEL, ESTE CAMPO PODERÁ
-                                    ESTAR DISPONÍVEL<br>
-                                    PARA SELECIONAR ALGUMA EMPRESA, NESTE CASO, ELE DEVE SEGUIR O PADRÃO DE CONSULTA,
-                                    PESQUISANDO SOBRE O<br>
-                                    NOME MULTBAN<br>
-                                    <br>
-                                    AO SELECIONAR UM CLIENTE, O SISTEMA DEVE ARMAZENAR O CLIENTE_ID E O CLIENT_DOC DA
-                                    TABELA TBDM_CLIENTES_GERAL<br>
-                                    <br>
-                                    AO CLICAR EM PESQUISAR, O SISTEMA DEVE UTILIZAR OS CAMPOS DO FILTRO PARA ACESSAR AS
-                                    TABELAS DE VENDA<br>
-                                    E TRAZER PARA A LISTA TODOS OS LANÇAMENTOS QUE CONDIZEM COM OS FILTROS<br>
-                                    <br>
-                                    <br>
-                                    Botão de Ação - Imprimir<br>
-                                    1. Imprimi o comprovante de pagamento referente ao título selecionado<br>
-                                    <br>
-                                    Botão de Ação - Manutenção de Título<br>
-                                    1. Abre uma nova tela, esta tela deverá ser criara no edit.blade pois terá todas as
-                                    informações do título<br>
-                                    2. Nesta tela poderemos editar os dampos:<br>
-                                    Data de Vencimento (TABELA tbtr_p_titulos_ab / CAMPO data_venc)<br>
-                                    Desconto Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_desc_mn)<br>
-                                    Acréscimo Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_acr_mn)<br>
-                                    <br>
-                                    Botão de Ação - Pagar<br>
-                                    1. Deve abrir o link de pagamento do Título, neste link deve conter as informações
-                                    para pagamento<br>
-                                    permitindo que o usuário possa escolhar PIX ou BOLETO<br>
-                                    Precisamos criar uma tela para este link, customizada e com a identidade visual da
-                                    Multban<br>
-                                    <br>
-                                    Botão de Ação - Cancelar<br>
-                                    1. Para Cancelar, é obrigatório dar um motivo.
-                                    2. Se o cancelamento for de uma parcela de cartão de crédito e que não seja a
-                                    última, o sistema deve informar ao usuário<br>
-                                    que todas as outras parcelas serão canceladas, pois não podemos cancelar uma única
-                                    parcela de uma venda<br>
-                                    Se o cancelamento for de um boleto parcelado, o sistema deve perguntar se o usuário
-                                    quer cancelar as demais parcelas<br>
-                                    se o usuário selecionar que SIM, todas as demais parcelas deverão ser canceladas<br>
-                                    <br>
-                                    Botão de Ação - Baixa Manual<br>
-                                    1. Abre um rela para Baixa Manual do Título, se for um lançamento de Cartão de
-                                    Crédito, o sistema deve gerar<br>
-                                    um débito no valor do MDR do título e uma msg deve aparecer na tela informando que o
-                                    MDR será cobrando<br>
-                                    se o cliente for optante de uma Wallet, o sistema deverá lançar um débito na Wallet,
-                                    se o cliente for optante<br>
-                                    de uma Conta Digital, o sistema deverá criar um título em nome do cliente para que
-                                    ele efetue o pagamento<br>
-                                    2. Se for um lançamento de um Boleto e este boleto já foi gerado pelo cliente final,
-                                    o sistema deve gerar um débito<br>
-                                    na wallet com o valor do Boleto+PIX registrado no sistema, ou cria um título para
-                                    pagamento com este valor,<br>
-                                    se for um lançamento de um Boleto ainda não gerado, o sistema apenas cancela o
-                                    lançamento<br>
-                                    <br>
-                                    Botão de Ação - Cobrança<br>
-                                    1. Direciona para a tela de cobrança já com os filtros do título selecionado
                                 </div>
                             </div>
 
@@ -757,13 +664,15 @@
                                         </div>
                                         <div class="form-group col-md-2">
                                             <input class="font-weight-bold" style="font-size: 1.5rem; color: #a702d8;"
-                                                id="cliente_socre" name="cliente_socre" placeholder="SCORE" value="">
+                                                id="cliente_socre" name="cliente_socre" placeholder="SCORE"
+                                                value="{{ $cliente->cliente_score ?? '' }}">
                                         </div>
                                     </div>
 
                                     <!-- TABELA -->
-                                    <table class="table-responsive">
-                                        <table id="gridtemplate" class="table table-striped table-bordered nowrap">
+                                    <div class="table-responsive">
+                                        <table id="gridtemplate-score"
+                                            class="table table-striped table-bordered nowrap">
                                             <thead>
                                                 <tr>
                                                     <th>Número do Processo/Protesto</th>
@@ -776,39 +685,32 @@
                                                     <th>Valor do Processo/Protesto</th>
                                                 </tr>
                                             </thead>
-
-                                            <!------------------------------------------------------------------------->
-                                            <!-- Exemplo de linha de compra. substituir por valores reais da pesquisa-->
                                             <tbody>
+                                                @forelse($scoreEntries as $score)
                                                 <tr>
-                                                    <td>123456</td>
-                                                    <td>Protesto</td>
-                                                    <td>Descrição do Protesto</td>
-                                                    <td>Ativo</td>
-                                                    <td>01/01/2023</td>
-                                                    <td>01/01/2020</td>
-                                                    <td>01/01/2021</td>
-                                                    <td>R$ 500,00</td>
+                                                    <td>{{ $score['numero'] }}</td>
+                                                    <td>{{ $score['tipo'] }}</td>
+                                                    <td>{{ $score['descricao'] }}</td>
+                                                    <td>{{ $score['status'] }}</td>
+                                                    <td>{{ $score['data_consulta'] }}</td>
+                                                    <td>{{ $score['data_inicio'] }}</td>
+                                                    <td>{{ $score['data_fim'] }}</td>
+                                                    <td>{{ $score['valor'] }}</td>
                                                 </tr>
+                                                @empty
                                                 <tr>
-                                                    <td>654321</td>
-                                                    <td>Processo Judicial</td>
-                                                    <td>Descrição do Processo</td>
-                                                    <td>Encerrado</td>
-                                                    <td>15/01/2023</td>
-                                                    <td>01/01/2019</td>
-                                                    <td>01/01/2020</td>
-                                                    <td>R$ 1.000,00</td>
+                                                    <td colspan="8" class="text-center text-muted">
+                                                        Nenhum registro de score encontrado para este cliente.
+                                                    </td>
                                                 </tr>
+                                                @endforelse
                                             </tbody>
-                                            <!-- Exemplo de linha de compra. substituir por valores reais da pesquisa-->
-                                            <!------------------------------------------------------------------------->
-
                                         </table>
-                                    </table>
-                                    AQUI PRECISAMOS FAZER COM QUE ESTES DADOS DIMINUAM A FONTE CONFORME O TAMANHO DA
-                                    TELA</br>
-                                    PARA CABER NA TELA INDEPENDENTE DO TAMANHO DO DISPOSITIVO
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        Ajuste o zoom do navegador se necessário para visualizar todas as colunas em
+                                        telas menores.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -831,7 +733,8 @@
                                                 <label for="cliente_socre" class="mr-2">SCORE do Cliente:</label>
                                                 <input type="text" id="cliente_socre"
                                                     class="form-control form-control-sm" readonly
-                                                    style="width: 150px; display: inline-block;">
+                                                    style="width: 150px; display: inline-block;"
+                                                    value="{{ $cliente->cliente_score ?? '' }}">
                                             </div>
 
                                             <div class="form-group d-inline-block ml-2">
