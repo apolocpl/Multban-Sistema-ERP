@@ -33,6 +33,7 @@ class ClienteRoute
         Route::delete('cliente/{emp_id}/destroy-card', [ClienteController::class, 'destroyCard']);
 
         Route::post('cliente/get-obter-grid-pesquisa-card', [ClienteController::class, 'getObterGridPesquisaCard']);
+        Route::get('cliente/card-password-token', [ClienteController::class, 'createCardPasswordToken']);
 
         Route::post('cliente/store-prontuario', [ClienteController::class, 'storeProntuario']);
         Route::post('cliente/update-prontuario/{id}', [ClienteController::class, 'updateProntuario']);

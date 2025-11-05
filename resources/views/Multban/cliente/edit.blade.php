@@ -1929,6 +1929,7 @@
 
                     <input type="hidden" name="card_uuid" id="reset_card_password_card_uuid">
                     <input type="hidden" name="emp_id" id="reset_card_password_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                    <input type="hidden" name="password_token" id="reset_card_password_token">
 
                     <div class="form-group">
                         <label for="reset_card_password">Nova senha (4 dígitos)</label>
@@ -2088,6 +2089,9 @@
         // Chama ao carregar
         toggleBtnImprimir();
 
+        let cardPasswordToken = null;
+        let cardPasswordCryptoKey = null;
+
         const $modalResetCardPassword = $('#modalResetCardPassword');
         const $resetCardPasswordForm = $('#formResetCardPassword');
         const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
@@ -2095,6 +2099,7 @@
         const $resetCardPasswordCardLabel = $('#resetCardPasswordCardLabel');
         const $resetCardPasswordInput = $('#reset_card_password');
         const $resetCardPasswordConfirmationInput = $('#reset_card_password_confirmation');
+        const $resetCardPasswordTokenInput = $('#reset_card_password_token');
 
         function clearResetCardPasswordValidation() {
             if (!$resetCardPasswordForm.length) {
@@ -2109,6 +2114,92 @@
             }
         }
 
+        function clearCardPasswordCryptoMaterials() {
+            cardPasswordToken = null;
+            cardPasswordCryptoKey = null;
+            if ($resetCardPasswordTokenInput.length) {
+                $resetCardPasswordTokenInput.val('');
+            }
+        }
+
+        function pemToArrayBuffer(pem) {
+            const cleaned = pem
+                .replace(/-----BEGIN PUBLIC KEY-----/g, '')
+                .replace(/-----END PUBLIC KEY-----/g, '')
+                .replace(/\s+/g, '');
+
+            const binary = window.atob(cleaned);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index += 1) {
+                bytes[index] = binary.charCodeAt(index);
+            }
+            return bytes.buffer;
+        }
+
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let index = 0; index < bytes.byteLength; index += 1) {
+                binary += String.fromCharCode(bytes[index]);
+            }
+            return window.btoa(binary);
+        }
+
+        async function fetchCardPasswordCryptoMaterials() {
+            if (!window.crypto || !window.crypto.subtle || typeof window.TextEncoder === 'undefined') {
+                throw new Error('Criptografia não suportada pelo navegador.');
+            }
+
+            if (cardPasswordCryptoKey && cardPasswordToken) {
+                return cardPasswordCryptoKey;
+            }
+
+            const response = await $.ajax({
+                url: '/cliente/card-password-token',
+                type: 'GET',
+                dataType: 'json'
+            });
+
+            if (!response || !response.token || !response.public_key) {
+                throw new Error('Resposta inválida ao requisitar chave pública.');
+            }
+
+            const keyBuffer = pemToArrayBuffer(response.public_key);
+            const cryptoKey = await window.crypto.subtle.importKey(
+                'spki',
+                keyBuffer,
+                {
+                    name: 'RSA-OAEP',
+                    hash: 'SHA-1'
+                },
+                false,
+                ['encrypt']
+            );
+
+            cardPasswordToken = response.token;
+            cardPasswordCryptoKey = cryptoKey;
+
+            if ($resetCardPasswordTokenInput.length) {
+                $resetCardPasswordTokenInput.val(cardPasswordToken);
+            }
+
+            return cardPasswordCryptoKey;
+        }
+
+        async function encryptCardPasswordValue(value) {
+            const encoder = new TextEncoder();
+            const cryptoKey = await fetchCardPasswordCryptoMaterials();
+            const encrypted = await window.crypto.subtle.encrypt(
+                {
+                    name: 'RSA-OAEP'
+                },
+                cryptoKey,
+                encoder.encode(value)
+            );
+
+            return arrayBufferToBase64(encrypted);
+        }
+
         function resetResetCardPasswordForm() {
             if (!$resetCardPasswordForm.length) {
                 return;
@@ -2116,6 +2207,7 @@
 
             $resetCardPasswordForm.trigger('reset');
             clearResetCardPasswordValidation();
+            clearCardPasswordCryptoMaterials();
         }
 
         if ($modalResetCardPassword.length && $resetCardPasswordForm.length) {
@@ -2136,7 +2228,20 @@
                     $resetCardPasswordCardLabel.text(cardLabel);
                 }
 
-                $modalResetCardPassword.modal('show');
+                fetchCardPasswordCryptoMaterials()
+                    .then(function () {
+                        $modalResetCardPassword.modal('show');
+                    })
+                    .catch(function (error) {
+                        clearCardPasswordCryptoMaterials();
+                        const message = 'Não foi possível preparar a criptografia da senha. Recarregue a página e tente novamente.';
+                        if (window.toastr) {
+                            toastr.error(message);
+                        } else {
+                            alert(message);
+                        }
+                        console.error(error);
+                    });
             });
 
             $modalResetCardPassword.on('hidden.bs.modal', function () {
@@ -2192,7 +2297,7 @@
                 return ascending || descending;
             }
 
-            $resetCardPasswordForm.on('submit', function (event) {
+            $resetCardPasswordForm.on('submit', async function (event) {
                 event.preventDefault();
                 clearResetCardPasswordValidation();
 
@@ -2229,6 +2334,24 @@
                     return;
                 }
 
+                let encryptedPassword;
+                let encryptedConfirmation;
+
+                try {
+                    encryptedPassword = await encryptCardPasswordValue(password);
+                    encryptedConfirmation = await encryptCardPasswordValue(confirmation);
+                } catch (cryptoError) {
+                    clearCardPasswordCryptoMaterials();
+                    const message = 'Falha ao criptografar a senha. Recarregue a página e tente novamente.';
+                    if ($resetCardPasswordAlert.length) {
+                        $resetCardPasswordAlert.removeClass('d-none').text(message);
+                    } else if (window.toastr) {
+                        toastr.error(message);
+                    }
+                    console.error(cryptoError);
+                    return;
+                }
+
                 const requestUrl = '/cliente/' + encodeURIComponent($('#reset_card_password_card_uuid').val()) + '/reset-card-password';
                 const token = $('meta[name="csrf-token"]').attr('content');
                 const originalButtonText = $resetCardPasswordSubmit.data('original-text') || $resetCardPasswordSubmit.text();
@@ -2243,8 +2366,9 @@
                     type: 'POST',
                     data: {
                         emp_id: $('#reset_card_password_emp_id').val(),
-                        password: password,
-                        password_confirmation: confirmation,
+                        password_token: $('#reset_card_password_token').val(),
+                        password_cipher: encryptedPassword,
+                        password_confirmation_cipher: encryptedConfirmation,
                         _token: token
                     },
                     success: function (response) {
@@ -2282,6 +2406,7 @@
                     complete: function () {
                         const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Salvar';
                         $resetCardPasswordSubmit.prop('disabled', false).text(recoveryText);
+                        clearCardPasswordCryptoMaterials();
                     }
                 });
             });
