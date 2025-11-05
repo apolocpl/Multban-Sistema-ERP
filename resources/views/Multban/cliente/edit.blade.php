@@ -565,89 +565,193 @@
                                         </div>
                                     </div>
 
-                                    <!-- TABELA DE DADOS -->
-                                    <div class="table-responsive table-sm">
-                                        <table id="gridtemplate"
-                                            class="table table-striped table-bordered nowrap table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th style="width: 20px;">
-                                                        <input type="checkbox" id="selectAll" class="mr-2"
-                                                            title="Selecionar Todos" />
-                                                    </th>
-                                                    <th style="width: 230px;">Ações</th>
-                                                    <th>ID Emp.</th>
-                                                    <th>Título</th>
-                                                    <th>Cliente</th>
-                                                    <th>Parcela</th>
-                                                    <th>Vlr. Init.</th>
-                                                    <th>Vlr. Jrs.</th>
-                                                    <th>Vlr. Tot.</th>
-                                                    <th>Meio Pgto</th>
-                                                    <th>Data Venda</th>
-                                                    <th>Data Venc.</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($compras as $compra)
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" class="mr-2"
-                                                            value="{{ $compra['identificador'] }}">
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Imprimir Comprovante">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Manutenção de Título">
-                                                            <i class="fas fa-wrench"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Pagar">
-                                                            <i class="fas fa-usd-square"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Baixa Manual">
-                                                            <i class="fas fa-hands-usd"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cobrança">
-                                                            <i class="far fa-file-invoice-dollar"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>{{ $compra['emp_id'] }}</td>
-                                                    <td>{{ $compra['titulo'] }}</td>
-                                                    <td>{{ $compra['cliente'] }}</td>
-                                                    <td>{{ $compra['parcela'] }}</td>
-                                                    <td>{{ $compra['valor_inicial'] }}</td>
-                                                    <td>{{ $compra['valor_juros'] }}</td>
-                                                    <td>{{ $compra['valor_total'] }}</td>
-                                                    <td>{{ $compra['meio_pagamento'] ?? '-' }}</td>
-                                                    <td>{{ $compra['data_venda'] }}</td>
-                                                    <td>{{ $compra['data_vencimento'] }}</td>
-                                                    <td>
-                                                        <span
-                                                            class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
+                                    @php
+                                        $comprasCollection = collect($compras ?? []);
+                                    @endphp
+
+                                    @if ($comprasCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhuma compra encontrada para este cliente.
+                                        </p>
+                                    @endif
+
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive table-sm">
+                                            <table id="gridtemplate"
+                                                class="table table-striped table-bordered nowrap table-sm mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 20px;">
+                                                            <input type="checkbox" id="selectAll" class="mr-2"
+                                                                title="Selecionar Todos" />
+                                                        </th>
+                                                        <th style="width: 230px;">Ações</th>
+                                                        <th>ID Emp.</th>
+                                                        <th>Título</th>
+                                                        <th>Cliente</th>
+                                                        <th>Parcela</th>
+                                                        <th>Vlr. Init.</th>
+                                                        <th>Vlr. Jrs.</th>
+                                                        <th>Vlr. Tot.</th>
+                                                        <th>Meio Pgto</th>
+                                                        <th>Data Venda</th>
+                                                        <th>Data Venc.</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($comprasCollection as $compra)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" class="mr-2"
+                                                                value="{{ $compra['identificador'] }}">
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Imprimir Comprovante">
+                                                                <i class="fas fa-print"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Manutenção de Título">
+                                                                <i class="fas fa-wrench"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Pagar">
+                                                                <i class="fas fa-usd-square"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Cancelar">
+                                                                <i class="fas fa-ban"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Baixa Manual">
+                                                                <i class="fas fa-hands-usd"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Cobrança">
+                                                                <i class="far fa-file-invoice-dollar"></i>
+                                                            </button>
+                                                        </td>
+                                                        <td>{{ $compra['emp_id'] }}</td>
+                                                        <td>{{ $compra['titulo'] }}</td>
+                                                        <td>{{ $compra['cliente'] }}</td>
+                                                        <td>{{ $compra['parcela'] }}</td>
+                                                        <td>{{ $compra['valor_inicial'] }}</td>
+                                                        <td>{{ $compra['valor_juros'] }}</td>
+                                                        <td>{{ $compra['valor_total'] }}</td>
+                                                        <td>{{ $compra['meio_pagamento'] ?? '-' }}</td>
+                                                        <td>{{ $compra['data_venda'] }}</td>
+                                                        <td>{{ $compra['data_vencimento'] }}</td>
+                                                        <td>
+                                                            <span
+                                                                class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
+                                                                {{ data_get($compra, 'status.descricao', '-') }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach($comprasCollection as $index => $compra)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <div>
+                                                            <span class="badge badge-light text-uppercase small">Emp.</span>
+                                                            <span class="font-weight-semibold">{{ $compra['emp_id'] }}</span>
+                                                        </div>
+                                                        <span class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
                                                             {{ data_get($compra, 'status.descricao', '-') }}
                                                         </span>
-                                                    </td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted">
-                                                        Nenhuma compra encontrada para este cliente.
-                                                    </td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
+                                                    </div>
+
+                                                    <div class="form-group mb-3">
+                                                        <div class="custom-control custom-checkbox">
+                                                            @php
+                                                                $checkboxId = 'compra-card-' . $index;
+                                                            @endphp
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                id="{{ $checkboxId }}" value="{{ $compra['identificador'] }}">
+                                                            <label class="custom-control-label" for="{{ $checkboxId }}">
+                                                                Selecionar para ações
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-12 mb-2">
+                                                            <p class="mb-1 small text-muted">Título</p>
+                                                            <p class="mb-0 font-weight-bold">{{ $compra['titulo'] }}</p>
+                                                        </div>
+                                                        <div class="col-12 mb-2">
+                                                            <p class="mb-1 small text-muted">Cliente</p>
+                                                            <p class="mb-0">{{ $compra['cliente'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Parcela</p>
+                                                            <p class="mb-0">{{ $compra['parcela'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Meio Pgto</p>
+                                                            <p class="mb-0">{{ $compra['meio_pagamento'] ?? '-' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor Inicial</p>
+                                                            <p class="mb-0">{{ $compra['valor_inicial'] }}</p>
+                                                        </div>
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Juros</p>
+                                                            <p class="mb-0">{{ $compra['valor_juros'] }}</p>
+                                                        </div>
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor Total</p>
+                                                            <p class="mb-0">{{ $compra['valor_total'] }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Data Venda</p>
+                                                            <p class="mb-0">{{ $compra['data_venda'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-3">
+                                                            <p class="mb-1 small text-muted">Data Venc.</p>
+                                                            <p class="mb-0">{{ $compra['data_vencimento'] }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex flex-wrap">
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Imprimir Comprovante">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Manutenção de Título">
+                                                            <i class="fas fa-wrench"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Pagar">
+                                                            <i class="fas fa-usd-square"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Cancelar">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Baixa Manual">
+                                                            <i class="fas fa-hands-usd"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mb-1" title="Cobrança">
+                                                            <i class="far fa-file-invoice-dollar"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>
@@ -672,43 +776,87 @@
                                         </div>
                                     </div>
 
-                                    <!-- TABELA -->
-                                    <div class="table-responsive">
-                                        <table id="gridtemplate-score"
-                                            class="table table-striped table-bordered nowrap">
-                                            <thead>
-                                                <tr>
-                                                    <th>Número do Processo/Protesto</th>
-                                                    <th>Tipo do Processo/Protesto</th>
-                                                    <th>Descrição do Processo/Protesto</th>
-                                                    <th>Status do Processo/Protesto</th>
-                                                    <th>Data da Pesquisa</th>
-                                                    <th>Data Início do Processo/Protesto</th>
-                                                    <th>Data Fim do Processo/Protesto</th>
-                                                    <th>Valor do Processo/Protesto</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($scoreEntries as $score)
-                                                <tr>
-                                                    <td>{{ $score['numero'] }}</td>
-                                                    <td>{{ $score['tipo'] }}</td>
-                                                    <td>{{ $score['descricao'] }}</td>
-                                                    <td>{{ $score['status'] }}</td>
-                                                    <td>{{ $score['data_consulta'] }}</td>
-                                                    <td>{{ $score['data_inicio'] }}</td>
-                                                    <td>{{ $score['data_fim'] }}</td>
-                                                    <td>{{ $score['valor'] }}</td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="8" class="text-center text-muted">
-                                                        Nenhum registro de score encontrado para este cliente.
-                                                    </td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
+                                    @php
+                                        $scoreCollection = collect($scoreEntries ?? []);
+                                    @endphp
+
+                                    @if ($scoreCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhum registro de score encontrado para este cliente.
+                                        </p>
+                                    @endif
+
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive">
+                                            <table id="gridtemplate-score"
+                                                class="table table-striped table-bordered nowrap mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Número do Processo/Protesto</th>
+                                                        <th>Tipo do Processo/Protesto</th>
+                                                        <th>Descrição do Processo/Protesto</th>
+                                                        <th>Status do Processo/Protesto</th>
+                                                        <th>Data da Pesquisa</th>
+                                                        <th>Data Início do Processo/Protesto</th>
+                                                        <th>Data Fim do Processo/Protesto</th>
+                                                        <th>Valor do Processo/Protesto</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($scoreCollection as $score)
+                                                    <tr>
+                                                        <td>{{ $score['numero'] }}</td>
+                                                        <td>{{ $score['tipo'] }}</td>
+                                                        <td>{{ $score['descricao'] }}</td>
+                                                        <td>{{ $score['status'] }}</td>
+                                                        <td>{{ $score['data_consulta'] }}</td>
+                                                        <td>{{ $score['data_inicio'] }}</td>
+                                                        <td>{{ $score['data_fim'] }}</td>
+                                                        <td>{{ $score['valor'] }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach($scoreCollection as $score)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="font-weight-bold">{{ $score['numero'] }}</span>
+                                                        <span class="badge badge-secondary">{{ $score['status'] }}</span>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Tipo</p>
+                                                    <p class="mb-2">{{ $score['tipo'] }}</p>
+                                                    <p class="mb-1 small text-muted">Descrição</p>
+                                                    <p class="mb-2">{{ $score['descricao'] }}</p>
+                                                    <div class="row">
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Data da Pesquisa</p>
+                                                            <p class="mb-0">{{ $score['data_consulta'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor</p>
+                                                            <p class="mb-0">{{ $score['valor'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Início</p>
+                                                            <p class="mb-0">{{ $score['data_inicio'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Fim</p>
+                                                            <p class="mb-0">{{ $score['data_fim'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                     <p class="text-muted small mb-0">
                                         Ajuste o zoom do navegador se necessário para visualizar todas as colunas em
@@ -751,55 +899,105 @@
                                         </div>
                                     </div>
 
-                                    <!-- TABELA -->
-                                    <table id="gridtemplate-cards" class="table table-striped table-bordered nowrap">
-                                        <thead>
-                                            <tr>
-                                                <th>Ações</th>
-                                                <th>Empresa</th>
-                                                <th>Número do Cartão</th>
-                                                <th>CV</th>
-                                                <th>Status</th>
-                                                <th>Tipo do Cartão</th>
-                                                <th>Modalidade do Cartão</th>
-                                                <th>Categoria</th>
-                                                <th>Descrição do Cartão</th>
-                                                <th>Saldo do Cartão</th>
-                                                <th>Limite do Cartão</th>
-                                                <th>Saldo de Pontos</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse($cartoes as $cartao)
-                                            <tr>
-                                                <td>{!! $cartao['actions'] !== '' ? $cartao['actions'] : '<span class="text-muted">-</span>' !!}</td>
-                                                <td>{{ $cartao['empresa'] }}</td>
-                                                <td>{{ $cartao['numero'] }}</td>
-                                                <td>{{ $cartao['cv'] }}</td>
-                                                <td>{!! $cartao['status_badge'] !!}</td>
-                                                <td>{{ $cartao['tipo_label'] }}</td>
-                                                <td>{{ $cartao['modalidade'] }}</td>
-                                                <td>{!! $cartao['categoria_badge'] !!}</td>
-                                                <td>{{ $cartao['descricao'] }}</td>
-                                                <td>{{ $cartao['saldo_valor'] }}</td>
-                                                <td>{{ $cartao['limite_valor'] }}</td>
-                                                <td>{{ $cartao['saldo_pontos'] }}</td>
-                                            </tr>
-                                            @empty
-                                            <tr>
-                                                <td colspan="12" class="text-center text-muted">
-                                                    Nenhum cartão encontrado para este cliente.
-                                                </td>
-                                            </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
+                                    @php
+                                        $cartaoCollection = collect($cartoes ?? []);
+                                    @endphp
 
+                                    @if ($cartaoCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhum cartão encontrado para este cliente.
+                                        </p>
+                                    @endif
 
-                                    AQUI PRECISAMOS FAZER COM QUE ESTES DADOS DIMINUAM A FONTE CONFORME O TAMANHO DA
-                                    TELA</br>
-                                    PARA CABER NA TELA INDEPENDENTE DO TAMANHO DO DISPOSITIVO
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive">
+                                            <table id="gridtemplate-cards" class="table table-striped table-bordered nowrap mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Ações</th>
+                                                        <th>Empresa</th>
+                                                        <th>Número do Cartão</th>
+                                                        <th>CV</th>
+                                                        <th>Status</th>
+                                                        <th>Tipo do Cartão</th>
+                                                        <th>Modalidade do Cartão</th>
+                                                        <th>Categoria</th>
+                                                        <th>Descrição do Cartão</th>
+                                                        <th>Saldo do Cartão</th>
+                                                        <th>Limite do Cartão</th>
+                                                        <th>Saldo de Pontos</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($cartaoCollection as $cartao)
+                                                        <tr>
+                                                            <td>{!! $cartao['actions'] !== '' ? $cartao['actions'] : '<span class="text-muted">-</span>' !!}</td>
+                                                            <td>{{ $cartao['empresa'] }}</td>
+                                                            <td>{{ $cartao['numero'] }}</td>
+                                                            <td>{{ $cartao['cv'] }}</td>
+                                                            <td>{!! $cartao['status_badge'] !!}</td>
+                                                            <td>{{ $cartao['tipo_label'] }}</td>
+                                                            <td>{{ $cartao['modalidade'] }}</td>
+                                                            <td>{!! $cartao['categoria_badge'] !!}</td>
+                                                            <td>{{ $cartao['descricao'] ?: '-' }}</td>
+                                                            <td>{{ $cartao['saldo_valor'] }}</td>
+                                                            <td>{{ $cartao['limite_valor'] }}</td>
+                                                            <td>{{ $cartao['saldo_pontos'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
 
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach ($cartaoCollection as $cartao)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="font-weight-bold">{{ $cartao['empresa'] }}</span>
+                                                        <span>{!! $cartao['status_badge'] !!}</span>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Número</p>
+                                                    <p class="mb-2 font-weight-bold">{{ $cartao['numero'] }}</p>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Tipo</p>
+                                                            <p class="mb-2">{{ $cartao['tipo_label'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Modalidade</p>
+                                                            <p class="mb-2">{{ $cartao['modalidade'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Limite</p>
+                                                            <p class="mb-2">{{ $cartao['limite_valor'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Saldo</p>
+                                                            <p class="mb-2">{{ $cartao['saldo_valor'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Saldo de Pontos</p>
+                                                    <p class="mb-2">{{ $cartao['saldo_pontos'] }}</p>
+                                                    @if (!empty($cartao['categoria_badge']))
+                                                        <div class="mb-2">{!! $cartao['categoria_badge'] !!}</div>
+                                                    @endif
+                                                    <p class="mb-1 small text-muted">Descrição</p>
+                                                    <p class="mb-3">{{ $cartao['descricao'] ?: '-' }}</p>
+                                                    @if (!empty($cartao['actions']))
+                                                        <div class="d-flex flex-wrap">
+                                                            {!! $cartao['actions'] !!}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>

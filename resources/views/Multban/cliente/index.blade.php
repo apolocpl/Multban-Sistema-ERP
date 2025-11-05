@@ -113,39 +113,71 @@
         <!-- CORPO DO QUADRO DO GRID DE CLIENTES -->
         <div class="card-body">
 
-            <div class="table-responsive">
-                <table id="gridtemplate" class="table table-striped table-bordered nowrap">
-                    <thead>
-                        <tr>
-                            <th>Ações</th>
-                            <th>Código</th>
-                            <th>Nome</th>
-                            <th>CNPJ/CPF</th>
-                            <th>Cliente Tipo</th>
-                            <th>E-mail</th>
-                            <th>Telefone</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($clientesRecentes as $clienteRow)
-                        <tr>
-                            <td>{!! $clienteRow['action'] !!}</td>
-                            <td>{{ $clienteRow['cliente_id'] }}</td>
-                            <td>{{ $clienteRow['cliente_nome'] }}</td>
-                            <td>{{ $clienteRow['cliente_doc'] }}</td>
-                            <td>{!! $clienteRow['cliente_tipo_badge'] !!}</td>
-                            <td>{{ $clienteRow['cliente_email'] }}</td>
-                            <td>{{ $clienteRow['cliente_cel'] }}</td>
-                            <td>{!! $clienteRow['cliente_status_badge'] !!}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center text-muted">Nenhum cliente encontrado.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            @php
+                $clientesCollection = collect($clientesRecentes ?? []);
+            @endphp
+
+            @if ($clientesCollection->isEmpty())
+                <p class="text-center text-muted mb-3">Nenhum cliente encontrado.</p>
+            @endif
+
+            <div class="d-none d-lg-block">
+                <div class="table-responsive">
+                    <table id="gridtemplate" class="table table-striped table-bordered nowrap mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ações</th>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>CNPJ/CPF</th>
+                                <th>Cliente Tipo</th>
+                                <th>E-mail</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($clientesCollection as $clienteRow)
+                            <tr>
+                                <td>{!! $clienteRow['action'] !!}</td>
+                                <td>{{ $clienteRow['cliente_id'] }}</td>
+                                <td>{{ $clienteRow['cliente_nome'] }}</td>
+                                <td>{{ $clienteRow['cliente_doc'] }}</td>
+                                <td>{!! $clienteRow['cliente_tipo_badge'] !!}</td>
+                                <td>{{ $clienteRow['cliente_email'] }}</td>
+                                <td>{{ $clienteRow['cliente_cel'] }}</td>
+                                <td>{!! $clienteRow['cliente_status_badge'] !!}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-lg-none">
+                @foreach($clientesCollection as $clienteRow)
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="font-weight-bold">#{{ $clienteRow['cliente_id'] }}</span>
+                                <span>{!! $clienteRow['cliente_status_badge'] !!}</span>
+                            </div>
+                            <p class="mb-1 small text-muted">Nome</p>
+                            <p class="mb-2 font-weight-bold">{{ $clienteRow['cliente_nome'] }}</p>
+                            <p class="mb-1 small text-muted">Documento</p>
+                            <p class="mb-2">{{ $clienteRow['cliente_doc'] }}</p>
+                            <p class="mb-1 small text-muted">Tipo</p>
+                            <div class="mb-2">{!! $clienteRow['cliente_tipo_badge'] !!}</div>
+                            <p class="mb-1 small text-muted">E-mail</p>
+                            <p class="mb-2">{{ $clienteRow['cliente_email'] }}</p>
+                            <p class="mb-1 small text-muted">Telefone</p>
+                            <p class="mb-3">{{ $clienteRow['cliente_cel'] }}</p>
+                            <div class="d-flex flex-wrap">
+                                {!! $clienteRow['action'] !!}
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>
