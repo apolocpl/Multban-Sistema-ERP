@@ -375,7 +375,12 @@ class ClienteController extends Controller
                 'descricao'       => mb_strtoupper(rtrim($card->card_desc ?? ''), 'UTF-8'),
                 'saldo_valor'     => formatarDecimalParaTexto($card->card_saldo_vlr ?? 0),
                 'limite_valor'    => formatarDecimalParaTexto($card->card_limite ?? 0),
-                'saldo_pontos'    => formatarDecimalParaTexto($card->card_saldo_pts ?? 0),
+                'saldo_pontos'    => formatarDecimalParaTexto(
+                    ($card->card_pts_part ?? 0)
+                    + ($card->card_pts_fraq ?? 0)
+                    + ($card->card_pts_mult ?? 0)
+                    + ($card->card_pts_cash ?? 0)
+                ),
             ];
         })->values();
     }
@@ -1093,7 +1098,7 @@ class ClienteController extends Controller
                 })
                 ->toArray();
 
-            // Soma dos pontos do cliente (card_saldo_pts)
+            // Soma dos pontos do cliente com base nos campos de pontuação
             $cliente->cliente_pts = ClienteCard::where('cliente_id', $cliente->cliente_id)
                 ->where('emp_id', $emp_id)
                 ->where('cliente_doc', $cliente->cliente_doc)
@@ -1112,20 +1117,6 @@ class ClienteController extends Controller
             'clientes' => $clientes->toArray(),
         ];
     }
-
-    // public function getClient(Request $request)
-    // {
-    //     $parametro = $request != null ? $request->all()['parametro'] : '';
-
-    //     if (empty($parametro)) {
-    //         return [];
-    //     }
-
-    //     return Cliente::select(DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) text'))
-    //         ->whereRaw(DB::raw("cliente_nome LIKE '%" . $parametro . "%' OR cliente_id = '%" . $parametro . "%'"))
-    //         ->get()
-    //         ->toArray();
-    // }
 
     public function storeProntuario(Request $request)
     {
@@ -1630,7 +1621,10 @@ class ClienteController extends Controller
                 'card_desc'        => mb_strtoupper(rtrim($request->card_desc), 'UTF-8'),
                 'card_saldo_vlr'   => formatarTextoParaDecimal($request->card_limite),
                 'card_limite'      => formatarTextoParaDecimal($request->card_limite),
-                'card_saldo_pts'   => 0,
+                'card_pts_part'    => 0,
+                'card_pts_fraq'    => 0,
+                'card_pts_mult'    => 0,
+                'card_pts_cash'    => 0,
                 'card_pass'        => $request->card_pass ?? null,
                 'criador'          => Auth::user()->user_id,
                 'dthr_cr'          => Carbon::now(),
@@ -1934,7 +1928,12 @@ class ClienteController extends Controller
             })->editColumn('card_saldo_vlr', function ($row) {
                 return formatarDecimalParaTexto($row->card_saldo_vlr);
             })->editColumn('card_saldo_pts', function ($row) {
-                return formatarDecimalParaTexto($row->card_saldo_pts);
+                $total = ($row->card_pts_part ?? 0)
+                    + ($row->card_pts_fraq ?? 0)
+                    + ($row->card_pts_mult ?? 0)
+                    + ($row->card_pts_cash ?? 0);
+
+                return formatarDecimalParaTexto($total);
             })->editColumn('card_desc', function ($row) {
                 return mb_strtoupper(rtrim($row->card_desc), 'UTF-8');
             })->editColumn('card_categ', function ($row) {
