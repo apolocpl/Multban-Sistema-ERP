@@ -395,14 +395,16 @@ class ClienteController extends Controller
     {
         $buttons = [];
 
+        $isDeleted = $card->card_sts === 'EX';
+
         if ($canResetPassword) {
             $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
-            $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" title="Resetar Senha"><i class="fas fa-key"></i></button>';
+            $resetDisabled = $isDeleted ? 'disabled' : '';
+            $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" title="Resetar Senha" ' . $resetDisabled . '><i class="fas fa-key"></i></button>';
         }
 
         $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
         $isActive = $card->card_sts === 'AT';
-        $isDeleted = $card->card_sts === 'EX';
         $activateDisabled = $isActive ? 'disabled' : '';
         if ($isDeleted) {
             $activateDisabled = 'disabled';
@@ -2459,11 +2461,12 @@ class ClienteController extends Controller
                 if (in_array('cliente.edit', $this->permissions)) {
 
                     $maskedCardNumber = formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
+                    $resetDisabled = ($row->card_sts === 'EX') ? 'disabled' : '';
                     $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
                     $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
                     $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
-                    $btn .= 'title="Resetar Senha"><i class="fas fa-key"></i></button>';
+                    $btn .= $resetDisabled . ' title="Resetar Senha"><i class="fas fa-key"></i></button>';
                 }
 
                 $editDisabled = ($row->card_sts === 'EX') ? 'disabled' : '';

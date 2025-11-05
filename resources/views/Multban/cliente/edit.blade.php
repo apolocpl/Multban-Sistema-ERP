@@ -2472,6 +2472,10 @@
 
         if ($modalResetCardPassword.length && $resetCardPasswordForm.length) {
             $(document).on('click', '.btn-reset-card-password', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
                 event.preventDefault();
                 resetResetCardPasswordForm();
 
