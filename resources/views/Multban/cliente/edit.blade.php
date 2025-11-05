@@ -1,5 +1,8 @@
 @extends('layouts.app-master')
 @section('page.title', 'Cliente')
+@if (!empty($cliente->cliente_nome))
+    @section('page.breadcrumb', $cliente->cliente_nome)
+@endif
 @push('script-head')
 
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/css/select2.min.css') }}">
