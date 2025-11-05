@@ -1969,6 +1969,40 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalDeleteCard" tabindex="-1" role="dialog" aria-labelledby="modalDeleteCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDeleteCardLabel">Excluir Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formDeleteCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="deleteCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma a exclusão do cartão
+                        <strong id="deleteCardLabel">-</strong>?
+                    </p>
+
+                    <p class="small text-muted mb-3">
+                        O registro permanecerá armazenado para auditoria, porém será marcado como excluído.
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="delete_card_uuid">
+                    <input type="hidden" name="emp_id" id="delete_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="deleteCardSubmit">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalResetCardPassword" tabindex="-1" role="dialog" aria-labelledby="modalResetCardPasswordLabel" aria-hidden="true">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -2168,6 +2202,14 @@
         const $blockCardUuid = $('#block_card_uuid');
         const $blockCardEmpId = $('#block_card_emp_id');
 
+        const $modalDeleteCard = $('#modalDeleteCard');
+        const $deleteCardForm = $('#formDeleteCard');
+        const $deleteCardAlert = $('#deleteCardAlert');
+        const $deleteCardSubmit = $('#deleteCardSubmit');
+        const $deleteCardLabel = $('#deleteCardLabel');
+        const $deleteCardUuid = $('#delete_card_uuid');
+        const $deleteCardEmpId = $('#delete_card_emp_id');
+
         const $modalResetCardPassword = $('#modalResetCardPassword');
         const $resetCardPasswordForm = $('#formResetCardPassword');
         const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
@@ -2209,6 +2251,17 @@
             $blockCardForm.find('.is-invalid').removeClass('is-invalid');
             if ($blockCardAlert.length) {
                 $blockCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearDeleteCardValidation() {
+            if (!$deleteCardForm.length) {
+                return;
+            }
+
+            $deleteCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($deleteCardAlert.length) {
+                $deleteCardAlert.addClass('d-none').text('');
             }
         }
 
@@ -2314,6 +2367,15 @@
 
             $blockCardForm.trigger('reset');
             clearBlockCardValidation();
+        }
+
+        function resetDeleteCardForm() {
+            if (!$deleteCardForm.length) {
+                return;
+            }
+
+            $deleteCardForm.trigger('reset');
+            clearDeleteCardValidation();
         }
 
         function resetResetCardPasswordForm() {
@@ -2729,6 +2791,109 @@
                     complete: function () {
                         const recoveryText = $blockCardSubmit.data('original-text') || 'Bloquear';
                         $blockCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
+        if ($modalDeleteCard.length && $deleteCardForm.length) {
+            $(document).on('click', '.btn-delete-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetDeleteCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $deleteCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $deleteCardEmpId.val(empIdData);
+                }
+
+                if ($deleteCardLabel.length) {
+                    $deleteCardLabel.text(cardLabel);
+                }
+
+                $modalDeleteCard.modal('show');
+            });
+
+            $modalDeleteCard.on('hidden.bs.modal', function () {
+                resetDeleteCardForm();
+            });
+
+            $deleteCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearDeleteCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($deleteCardUuid.val()) + '/delete-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $deleteCardSubmit.data('original-text') || $deleteCardSubmit.text();
+
+                $deleteCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Excluindo...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $deleteCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalDeleteCard.modal('hide');
+                        resetDeleteCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível excluir o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($deleteCardAlert.length) {
+                            $deleteCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $deleteCardSubmit.data('original-text') || 'Excluir';
+                        $deleteCardSubmit.prop('disabled', false).text(recoveryText);
                     }
                 });
             });

@@ -31,6 +31,7 @@ class ClienteRoute
         Route::get('cliente/{emp_id}/edit-card', [ClienteController::class, 'editCard']);
         Route::post('cliente/{card_uuid}/activate-card', [ClienteController::class, 'activateCard']);
         Route::post('cliente/{card_uuid}/block-card', [ClienteController::class, 'blockCard']);
+        Route::post('cliente/{card_uuid}/delete-card', [ClienteController::class, 'deleteCard']);
         Route::patch('cliente/update-card', [ClienteController::class, 'updateCard']);
         Route::delete('cliente/{emp_id}/destroy-card', [ClienteController::class, 'destroyCard']);
 
