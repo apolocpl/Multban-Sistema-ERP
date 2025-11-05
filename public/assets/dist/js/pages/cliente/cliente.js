@@ -779,29 +779,33 @@ $(function () {
                     contentType: false,
                     processData: false,
                     success: function (data) {
-                        $.removeLoading();
-                        $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
-                        $(btnSubmit).habilitar();
-                        $(btnSubmit).attr('data-emp-id', '');
-                        $("#" + btnPesquisar).trigger('click');
-                        if (modal) {
+                        if (data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            $.removeLoading();
+                            $(btnSubmit).html('<i class="icon fas fa-save"></i> Salvar');
+                            $(btnSubmit).habilitar();
+                            $(btnSubmit).attr('data-emp-id', '');
+                            $("#" + btnPesquisar).trigger('click');
+                            if (modal) {
 
-                            $("#" + modal).modal('hide');
+                                $("#" + modal).modal('hide');
+                            }
+
+                            myDropzone.removeAllFiles(true);
+                            myDropzoneDocs.removeAllFiles(true);
+
+                            Swal.fire({
+                                title: data.title,
+                                text: data.text,
+                                icon: data.type,
+                                showCancelButton: false,
+                                allowOutsideClick: false,
+                            }).then(function (result) {
+                                $.limparBloqueioSairDaTela();
+                                location.reload();
+                            });
                         }
-
-                        myDropzone.removeAllFiles(true);
-                        myDropzoneDocs.removeAllFiles(true);
-
-                        Swal.fire({
-                            title: data.title,
-                            text: data.text,
-                            icon: data.type,
-                            showCancelButton: false,
-                            allowOutsideClick: false,
-                        }).then(function (result) {
-                            $.limparBloqueioSairDaTela();
-                            location.reload();
-                        });
                     },
                     error: function (xhr, status, error) {
                         $.removeLoading();

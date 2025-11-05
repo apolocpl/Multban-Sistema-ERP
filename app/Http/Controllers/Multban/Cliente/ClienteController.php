@@ -293,6 +293,7 @@ class ClienteController extends Controller
 
             return response()->json([
                 'message'   => 'Cliente ' . str_pad($cliente->cliente_id, 5, '0', STR_PAD_LEFT) . ' adicionado com sucesso.',
+                'redirect'  => route('cliente.edit', ['id' => $cliente->cliente_id]),
             ]);
         } catch (Exception|\Throwable $e) {
             DB::rollBack();
