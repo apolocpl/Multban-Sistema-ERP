@@ -12,12 +12,14 @@ use App\Models\Multban\Cliente\CardTipo;
 use App\Models\Multban\Cliente\Cliente;
 use App\Models\Multban\Cliente\ClienteCard;
 use App\Models\Multban\Cliente\ClienteProntuario;
+use App\Models\Multban\Cliente\ClienteScore;
 use App\Models\Multban\Cliente\ClienteStatus;
 use App\Models\Multban\Cliente\ClienteTipo;
 use App\Models\Multban\DadosMestre\TbDmConvenios;
 use App\Models\Multban\Empresa\Empresa;
 use App\Models\Multban\Endereco\Cidade;
 use App\Models\Multban\Endereco\Estados;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -25,6 +27,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -35,7 +39,7 @@ use App\Support\Tenancy\TenantManager;
 
 class ClienteController extends Controller
 {
-    private $permissions;
+    private ?array $permissions = null;
 
     public function __construct(private readonly TenantManager $tenantManager) {}
 
@@ -93,6 +97,554 @@ class ClienteController extends Controller
     }
 
     /**
+     * Resolve and cache the authenticated user's permissions.
+     */
+    private function resolvePermissions(): array
+    {
+        if ($this->permissions !== null) {
+            return $this->permissions;
+        }
+
+        $user = Auth::user();
+
+        if (! $user) {
+            return $this->permissions = [];
+        }
+
+        if (method_exists($user, 'getAllPermissions')) {
+            return $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
+        }
+
+        $rolePerms = collect();
+        foreach ($user->roles as $role) {
+            if (method_exists($role, 'permissions') || isset($role->permissions)) {
+                $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
+            }
+        }
+
+        $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
+
+        return $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+    }
+
+    /**
+     * Build the action buttons for cliente listings.
+     */
+    private function buildClienteActions(Cliente $cliente, array $permissions): string
+    {
+        $buttons = [];
+
+        if (in_array('cliente.edit', $permissions, true)) {
+            $buttons[] = '<a href="cliente/' . $cliente->cliente_id . '/alterar" class="btn btn-primary btn-sm mr-1" title="Editar"><i class="fas fa-edit"></i></a>';
+        }
+
+        $statusCode = optional($cliente->status)->cliente_sts;
+
+        $disabled = '';
+        if ($statusCode === EmpresaStatusEnum::ATIVO) {
+            $disabled = 'disabled';
+        }
+
+        $buttons[] = '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="active_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Ativar"><i class="far fa-check-circle"></i></button>';
+
+        $disabled = '';
+        if ($statusCode === EmpresaStatusEnum::INATIVO) {
+            $disabled = 'disabled';
+        }
+
+        $buttons[] = '<button href="#" class="btn btn-primary btn-sm mr-1" ' . $disabled . ' id="inactive_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Inativar"><i class="fas fa-ban"></i></button>';
+
+        if (in_array('cliente.destroy', $permissions, true)) {
+            $disabled = '';
+            if ($statusCode === EmpresaStatusEnum::EXCLUIDO) {
+                $disabled = 'disabled';
+            }
+
+            $buttons[] = '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+        }
+
+        return implode('', $buttons);
+    }
+
+    /**
+     * Format cliente status badge.
+     */
+    private function buildClienteStatusBadge(Cliente $cliente): string
+    {
+        $status = $cliente->status;
+
+        if (! $status) {
+            return '<span class="badge badge-secondary">Sem status</span>';
+        }
+
+        switch ($status->cliente_sts) {
+            case EmpresaStatusEnum::ATIVO:
+                $class = 'success';
+                break;
+            case EmpresaStatusEnum::EMANALISE:
+                $class = 'warning';
+                break;
+            case EmpresaStatusEnum::INATIVO:
+            case EmpresaStatusEnum::EXCLUIDO:
+            case EmpresaStatusEnum::BLOQUEADO:
+                $class = 'danger';
+                break;
+            default:
+                $class = 'secondary';
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($status->cliente_sts_desc ?? $status->cliente_sts) . '</span>';
+    }
+
+    /**
+     * Format cliente tipo badge.
+     */
+    private function buildClienteTipoBadge(Cliente $cliente): string
+    {
+        $tipo = $cliente->tipo;
+
+        if (! $tipo) {
+            return '<span class="badge badge-secondary">Sem tipo</span>';
+        }
+
+        switch ($tipo->cliente_tipo) {
+            case 1:
+                $class = 'info';
+                break;
+            case 2:
+            case 3:
+            case 4:
+                $class = 'success';
+                break;
+            default:
+                $class = 'secondary';
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($tipo->cliente_tipo_desc ?? (string) $tipo->cliente_tipo) . '</span>';
+    }
+
+    /**
+     * Format CPF/CNPJ.
+     */
+    private function formatClienteDocumento(?string $documento): string
+    {
+        if (empty($documento)) {
+            return '-';
+        }
+
+        $limpo = preg_replace('/\D/', '', $documento);
+        if (strlen($limpo) > 11) {
+            return formatarCNPJ($limpo);
+        }
+
+        return formatarCPF($limpo);
+    }
+
+    private function formatCurrency($valor): string
+    {
+        if ($valor === null || $valor === '') {
+            return '-';
+        }
+
+        return formatarDecimalParaTexto((float) $valor);
+    }
+
+    private function formatDate(?string $value, string $format = 'd/m/Y'): string
+    {
+        if (empty($value)) {
+            return '-';
+        }
+
+        try {
+            return Carbon::parse($value)->format($format);
+        } catch (\Throwable $throwable) {
+            return (string) $value;
+        }
+    }
+
+    private function mapParcelaStatusBadge(?string $codigo): string
+    {
+        switch ($codigo) {
+            case 'BXD':
+            case 'BXI':
+                return 'success';
+            case 'REG':
+                return 'warning';
+            case 'IND':
+                return 'danger';
+            default:
+                return 'secondary';
+        }
+    }
+
+    /**
+     * Load compras realizadas for the cliente/empresa context.
+     */
+    private function loadComprasForCliente(Cliente $cliente, int $empresaId)
+    {
+        $rows = DB::connection('dbsysclient')
+            ->table('tbtr_p_titulos_cp as parcelas')
+            ->leftJoin('tbdm_parcela_sts as status', function ($join) {
+                $join->on('parcelas.parcela_sts', '=', 'status.parcela_sts')
+                    ->where('status.langu', '=', 'PORT');
+            })
+            ->select([
+                'parcelas.emp_id as emp_id',
+                'parcelas.titulo as titulo',
+                'parcelas.parcela as parcela',
+                'parcelas.vlr_bpar_split as valor_inicial',
+                'parcelas.vlr_jurosp as valor_juros',
+                'parcelas.vlr_bpar_cj as valor_total',
+                'parcelas.meio_pag_v as meio_pagamento',
+                'parcelas.data_mov as data_venda',
+                'parcelas.data_venc as data_vencimento',
+                'parcelas.parcela_sts as status_codigo',
+                'parcelas.nid_parcela as identificador',
+                'status.parcela_sts_desc as status_descricao',
+            ])
+            ->where('parcelas.emp_id', $empresaId)
+            ->where('parcelas.cliente_id', $cliente->cliente_id)
+            ->orderByDesc('parcelas.data_mov')
+            ->orderByDesc('parcelas.parcela')
+            ->get();
+
+        return $rows->map(function ($row) use ($cliente) {
+            $statusClass = $this->mapParcelaStatusBadge($row->status_codigo);
+            $statusDesc = $row->status_descricao ?? $row->status_codigo;
+
+            return [
+                'identificador'    => $row->identificador,
+                'emp_id'           => $row->emp_id,
+                'titulo'           => $row->titulo,
+                'cliente'          => $cliente->cliente_nome,
+                'parcela'          => $row->parcela,
+                'valor_inicial'    => $this->formatCurrency($row->valor_inicial),
+                'valor_juros'      => $this->formatCurrency($row->valor_juros),
+                'valor_total'      => $this->formatCurrency($row->valor_total),
+                'meio_pagamento'   => $row->meio_pagamento,
+                'data_venda'       => $this->formatDate($row->data_venda),
+                'data_vencimento'  => $this->formatDate($row->data_vencimento),
+                'status'           => [
+                    'descricao' => $statusDesc,
+                    'classe'    => $statusClass,
+                ],
+            ];
+        });
+    }
+
+    /**
+     * Load cartões vinculados ao cliente no contexto da empresa.
+     */
+    private function loadCartoesForCliente(Cliente $cliente, int $empresaId, bool $canManageRelatedData)
+    {
+        if (! $canManageRelatedData) {
+            return collect();
+        }
+
+        $cards = ClienteCard::where('emp_id', $empresaId)
+            ->where('cliente_id', $cliente->cliente_id)
+            ->get();
+
+        if ($cards->isEmpty()) {
+            return collect();
+        }
+
+        $empresaNome = Empresa::select('emp_nmult')->find($empresaId)?->emp_nmult ?? 'Empresa não encontrada';
+        $permissions = $this->resolvePermissions();
+        $canResetPassword = in_array('cliente.edit', $permissions, true);
+
+        $statusLookup = CardStatus::all()->keyBy('card_sts');
+        $categoriaLookup = CardCateg::all()->keyBy('card_categ');
+
+        return $cards->map(function (ClienteCard $card) use ($empresaNome, $statusLookup, $categoriaLookup, $canManageRelatedData, $canResetPassword) {
+            $statusModel = $statusLookup->get($card->card_sts);
+            $statusDesc = $statusModel?->card_sts_desc ?? ($card->card_sts ?? 'Sem status');
+            $statusBadge = $this->formatCardStatusBadge($card->card_sts, $statusDesc);
+
+            $categoriaBadge = '';
+            if ($categoriaLookup->has($card->card_categ)) {
+                $categoriaBadge = '<span class="badge badge-info">' . e($categoriaLookup->get($card->card_categ)->card_categ_desc) . '</span>';
+            }
+
+            return [
+                'actions'         => $canManageRelatedData ? $this->buildCartaoActions($card, $canResetPassword) : '',
+                'empresa'         => $empresaNome,
+                'numero'          => formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4)),
+                'cv'              => $card->cliente_cardcv,
+                'status_badge'    => $statusBadge,
+                'tipo_label'      => $card->card_tp === 'PRE' ? 'Pré-pago' : 'Pós-pago',
+                'modalidade'      => $this->translateCardModalidade($card->card_mod),
+                'categoria_badge' => $categoriaBadge,
+                'descricao'       => mb_strtoupper(rtrim($card->card_desc ?? ''), 'UTF-8'),
+                'saldo_valor'     => formatarDecimalParaTexto($card->card_saldo_vlr ?? 0),
+                'limite_valor'    => formatarDecimalParaTexto($card->card_limite ?? 0),
+                'saldo_pontos'    => formatarDecimalParaTexto(
+                    ($card->card_pts_part ?? 0)
+                    + ($card->card_pts_fraq ?? 0)
+                    + ($card->card_pts_mult ?? 0)
+                    + ($card->card_pts_cash ?? 0)
+                ),
+            ];
+        })->values();
+    }
+
+    /**
+     * Build action buttons for cartão rows.
+     */
+    private function buildCartaoActions(ClienteCard $card, bool $canResetPassword): string
+    {
+        $buttons = [];
+
+        $isDeleted = $card->card_sts === 'EX';
+
+        if ($canResetPassword) {
+            $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
+            $resetDisabled = $isDeleted ? 'disabled' : '';
+            $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" title="Resetar Senha" ' . $resetDisabled . '><i class="fas fa-key"></i></button>';
+        }
+
+        $maskedCardNumber = formatarCartaoCredito(Str::mask($card->cliente_cardn, '*', 0, -4));
+        $isActive = $card->card_sts === 'AT';
+        $activateDisabled = $isActive ? 'disabled' : '';
+        if ($isDeleted) {
+            $activateDisabled = 'disabled';
+        }
+        $isBlocked = $card->card_sts === 'BL';
+        $blockDisabled = $isBlocked ? 'disabled' : '';
+        if ($isDeleted) {
+            $blockDisabled = 'disabled';
+        }
+        $editDisabled = $isDeleted ? 'disabled' : '';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-edit-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Editar" ' . $editDisabled . '><i class="fas fa-edit"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-activate-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Ativar" ' . $activateDisabled . '><i class="far fa-check-circle"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-block-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Bloquear" ' . $blockDisabled . '><i class="fas fa-ban"></i></button>';
+        $deleteDisabled = ($card->card_sts === 'EX') ? 'disabled' : '';
+        $buttons[] = '<button type="button" class="btn btn-sm btn-primary mr-1 btn-delete-card" data-emp-id="' . $card->emp_id . '" data-uuid="' . e($card->card_uuid) . '" data-card-label="' . e($maskedCardNumber) . '" data-current-status="' . e($card->card_sts ?? '') . '" title="Excluir" ' . $deleteDisabled . '><i class="far fa-trash-alt"></i></button>';
+
+        return implode('', $buttons);
+    }
+
+    /**
+     * Determine whether a 4-digit card password is considered weak (sequential or repeated digits).
+     */
+    private function isWeakCardPassword(string $password): bool
+    {
+        if (! preg_match('/^\d{4}$/', $password)) {
+            return true;
+        }
+
+        $digits = str_split($password);
+
+        if (count(array_unique($digits)) === 1) {
+            return true;
+        }
+
+        $ascending = true;
+        $descending = true;
+
+        for ($index = 1; $index < count($digits); $index++) {
+            $previous = (int) $digits[$index - 1];
+            $current = (int) $digits[$index];
+
+            if ($current !== (($previous + 1) % 10)) {
+                $ascending = false;
+            }
+
+            if ($current !== (($previous + 9) % 10)) {
+                $descending = false;
+            }
+        }
+
+        return $ascending || $descending;
+    }
+
+    /**
+     * Build the cache key used to store temporary private keys for card password encryption.
+     */
+    private function cardPasswordTokenCacheKey(string $token): string
+    {
+        return 'card-password-token:' . $token;
+    }
+
+    /**
+     * Decrypt an encrypted password value using the provided private key.
+     */
+    private function decryptCardPasswordValue(string $privateKey, string $cipherText): ?string
+    {
+        $decodedCipher = base64_decode($cipherText, true);
+
+        if ($decodedCipher === false) {
+            return null;
+        }
+
+        $decrypted = '';
+        $success = openssl_private_decrypt($decodedCipher, $decrypted, $privateKey, OPENSSL_PKCS1_OAEP_PADDING);
+
+        if (! $success) {
+            return null;
+        }
+
+        return $decrypted;
+    }
+
+    /**
+     * Format the cartão status badge.
+     */
+    private function formatCardStatusBadge(?string $statusCode, string $statusDesc): string
+    {
+        if (! $statusCode) {
+            return '<span class="badge badge-secondary">Sem status</span>';
+        }
+
+        switch ($statusCode) {
+            case 'AT':
+                $class = 'success';
+                break;
+            case 'IN':
+            case 'EX':
+            case 'BL':
+                $class = 'danger';
+                break;
+            default:
+                $class = 'secondary';
+                break;
+        }
+
+        return '<span class="badge badge-' . $class . '">' . e($statusDesc) . '</span>';
+    }
+
+    /**
+     * Translate the cartão modalidade code into a human readable label.
+     */
+    private function translateCardModalidade(?string $codigo): string
+    {
+        switch ($codigo) {
+            case 'CRDT':
+                return 'Crédito';
+            case 'DEBT':
+                return 'Débito';
+            case 'GIFT':
+                return 'Gift Card';
+            case 'FID':
+                return 'Fidelidade';
+            default:
+                return $codigo ?? '-';
+        }
+    }
+
+    /**
+     * Load prontuários vinculados ao cliente.
+     */
+    private function loadProntuariosForCliente(Cliente $cliente, int $empresaId, bool $canManageRelatedData)
+    {
+        if (! $canManageRelatedData) {
+            return collect();
+        }
+
+        $prontuarios = ClienteProntuario::with(['user', 'tipo'])
+            ->where('emp_id', $empresaId)
+            ->where('cliente_id', $cliente->cliente_id)
+            ->orderByDesc('protocolo')
+            ->get();
+
+        return $prontuarios->map(function (ClienteProntuario $row) {
+            $badge = '';
+            if (! empty($row->tipo)) {
+                switch ($row->tipo->protocolo_tp) {
+                    case 1:
+                        $badge = '<span class="badge badge-info">' . e($row->tipo->prt_tp_desc) . '</span>';
+                        break;
+                    case 2:
+                    case 3:
+                    case 4:
+                        $badge = '<span class="badge badge-success">' . e($row->tipo->prt_tp_desc) . '</span>';
+                        break;
+                    default:
+                        $badge = '<span class="badge badge-secondary">' . e($row->tipo->prt_tp_desc ?? $row->protocolo_tp) . '</span>';
+                        break;
+                }
+            }
+
+            $anexo = $row->anexo === 'x'
+                ? '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>'
+                : '<span class="badge badge-secondary">Sem Anexo</span>';
+
+            return [
+                'id'             => $row->id,
+                'protocolo'      => str_pad((string) $row->protocolo, 12, '0', STR_PAD_LEFT),
+                'protocolo_raw'  => $row->protocolo,
+                'protocolo_tp'   => $badge,
+                'medico'         => $row->user->user_name ?? 'Sem Médico',
+                'crm_medico'     => $row->user->user_crm ?? 'Sem CRM',
+                'anexo'          => $anexo,
+                'texto_anm'      => $row->texto_anm ?? '',
+                'texto_prt'      => $row->texto_prt ?? '',
+                'texto_prv'      => $row->texto_prv ?? '',
+                'texto_rec'      => $row->texto_rec ?? '',
+                'texto_exm'      => $row->texto_exm ?? '',
+                'texto_atd'      => $row->texto_atd ?? '',
+                'images'         => $this->listPublicFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails'),
+                'docs'           => $this->listPublicFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo),
+            ];
+        })->values();
+    }
+
+    /**
+     * Helper to list files from the public storage disk safely.
+     */
+    private function listPublicFiles(string $path): array
+    {
+        if (! Storage::disk('public')->exists($path)) {
+            return [];
+        }
+
+        return Storage::disk('public')->allFiles($path);
+    }
+
+    /**
+     * Load score entries for the cliente.
+     */
+    private function loadScoreEntriesForCliente(Cliente $cliente)
+    {
+        return ClienteScore::where('cliente_id', $cliente->cliente_id)
+            ->orderByDesc('dthr_cr')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'numero'        => $row->cliente_proc_num,
+                    'tipo'          => $row->cliente_proc_tipo,
+                    'descricao'     => $row->cliente_proc_desc,
+                    'status'        => $row->cliente_proc_sts,
+                    'data_consulta' => $this->formatDate($row->cliente_proc_dtc),
+                    'data_inicio'   => $this->formatDate($row->cliente_proc_dti),
+                    'data_fim'      => $this->formatDate($row->cliente_proc_dtf),
+                    'valor'         => $this->formatScoreValor($row->cliente_proc_vlr),
+                ];
+            });
+    }
+
+    private function formatScoreValor(?string $valor): string
+    {
+        if ($valor === null || $valor === '') {
+            return '-';
+        }
+
+        $normalizado = preg_replace('/[^\d,.-]/', '', $valor);
+        if ($normalizado === '' || $normalizado === null) {
+            return $valor;
+        }
+
+        $normalizado = str_replace('.', '', $normalizado);
+        $normalizado = str_replace(',', '.', $normalizado);
+
+        if (! is_numeric($normalizado)) {
+            return $valor;
+        }
+
+        return formatarDecimalParaTexto((float) $normalizado);
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -103,14 +655,39 @@ class ClienteController extends Controller
         $tipos = ClienteTipo::all();
         $filters = session('cliente_filters', []);
         $nomeMultbanOptions = [];
+        $clientesRecentes = collect();
+        $empresa = null;
 
         try {
             $empresaId = $this->tenantManager->ensure();
-            $empresaAtual = Empresa::select('emp_nmult')->find($empresaId);
+            $empresa = Empresa::select('emp_id', 'emp_nmult', 'emp_cnpj')->find($empresaId);
 
-            if ($empresaAtual && ! empty($empresaAtual->emp_nmult)) {
-                $nomeMultbanOptions[] = $empresaAtual->emp_nmult;
+            if ($empresa && ! empty($empresa->emp_nmult)) {
+                $nomeMultbanOptions[] = $empresa->emp_nmult;
             }
+
+            $recentes = Cliente::with(['status', 'tipo'])
+                ->whereHas('clienteEmp', function ($query) use ($empresaId) {
+                    $query->where('emp_id', $empresaId);
+                })
+                ->orderByDesc('cliente_id')
+                ->limit(10)
+                ->get();
+
+            $permissions = $this->resolvePermissions();
+
+            $clientesRecentes = $recentes->map(function (Cliente $cliente) use ($permissions) {
+                return [
+                    'action'               => $this->buildClienteActions($cliente, $permissions),
+                    'cliente_id'           => $cliente->cliente_id,
+                    'cliente_nome'         => $cliente->cliente_nome,
+                    'cliente_doc'          => $this->formatClienteDocumento($cliente->cliente_doc),
+                    'cliente_tipo_badge'   => $this->buildClienteTipoBadge($cliente),
+                    'cliente_email'        => $cliente->cliente_email ?? '-',
+                    'cliente_cel'          => $cliente->cliente_cel ? formatarTelefone($cliente->cliente_cel) : '-',
+                    'cliente_status_badge' => $this->buildClienteStatusBadge($cliente),
+                ];
+            });
         } catch (\Throwable $e) {
             // Caso o tenant não esteja disponível ainda, apenas ignore e siga sem opções pré-carregadas.
         }
@@ -123,7 +700,14 @@ class ClienteController extends Controller
             return $value !== null && $value !== '';
         }));
 
-        return response()->view('Multban.cliente.index', compact('status', 'tipos', 'filters', 'nomeMultbanOptions'));
+        return response()->view('Multban.cliente.index', compact(
+            'status',
+            'tipos',
+            'filters',
+            'nomeMultbanOptions',
+            'clientesRecentes',
+            'empresa'
+        ));
     }
 
     /**
@@ -143,9 +727,14 @@ class ClienteController extends Controller
         $cardCateg = CardCateg::all();
         $cliente = new Cliente;
         $convenios = TbDmConvenios::all();
-        $estados = Estados::orderBy('estado_desc')->get();
-        $cidades = Cidade::orderBy('cidade_desc')->get();
-        $users = User::with('cargo')->get(); // ou sua query customizada
+       $estados = Estados::orderBy('estado_desc')->get();
+       $cidades = Cidade::orderBy('cidade_desc')->get();
+       $users = User::with('cargo')->get(); // ou sua query customizada
+        $compras = collect();
+        $scoreEntries = collect();
+        $cartoes = collect();
+        $prontuarios = collect();
+        $canManageRelatedData = true;
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -166,7 +755,12 @@ class ClienteController extends Controller
             'convenios',
             'estados',
             'cidades',
-            'users'
+            'users',
+            'compras',
+            'scoreEntries',
+            'cartoes',
+            'prontuarios',
+            'canManageRelatedData'
         ));
     }
 
@@ -293,6 +887,7 @@ class ClienteController extends Controller
 
             return response()->json([
                 'message'   => 'Cliente ' . str_pad($cliente->cliente_id, 5, '0', STR_PAD_LEFT) . ' adicionado com sucesso.',
+                'redirect'  => route('cliente.edit', ['id' => $cliente->cliente_id]),
             ]);
         } catch (Exception|\Throwable $e) {
             DB::rollBack();
@@ -300,6 +895,480 @@ class ClienteController extends Controller
             return response()->json([
                 'message'   => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function createCardPasswordToken(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            abort(Response::HTTP_UNAUTHORIZED);
+        }
+
+        if ($user->cannot('cliente.edit')) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $keyResource = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+
+        if (! $keyResource) {
+            throw new Exception('Não foi possível gerar a chave de criptografia temporária.');
+        }
+
+        $privateKey = '';
+        $exported = openssl_pkey_export($keyResource, $privateKey);
+        $details = openssl_pkey_get_details($keyResource);
+
+        openssl_pkey_free($keyResource);
+
+        if (! $exported || ! $details || empty($details['key'])) {
+            throw new Exception('Falha ao preparar a chave pública para criptografia.');
+        }
+
+        $token = (string) Str::uuid();
+        Cache::put($this->cardPasswordTokenCacheKey($token), $privateKey, now()->addMinutes(5));
+
+        return response()->json([
+            'token'      => $token,
+            'public_key' => $details['key'],
+        ]);
+    }
+
+    public function resetCardPassword(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id'                         => ['required', 'integer'],
+                    'password_token'                 => ['required', 'string'],
+                    'password_cipher'                => ['required', 'string'],
+                    'password_confirmation_cipher'   => ['required', 'string'],
+                ],
+                [
+                    'password_token.required'               => 'Não foi possível preparar a criptografia da senha. Recarregue a página e tente novamente.',
+                    'password_cipher.required'              => 'Informe a nova senha do cartão.',
+                    'password_confirmation_cipher.required' => 'Confirme a nova senha do cartão.',
+                ],
+                [
+                    'password_cipher'              => 'nova senha',
+                    'password_confirmation_cipher' => 'confirmação da senha',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validator->validated();
+
+            $cacheKey = $this->cardPasswordTokenCacheKey($validated['password_token']);
+            $privateKey = Cache::pull($cacheKey);
+
+            if (! $privateKey) {
+                return response()->json([
+                    'message' => [
+                        'password_cipher' => ['Sessão expirada para redefinição de senha. Gere uma nova solicitação.'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $password = $this->decryptCardPasswordValue($privateKey, $validated['password_cipher']);
+            $passwordConfirmation = $this->decryptCardPasswordValue($privateKey, $validated['password_confirmation_cipher']);
+
+            unset($privateKey);
+
+            if ($password === null || $passwordConfirmation === null) {
+                return response()->json([
+                    'message' => [
+                        'password_cipher' => ['Não foi possível processar a nova senha do cartão. Tente novamente.'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($password !== $passwordConfirmation) {
+                return response()->json([
+                    'message' => [
+                        'password_confirmation_cipher' => ['As senhas informadas não coincidem.'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if (! preg_match('/^\d{4}$/', $password)) {
+                return response()->json([
+                    'message' => [
+                        'password_cipher' => ['A nova senha deve conter exatamente 4 dígitos numéricos.'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($this->isWeakCardPassword($password)) {
+                return response()->json([
+                    'message' => [
+                        'password_cipher' => ['Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).'],
+                    ],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validated['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_pass'   => Hash::make($password),
+                    'modificador' => Auth::user()->user_id,
+                    'dthr_ch'     => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Senha do cartão atualizada com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function activateCard(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id' => ['required', 'integer'],
+                ],
+                [
+                    'emp_id.required' => 'Empresa obrigatória para ativar o cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            if ($card->card_sts === 'AT') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão já encontra-se ativo.',
+                    'type'  => 'info',
+                ]);
+            }
+
+            if ($card->card_sts === 'EX') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão foi excluído e não pode ser reativado.',
+                    'type'  => 'info',
+                ], Response::HTTP_CONFLICT);
+            }
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_sts'     => 'AT',
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão ativado com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function blockCard(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id' => ['required', 'integer'],
+                ],
+                [
+                    'emp_id.required' => 'Empresa obrigatória para bloquear o cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            if ($card->card_sts === 'BL') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão já está bloqueado.',
+                    'type'  => 'info',
+                ]);
+            }
+
+            if ($card->card_sts === 'EX') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão foi excluído e não pode ser bloqueado.',
+                    'type'  => 'info',
+                ], Response::HTTP_CONFLICT);
+            }
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_sts'     => 'BL',
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão bloqueado com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function deleteCard(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id' => ['required', 'integer'],
+                ],
+                [
+                    'emp_id.required' => 'Empresa obrigatória para excluir o cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            if ($card->card_sts === 'EX') {
+                return response()->json([
+                    'title' => 'Aviso',
+                    'text'  => 'Este cartão já está marcado como excluído.',
+                    'type'  => 'info',
+                ]);
+            }
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_sts'     => 'EX',
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão excluído com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function showCardDetails(Request $request, string $cardUuid)
+    {
+        try {
+            $empresaId = $this->authenticatedEmpresaId((int) $request->input('emp_id'));
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Dados obtidos com sucesso.',
+                'type'  => 'success',
+                'data'  => [
+                    'card_desc'   => $card->card_desc ?? '',
+                    'card_limite' => formatarDecimalParaTexto($card->card_limite ?? 0),
+                ],
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function updateCardDetails(Request $request, string $cardUuid)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'emp_id'      => ['required', 'integer'],
+                    'card_desc'   => ['required', 'string', 'max:255'],
+                    'card_limite' => ['required', 'string'],
+                ],
+                [
+                    'card_desc.required'   => 'Informe a descrição do cartão.',
+                    'card_limite.required' => 'Informe o limite do cartão.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validator->validated();
+
+            $empresaId = $this->authenticatedEmpresaId((int) $validated['emp_id']);
+
+            $card = ClienteCard::query()
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->firstOrFail();
+
+            $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
+
+            $descricao = mb_strtoupper(rtrim($validated['card_desc']), 'UTF-8');
+            $limite = formatarTextoParaDecimal($validated['card_limite']);
+
+            DB::connection('dbsysclient')
+                ->table('tbdm_clientes_card')
+                ->where('card_uuid', $cardUuid)
+                ->where('emp_id', $empresaId)
+                ->update([
+                    'card_desc'    => $descricao,
+                    'card_limite'  => $limite,
+                    'modificador'  => Auth::user()->user_id,
+                    'dthr_ch'      => Carbon::now(),
+                ]);
+
+            return response()->json([
+                'title' => 'Sucesso',
+                'text'  => 'Cartão atualizado com sucesso.',
+                'type'  => 'success',
+            ]);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'title' => 'Registro não encontrado',
+                'text'  => 'Cartão não localizado ou não pertence à empresa autenticada.',
+                'type'  => 'error',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'title' => 'Erro',
+                'text'  => $th->getMessage(),
+                'type'  => 'error',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -335,69 +1404,18 @@ class ClienteController extends Controller
         $cardMod = CardMod::all();
         $cardCateg = CardCateg::all();
         $cliente = $this->getClienteForUserOrFail((int) $id, 'view');
+        $canManageRelatedData = Auth::user()?->can('manageRelatedData', $cliente) ?? false;
+        $compras = $this->loadComprasForCliente($cliente, $emp_id);
+        $scoreEntries = $this->loadScoreEntriesForCliente($cliente);
+        $cartoes = $this->loadCartoesForCliente($cliente, $emp_id, $canManageRelatedData);
+        $prontuarios = $this->loadProntuariosForCliente($cliente, $emp_id, $canManageRelatedData);
 
         $convenios = TbDmConvenios::all();
         $estados = Estados::orderBy('estado_desc')->get();
         $cidades = Cidade::orderBy('cidade_desc')->get();
-        $prontuarios = ClienteProntuario::where('cliente_id', $cliente->cliente_id)
-            ->where('emp_id', $emp_id)
-            ->get();
         $dbsysclient = DB::connection('dbsysclient');
         $users = User::join($dbsysclient->getDatabaseName() . '.tbdm_userfunc', 'tbsy_user.user_func', '=', 'tbdm_userfunc.user_func')
             ->where('user_func_grp', '=', 'consulta')->get();
-
-        $clienteProntuarios = DataTables::of($prontuarios)
-            ->addIndexColumn()
-            ->editColumn('anexo', function ($row) {
-                if ($row->anexo == 'x') {
-                    return '<span class="text-center ml-3"><i class="fas fa-paperclip"></i></span>';
-                }
-
-                return '<span class="badge badge-secondary">Sem Anexo</span>';
-            })
-            ->addColumn('medico', function ($row) {
-                if (! empty($row->user)) {
-                    return $row->user->user_name;
-                }
-
-                return '<button class="btn btn-sm btn-primary" onclick="editMedico(' . $row->id . ')">Editar</button>';
-            })
-            ->addColumn('crm_medico', function ($row) {
-                if (! empty($row->user)) {
-                    return $row->user->user_crm;
-                }
-
-                return 'Sem CRM';
-            })
-            ->addColumn('images', function ($row) {
-                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/fotos/protocolo_' . $row->protocolo . '/thumbnails');
-            })
-            ->addColumn('docs', function ($row) {
-                return Storage::disk('public')->allFiles('prontuarios/empresa_' . $row->emp_id . '/client_' . $row->cliente_id . '/docs/protocolo_' . $row->protocolo);
-            })
-            ->editColumn('protocolo', function ($row) {
-                return str_pad($row->protocolo, 12, '0', STR_PAD_LEFT);
-            })
-            ->editColumn('protocolo_tp', function ($row) {
-                $badge = '';
-                if (! empty($row->tipo)) {
-
-                    switch ($row->tipo->protocolo_tp) {
-                        case 1:
-                            $badge = '<span class="badge badge-info">' . $row->tipo->prt_tp_desc . '</span>';
-                            break;
-                        case 2:
-                        case 3:
-                        case 4:
-                            $badge = '<span class="badge badge-success">' . $row->tipo->prt_tp_desc . '</span>';
-                            break;
-                    }
-                }
-
-                return $badge;
-            })
-            ->rawColumns(['anexo', 'medico', 'action', 'protocolo_tp'])
-            ->make(true);
 
         $canChangeStatus = false;
         foreach ($userRole as $key => $value) {
@@ -418,8 +1436,12 @@ class ClienteController extends Controller
             'convenios',
             'estados',
             'cidades',
-            'clienteProntuarios',
             'users',
+            'compras',
+            'scoreEntries',
+            'cartoes',
+            'prontuarios',
+            'canManageRelatedData',
         ));
     }
 
@@ -633,7 +1655,7 @@ class ClienteController extends Controller
                 })
                 ->toArray();
 
-            // Soma dos pontos do cliente (card_saldo_pts)
+            // Soma dos pontos do cliente com base nos campos de pontuação
             $cliente->cliente_pts = ClienteCard::where('cliente_id', $cliente->cliente_id)
                 ->where('emp_id', $emp_id)
                 ->where('cliente_doc', $cliente->cliente_doc)
@@ -652,20 +1674,6 @@ class ClienteController extends Controller
             'clientes' => $clientes->toArray(),
         ];
     }
-
-    // public function getClient(Request $request)
-    // {
-    //     $parametro = $request != null ? $request->all()['parametro'] : '';
-
-    //     if (empty($parametro)) {
-    //         return [];
-    //     }
-
-    //     return Cliente::select(DB::raw('cliente_id as id, cliente_id, cliente_doc, UPPER(cliente_nome) text'))
-    //         ->whereRaw(DB::raw("cliente_nome LIKE '%" . $parametro . "%' OR cliente_id = '%" . $parametro . "%'"))
-    //         ->get()
-    //         ->toArray();
-    // }
 
     public function storeProntuario(Request $request)
     {
@@ -1017,19 +2025,7 @@ class ClienteController extends Controller
 
         $data = $clientesQuery->get();
 
-        $user = Auth::user();
-        if ($user && is_callable([$user, 'getAllPermissions'])) {
-            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
-        } else {
-            $rolePerms = collect();
-            foreach ($user->roles as $role) {
-                if (method_exists($role, 'permissions') || isset($role->permissions)) {
-                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
-                }
-            }
-            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
-            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
-        }
+        $this->permissions = $this->resolvePermissions();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -1148,6 +2144,27 @@ class ClienteController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
+            $cardPassword = $request->card_pass;
+            $cardPassword = $cardPassword === null ? null : trim((string) $cardPassword);
+
+            if ($cardPassword !== null && $cardPassword !== '') {
+                if (! preg_match('/^\d{4}$/', $cardPassword)) {
+                    return response()->json([
+                        'message' => [
+                            'card_pass' => ['A senha do cartão deve conter exatamente 4 dígitos numéricos.'],
+                        ],
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                if ($this->isWeakCardPassword($cardPassword)) {
+                    return response()->json([
+                        'message' => [
+                            'card_pass' => ['Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).'],
+                        ],
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
+            }
+
             DB::beginTransaction();
 
             $empresa = Empresa::find($empresaId);
@@ -1167,6 +2184,11 @@ class ClienteController extends Controller
             // Gera um número de cartão de crédito com 16 dígitos
             $numeroCartao = $this->gerarNumeroCartaoCredito($cnpj, $cpf, $request->card_mod, $request->card_tp);
 
+            if ($cardPassword === null || $cardPassword === '') {
+                $cardPassword = (string) random_int(100000, 999999);
+            }
+            $cardPasswordHash = Hash::make($cardPassword);
+
             $dadosCartao = [
                 'emp_id'           => $empresaId,
                 'cliente_id'       => $cliente->cliente_id,
@@ -1182,8 +2204,11 @@ class ClienteController extends Controller
                 'card_desc'        => mb_strtoupper(rtrim($request->card_desc), 'UTF-8'),
                 'card_saldo_vlr'   => formatarTextoParaDecimal($request->card_limite),
                 'card_limite'      => formatarTextoParaDecimal($request->card_limite),
-                'card_saldo_pts'   => 0,
-                'card_pass'        => $request->card_pass ?? null,
+                'card_pts_part'    => 0,
+                'card_pts_fraq'    => 0,
+                'card_pts_mult'    => 0,
+                'card_pts_cash'    => 0,
+                'card_pass'        => $cardPasswordHash,
                 'criador'          => Auth::user()->user_id,
                 'dthr_cr'          => Carbon::now(),
                 'modificador'      => Auth::user()->user_id,
@@ -1407,29 +2432,26 @@ class ClienteController extends Controller
             abort(Response::HTTP_UNAUTHORIZED, 'Usuário não autenticado...');
         }
 
-        $data = DB::connection('dbsysclient')->table('tbdm_clientes_card')->where(
-            'emp_id',
-            '=',
-            1
-        )->where(
-            'cliente_id',
-            '=',
-            $request->cliente_id
-        )->get();
+        $empresaId = $this->authenticatedEmpresaId(
+            $request->filled('emp_id') ? (int) $request->input('emp_id') : null
+        );
 
-        $user = Auth::user();
-        if (method_exists($user, 'getAllPermissions')) {
-            $this->permissions = $user->getAllPermissions()->pluck('name')->toArray();
-        } else {
-            $rolePerms = collect();
-            foreach ($user->roles as $role) {
-                if (method_exists($role, 'permissions') || isset($role->permissions)) {
-                    $rolePerms = $rolePerms->merge($role->permissions->pluck('name'));
-                }
-            }
-            $directPerms = isset($user->permissions) ? $user->permissions->pluck('name') : collect();
-            $this->permissions = $rolePerms->merge($directPerms)->unique()->toArray();
+        $clienteId = (int) $request->input('cliente_id');
+
+        if ($clienteId <= 0) {
+            return DataTables::of(collect())->make(true);
         }
+
+        // Garantir que o cliente pertence à empresa autenticada antes de carregar os cartões
+        $this->getClienteForUserOrFail($clienteId, 'view');
+
+        $data = DB::connection('dbsysclient')
+            ->table('tbdm_clientes_card')
+            ->where('emp_id', $empresaId)
+            ->where('cliente_id', $clienteId)
+            ->get();
+
+        $this->permissions = $this->resolvePermissions();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -1438,16 +2460,47 @@ class ClienteController extends Controller
 
                 if (in_array('cliente.edit', $this->permissions)) {
 
-                    $btn .= '<button class="btn btn-sm btn-primary mr-1"';
+                    $maskedCardNumber = formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
+                    $resetDisabled = ($row->card_sts === 'EX') ? 'disabled' : '';
+                    $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-reset-card-password" ';
                     $btn .= 'data-emp-id="' . $row->emp_id . '" ';
-                    $btn .= 'data-uuid="' . $row->card_uuid . '" ';
-                    $btn .= ' title="Resetar Senha"><i class="fas fa-key"></i></button>';
+                    $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                    $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                    $btn .= $resetDisabled . ' title="Resetar Senha"><i class="fas fa-key"></i></button>';
                 }
 
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Editar"><i class="fas fa-edit"></i></button>';
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Ativar"><i class="far fa-check-circle"></i></button>';
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Bloquear"><i class="fas fa-ban"></i></button>';
-                $btn .= '<button class="btn btn-sm btn-primary mr-1" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+                $editDisabled = ($row->card_sts === 'EX') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-edit-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $editDisabled . ' title="Editar"><i class="fas fa-edit"></i></button>';
+
+                $maskedCardNumber = formatarCartaoCredito(Str::mask($row->cliente_cardn, '*', 0, -4));
+                $activateDisabled = ($row->card_sts === 'AT' || $row->card_sts === 'EX') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-activate-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $activateDisabled . ' title="Ativar"><i class="far fa-check-circle"></i></button>';
+
+                $blockDisabled = ($row->card_sts === 'BL' || $row->card_sts === 'EX') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-block-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $blockDisabled . ' title="Bloquear"><i class="fas fa-ban"></i></button>';
+
+                $deleteDisabled = ($row->card_sts === 'EX') ? 'disabled' : '';
+                $btn .= '<button type="button" class="btn btn-sm btn-primary mr-1 btn-delete-card" ';
+                $btn .= 'data-emp-id="' . $row->emp_id . '" ';
+                $btn .= 'data-uuid="' . e($row->card_uuid) . '" ';
+                $btn .= 'data-card-label="' . e($maskedCardNumber) . '" ';
+                $btn .= 'data-current-status="' . e($row->card_sts ?? '') . '" ';
+                $btn .= $deleteDisabled . ' title="Excluir"><i class="far fa-trash-alt"></i></button>';
 
                 return $btn;
             })->editColumn('card_sts', function ($row) {
@@ -1489,7 +2542,12 @@ class ClienteController extends Controller
             })->editColumn('card_saldo_vlr', function ($row) {
                 return formatarDecimalParaTexto($row->card_saldo_vlr);
             })->editColumn('card_saldo_pts', function ($row) {
-                return formatarDecimalParaTexto($row->card_saldo_pts);
+                $total = ($row->card_pts_part ?? 0)
+                    + ($row->card_pts_fraq ?? 0)
+                    + ($row->card_pts_mult ?? 0)
+                    + ($row->card_pts_cash ?? 0);
+
+                return formatarDecimalParaTexto($total);
             })->editColumn('card_desc', function ($row) {
                 return mb_strtoupper(rtrim($row->card_desc), 'UTF-8');
             })->editColumn('card_categ', function ($row) {

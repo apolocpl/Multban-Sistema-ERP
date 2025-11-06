@@ -1,5 +1,8 @@
 @extends('layouts.app-master')
 @section('page.title', 'Cliente')
+@if (!empty($cliente->cliente_nome))
+    @section('page.breadcrumb', $cliente->cliente_nome)
+@endif
 @push('script-head')
 
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/css/select2.min.css') }}">
@@ -562,183 +565,194 @@
                                         </div>
                                     </div>
 
-                                    <!-- TABELA DE DADOS -->
-                                    <div class="table-responsive table-sm">
-                                        <table id="gridtemplate"
-                                            class="table table-striped table-bordered nowrap table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th style="width: 20px;">
-                                                        <input type="checkbox" id="selectAll" class="mr-2"
-                                                            title="Selecionar Todos" />
-                                                    </th>
-                                                    <th style="width: 230px;">Ações</th>
-                                                    <th>ID Emp.</th>
-                                                    <th>Título</th>
-                                                    <th>Cliente</th>
-                                                    <th>Parcela</th>
-                                                    <th>Vlr. Init.</th>
-                                                    <th>Vlr. Jrs.</th>
-                                                    <th>Vlr. Tot.</th>
-                                                    <th>Meio Pgto</th>
-                                                    <th>Data Venda</th>
-                                                    <th>Data Venc.</th>
-                                                    <th>Status</th>
-                                                </tr>
+                                    @php
+                                        $comprasCollection = collect($compras ?? []);
+                                    @endphp
 
-                                                <!-- Exemplo de dados estáticos -->
-                                            <tbody>
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" class="mr-2" />
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Imprimir Comprovante">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Manutenção de Título">
-                                                            <i class="fas fa-wrench"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Pagar">
-                                                            <i class="fas fa-usd-square"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Baixa Manual">
-                                                            <i class="fas fa-hands-usd"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cobrança">
-                                                            <i class="far fa-file-invoice-dollar"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>1</td>
-                                                    <td>12345</td>
-                                                    <td>Cliente Teste</td>
-                                                    <td>2</td>
-                                                    <td>R$ 100,00</td>
-                                                    <td>R$ 1,50</td>
-                                                    <th>R$ 101,50</th>
-                                                    <td>Cartão</td>
-                                                    <td>10/05/2025</td>
-                                                    <td>10/07/2025</td>
-                                                    <td><span class="badge badge-success">Pago</span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" class="mr-2" />
-                                                    </td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Imprimir Comprovante">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Manutenção de Título">
-                                                            <i class="fas fa-wrench"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Pagar">
-                                                            <i class="fas fa-usd-square"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Baixa Manual">
-                                                            <i class="fas fa-hands-usd"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                                            title="Cobrança">
-                                                            <i class="far fa-file-invoice-dollar"></i>
-                                                        </button>
-                                                    </td>
-                                                    <td>1</td>
-                                                    <td>12345</td>
-                                                    <td>Cliente Teste</td>
-                                                    <td>2</td>
-                                                    <td>R$ 100,00</td>
-                                                    <td>R$ 1,50</td>
-                                                    <th>R$ 101,50</th>
-                                                    <td>Cartão</td>
-                                                    <td>10/05/2025</td>
-                                                    <td>10/07/2025</td>
-                                                    <td><span class="badge badge-danger">Vencido</span></td>
-                                                </tr>
+                                    @if ($comprasCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhuma compra encontrada para este cliente.
+                                        </p>
+                                    @endif
 
-                                            </tbody>
-                                            </thead>
-                                        </table>
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive table-sm">
+                                            <table id="gridtemplate"
+                                                class="table table-striped table-bordered nowrap table-sm mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 20px;">
+                                                            <input type="checkbox" id="selectAll" class="mr-2"
+                                                                title="Selecionar Todos" />
+                                                        </th>
+                                                        <th style="width: 230px;">Ações</th>
+                                                        <th>ID Emp.</th>
+                                                        <th>Título</th>
+                                                        <th>Cliente</th>
+                                                        <th>Parcela</th>
+                                                        <th>Vlr. Init.</th>
+                                                        <th>Vlr. Jrs.</th>
+                                                        <th>Vlr. Tot.</th>
+                                                        <th>Meio Pgto</th>
+                                                        <th>Data Venda</th>
+                                                        <th>Data Venc.</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($comprasCollection as $compra)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="checkbox" class="mr-2"
+                                                                value="{{ $compra['identificador'] }}">
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Imprimir Comprovante">
+                                                                <i class="fas fa-print"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Manutenção de Título">
+                                                                <i class="fas fa-wrench"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Pagar">
+                                                                <i class="fas fa-usd-square"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Cancelar">
+                                                                <i class="fas fa-ban"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Baixa Manual">
+                                                                <i class="fas fa-hands-usd"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-primary mt-1"
+                                                                title="Cobrança">
+                                                                <i class="far fa-file-invoice-dollar"></i>
+                                                            </button>
+                                                        </td>
+                                                        <td>{{ $compra['emp_id'] }}</td>
+                                                        <td>{{ $compra['titulo'] }}</td>
+                                                        <td>{{ $compra['cliente'] }}</td>
+                                                        <td>{{ $compra['parcela'] }}</td>
+                                                        <td>{{ $compra['valor_inicial'] }}</td>
+                                                        <td>{{ $compra['valor_juros'] }}</td>
+                                                        <td>{{ $compra['valor_total'] }}</td>
+                                                        <td>{{ $compra['meio_pagamento'] ?? '-' }}</td>
+                                                        <td>{{ $compra['data_venda'] }}</td>
+                                                        <td>{{ $compra['data_vencimento'] }}</td>
+                                                        <td>
+                                                            <span
+                                                                class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
+                                                                {{ data_get($compra, 'status.descricao', '-') }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
 
-                                    O CAMPO EMPRESA DEVERÁ VIR PREENCHIDO COM A EMPRESA DO USUÁRIO LOGADO, SOMENTE<br>
-                                    NO CASO DO USUÁRIO SER DA MULTBAN OU DE UMA EMPRESA WHITE LABEL, ESTE CAMPO PODERÁ
-                                    ESTAR DISPONÍVEL<br>
-                                    PARA SELECIONAR ALGUMA EMPRESA, NESTE CASO, ELE DEVE SEGUIR O PADRÃO DE CONSULTA,
-                                    PESQUISANDO SOBRE O<br>
-                                    NOME MULTBAN<br>
-                                    <br>
-                                    AO SELECIONAR UM CLIENTE, O SISTEMA DEVE ARMAZENAR O CLIENTE_ID E O CLIENT_DOC DA
-                                    TABELA TBDM_CLIENTES_GERAL<br>
-                                    <br>
-                                    AO CLICAR EM PESQUISAR, O SISTEMA DEVE UTILIZAR OS CAMPOS DO FILTRO PARA ACESSAR AS
-                                    TABELAS DE VENDA<br>
-                                    E TRAZER PARA A LISTA TODOS OS LANÇAMENTOS QUE CONDIZEM COM OS FILTROS<br>
-                                    <br>
-                                    <br>
-                                    Botão de Ação - Imprimir<br>
-                                    1. Imprimi o comprovante de pagamento referente ao título selecionado<br>
-                                    <br>
-                                    Botão de Ação - Manutenção de Título<br>
-                                    1. Abre uma nova tela, esta tela deverá ser criara no edit.blade pois terá todas as
-                                    informações do título<br>
-                                    2. Nesta tela poderemos editar os dampos:<br>
-                                    Data de Vencimento (TABELA tbtr_p_titulos_ab / CAMPO data_venc)<br>
-                                    Desconto Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_desc_mn)<br>
-                                    Acréscimo Manual (TABELA tbtr_p_titulos_ab / CAMPO vlr_acr_mn)<br>
-                                    <br>
-                                    Botão de Ação - Pagar<br>
-                                    1. Deve abrir o link de pagamento do Título, neste link deve conter as informações
-                                    para pagamento<br>
-                                    permitindo que o usuário possa escolhar PIX ou BOLETO<br>
-                                    Precisamos criar uma tela para este link, customizada e com a identidade visual da
-                                    Multban<br>
-                                    <br>
-                                    Botão de Ação - Cancelar<br>
-                                    1. Para Cancelar, é obrigatório dar um motivo.
-                                    2. Se o cancelamento for de uma parcela de cartão de crédito e que não seja a
-                                    última, o sistema deve informar ao usuário<br>
-                                    que todas as outras parcelas serão canceladas, pois não podemos cancelar uma única
-                                    parcela de uma venda<br>
-                                    Se o cancelamento for de um boleto parcelado, o sistema deve perguntar se o usuário
-                                    quer cancelar as demais parcelas<br>
-                                    se o usuário selecionar que SIM, todas as demais parcelas deverão ser canceladas<br>
-                                    <br>
-                                    Botão de Ação - Baixa Manual<br>
-                                    1. Abre um rela para Baixa Manual do Título, se for um lançamento de Cartão de
-                                    Crédito, o sistema deve gerar<br>
-                                    um débito no valor do MDR do título e uma msg deve aparecer na tela informando que o
-                                    MDR será cobrando<br>
-                                    se o cliente for optante de uma Wallet, o sistema deverá lançar um débito na Wallet,
-                                    se o cliente for optante<br>
-                                    de uma Conta Digital, o sistema deverá criar um título em nome do cliente para que
-                                    ele efetue o pagamento<br>
-                                    2. Se for um lançamento de um Boleto e este boleto já foi gerado pelo cliente final,
-                                    o sistema deve gerar um débito<br>
-                                    na wallet com o valor do Boleto+PIX registrado no sistema, ou cria um título para
-                                    pagamento com este valor,<br>
-                                    se for um lançamento de um Boleto ainda não gerado, o sistema apenas cancela o
-                                    lançamento<br>
-                                    <br>
-                                    Botão de Ação - Cobrança<br>
-                                    1. Direciona para a tela de cobrança já com os filtros do título selecionado
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach($comprasCollection as $index => $compra)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <div>
+                                                            <span class="badge badge-light text-uppercase small">Emp.</span>
+                                                            <span class="font-weight-semibold">{{ $compra['emp_id'] }}</span>
+                                                        </div>
+                                                        <span class="badge badge-{{ data_get($compra, 'status.classe', 'secondary') }}">
+                                                            {{ data_get($compra, 'status.descricao', '-') }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="form-group mb-3">
+                                                        <div class="custom-control custom-checkbox">
+                                                            @php
+                                                                $checkboxId = 'compra-card-' . $index;
+                                                            @endphp
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                id="{{ $checkboxId }}" value="{{ $compra['identificador'] }}">
+                                                            <label class="custom-control-label" for="{{ $checkboxId }}">
+                                                                Selecionar para ações
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-12 mb-2">
+                                                            <p class="mb-1 small text-muted">Título</p>
+                                                            <p class="mb-0 font-weight-bold">{{ $compra['titulo'] }}</p>
+                                                        </div>
+                                                        <div class="col-12 mb-2">
+                                                            <p class="mb-1 small text-muted">Cliente</p>
+                                                            <p class="mb-0">{{ $compra['cliente'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Parcela</p>
+                                                            <p class="mb-0">{{ $compra['parcela'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Meio Pgto</p>
+                                                            <p class="mb-0">{{ $compra['meio_pagamento'] ?? '-' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor Inicial</p>
+                                                            <p class="mb-0">{{ $compra['valor_inicial'] }}</p>
+                                                        </div>
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Juros</p>
+                                                            <p class="mb-0">{{ $compra['valor_juros'] }}</p>
+                                                        </div>
+                                                        <div class="col-4 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor Total</p>
+                                                            <p class="mb-0">{{ $compra['valor_total'] }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Data Venda</p>
+                                                            <p class="mb-0">{{ $compra['data_venda'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-3">
+                                                            <p class="mb-1 small text-muted">Data Venc.</p>
+                                                            <p class="mb-0">{{ $compra['data_vencimento'] }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex flex-wrap">
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Imprimir Comprovante">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Manutenção de Título">
+                                                            <i class="fas fa-wrench"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Pagar">
+                                                            <i class="fas fa-usd-square"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Cancelar">
+                                                            <i class="fas fa-ban"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mr-1 mb-1" title="Baixa Manual">
+                                                            <i class="fas fa-hands-usd"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-primary mb-1" title="Cobrança">
+                                                            <i class="far fa-file-invoice-dollar"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
 
@@ -757,58 +771,97 @@
                                         </div>
                                         <div class="form-group col-md-2">
                                             <input class="font-weight-bold" style="font-size: 1.5rem; color: #a702d8;"
-                                                id="cliente_socre" name="cliente_socre" placeholder="SCORE" value="">
+                                                id="cliente_socre" name="cliente_socre" placeholder="SCORE"
+                                                value="{{ $cliente->cliente_score ?? '' }}">
                                         </div>
                                     </div>
 
-                                    <!-- TABELA -->
-                                    <table class="table-responsive">
-                                        <table id="gridtemplate" class="table table-striped table-bordered nowrap">
-                                            <thead>
-                                                <tr>
-                                                    <th>Número do Processo/Protesto</th>
-                                                    <th>Tipo do Processo/Protesto</th>
-                                                    <th>Descrição do Processo/Protesto</th>
-                                                    <th>Status do Processo/Protesto</th>
-                                                    <th>Data da Pesquisa</th>
-                                                    <th>Data Início do Processo/Protesto</th>
-                                                    <th>Data Fim do Processo/Protesto</th>
-                                                    <th>Valor do Processo/Protesto</th>
-                                                </tr>
-                                            </thead>
+                                    @php
+                                        $scoreCollection = collect($scoreEntries ?? []);
+                                    @endphp
 
-                                            <!------------------------------------------------------------------------->
-                                            <!-- Exemplo de linha de compra. substituir por valores reais da pesquisa-->
-                                            <tbody>
-                                                <tr>
-                                                    <td>123456</td>
-                                                    <td>Protesto</td>
-                                                    <td>Descrição do Protesto</td>
-                                                    <td>Ativo</td>
-                                                    <td>01/01/2023</td>
-                                                    <td>01/01/2020</td>
-                                                    <td>01/01/2021</td>
-                                                    <td>R$ 500,00</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>654321</td>
-                                                    <td>Processo Judicial</td>
-                                                    <td>Descrição do Processo</td>
-                                                    <td>Encerrado</td>
-                                                    <td>15/01/2023</td>
-                                                    <td>01/01/2019</td>
-                                                    <td>01/01/2020</td>
-                                                    <td>R$ 1.000,00</td>
-                                                </tr>
-                                            </tbody>
-                                            <!-- Exemplo de linha de compra. substituir por valores reais da pesquisa-->
-                                            <!------------------------------------------------------------------------->
+                                    @if ($scoreCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhum registro de score encontrado para este cliente.
+                                        </p>
+                                    @endif
 
-                                        </table>
-                                    </table>
-                                    AQUI PRECISAMOS FAZER COM QUE ESTES DADOS DIMINUAM A FONTE CONFORME O TAMANHO DA
-                                    TELA</br>
-                                    PARA CABER NA TELA INDEPENDENTE DO TAMANHO DO DISPOSITIVO
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive">
+                                            <table id="gridtemplate-score"
+                                                class="table table-striped table-bordered nowrap mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Número do Processo/Protesto</th>
+                                                        <th>Tipo do Processo/Protesto</th>
+                                                        <th>Descrição do Processo/Protesto</th>
+                                                        <th>Status do Processo/Protesto</th>
+                                                        <th>Data da Pesquisa</th>
+                                                        <th>Data Início do Processo/Protesto</th>
+                                                        <th>Data Fim do Processo/Protesto</th>
+                                                        <th>Valor do Processo/Protesto</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($scoreCollection as $score)
+                                                    <tr>
+                                                        <td>{{ $score['numero'] }}</td>
+                                                        <td>{{ $score['tipo'] }}</td>
+                                                        <td>{{ $score['descricao'] }}</td>
+                                                        <td>{{ $score['status'] }}</td>
+                                                        <td>{{ $score['data_consulta'] }}</td>
+                                                        <td>{{ $score['data_inicio'] }}</td>
+                                                        <td>{{ $score['data_fim'] }}</td>
+                                                        <td>{{ $score['valor'] }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach($scoreCollection as $score)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="font-weight-bold">{{ $score['numero'] }}</span>
+                                                        <span class="badge badge-secondary">{{ $score['status'] }}</span>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Tipo</p>
+                                                    <p class="mb-2">{{ $score['tipo'] }}</p>
+                                                    <p class="mb-1 small text-muted">Descrição</p>
+                                                    <p class="mb-2">{{ $score['descricao'] }}</p>
+                                                    <div class="row">
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Data da Pesquisa</p>
+                                                            <p class="mb-0">{{ $score['data_consulta'] }}</p>
+                                                        </div>
+                                                        <div class="col-6 mb-2">
+                                                            <p class="mb-1 small text-muted">Valor</p>
+                                                            <p class="mb-0">{{ $score['valor'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Início</p>
+                                                            <p class="mb-0">{{ $score['data_inicio'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Fim</p>
+                                                            <p class="mb-0">{{ $score['data_fim'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        Ajuste o zoom do navegador se necessário para visualizar todas as colunas em
+                                        telas menores.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -820,18 +873,21 @@
 
                                     <!-- AÇÕES -->
                                     <div class="form-row">
+                                        @if ($canManageRelatedData)
                                         <div class="col-md-2">
                                             <button type="button" class="btn btn-primary btn-sm"
                                                 data-modal="modalCriarCartao" id="btnCriarCartao">Criar Novo
                                                 Cartão</button>
                                         </div>
+                                        @endif
 
                                         <div class="col-md-8">
                                             <div class="form-group d-inline-block">
                                                 <label for="cliente_socre" class="mr-2">SCORE do Cliente:</label>
                                                 <input type="text" id="cliente_socre"
                                                     class="form-control form-control-sm" readonly
-                                                    style="width: 150px; display: inline-block;">
+                                                    style="width: 150px; display: inline-block;"
+                                                    value="{{ $cliente->cliente_score ?? '' }}">
                                             </div>
 
                                             <div class="form-group d-inline-block ml-2">
@@ -843,31 +899,105 @@
                                         </div>
                                     </div>
 
-                                    <!-- TABELA -->
-                                    <table id="gridtemplate-cards" class="table table-striped table-bordered nowrap">
-                                        <thead>
-                                            <tr>
-                                                <th>Ações</th>
-                                                <th>Empresa</th>
-                                                <th>Número do Cartão</th>
-                                                <th>CV</th>
-                                                <th>Status</th>
-                                                <th>Tipo do Cartão</th>
-                                                <th>Modalidade do Cartão</th>
-                                                <th>Categoria</th>
-                                                <th>Descrição do Cartão</th>
-                                                <th>Saldo do Cartão</th>
-                                                <th>Limite do Cartão</th>
-                                                <th>Saldo de Pontos</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
+                                    @php
+                                        $cartaoCollection = collect($cartoes ?? []);
+                                    @endphp
 
+                                    @if ($cartaoCollection->isEmpty())
+                                        <p class="text-center text-muted mb-3">
+                                            Nenhum cartão encontrado para este cliente.
+                                        </p>
+                                    @endif
 
-                                    AQUI PRECISAMOS FAZER COM QUE ESTES DADOS DIMINUAM A FONTE CONFORME O TAMANHO DA
-                                    TELA</br>
-                                    PARA CABER NA TELA INDEPENDENTE DO TAMANHO DO DISPOSITIVO
+                                    <!-- GRID DESKTOP -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="table-responsive">
+                                            <table id="gridtemplate-cards" class="table table-striped table-bordered nowrap mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Ações</th>
+                                                        <th>Empresa</th>
+                                                        <th>Número do Cartão</th>
+                                                        <th>CV</th>
+                                                        <th>Status</th>
+                                                        <th>Tipo do Cartão</th>
+                                                        <th>Modalidade do Cartão</th>
+                                                        <th>Categoria</th>
+                                                        <th>Descrição do Cartão</th>
+                                                        <th>Saldo do Cartão</th>
+                                                        <th>Limite do Cartão</th>
+                                                        <th>Saldo de Pontos</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($cartaoCollection as $cartao)
+                                                        <tr>
+                                                            <td>{!! $cartao['actions'] !== '' ? $cartao['actions'] : '<span class="text-muted">-</span>' !!}</td>
+                                                            <td>{{ $cartao['empresa'] }}</td>
+                                                            <td>{{ $cartao['numero'] }}</td>
+                                                            <td>{{ $cartao['cv'] }}</td>
+                                                            <td>{!! $cartao['status_badge'] !!}</td>
+                                                            <td>{{ $cartao['tipo_label'] }}</td>
+                                                            <td>{{ $cartao['modalidade'] }}</td>
+                                                            <td>{!! $cartao['categoria_badge'] !!}</td>
+                                                            <td>{{ $cartao['descricao'] ?: '-' }}</td>
+                                                            <td>{{ $cartao['saldo_valor'] }}</td>
+                                                            <td>{{ $cartao['limite_valor'] }}</td>
+                                                            <td>{{ $cartao['saldo_pontos'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
 
+                                    <!-- GRID MOBILE -->
+                                    <div class="d-lg-none">
+                                        @foreach ($cartaoCollection as $cartao)
+                                            <div class="card shadow-sm mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="font-weight-bold">{{ $cartao['empresa'] }}</span>
+                                                        <span>{!! $cartao['status_badge'] !!}</span>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Número</p>
+                                                    <p class="mb-2 font-weight-bold">{{ $cartao['numero'] }}</p>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Tipo</p>
+                                                            <p class="mb-2">{{ $cartao['tipo_label'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Modalidade</p>
+                                                            <p class="mb-2">{{ $cartao['modalidade'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Limite</p>
+                                                            <p class="mb-2">{{ $cartao['limite_valor'] }}</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <p class="mb-1 small text-muted">Saldo</p>
+                                                            <p class="mb-2">{{ $cartao['saldo_valor'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <p class="mb-1 small text-muted">Saldo de Pontos</p>
+                                                    <p class="mb-2">{{ $cartao['saldo_pontos'] }}</p>
+                                                    @if (!empty($cartao['categoria_badge']))
+                                                        <div class="mb-2">{!! $cartao['categoria_badge'] !!}</div>
+                                                    @endif
+                                                    <p class="mb-1 small text-muted">Descrição</p>
+                                                    <p class="mb-3">{{ $cartao['descricao'] ?: '-' }}</p>
+                                                    @if (!empty($cartao['actions']))
+                                                        <div class="d-flex flex-wrap">
+                                                            {!! $cartao['actions'] !!}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -932,6 +1062,22 @@
                                                 <th>Anexo</th>
                                             </tr>
                                         </thead>
+                                        <tbody>
+                                            @forelse($prontuarios as $prontuario)
+                                            <tr>
+                                                <td>{{ $prontuario['protocolo'] }}</td>
+                                                <td>{!! $prontuario['protocolo_tp'] !!}</td>
+                                                <td>{{ $prontuario['medico'] }}</td>
+                                                <td>{!! $prontuario['anexo'] !!}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">
+                                                    Nenhum prontuário encontrado para este cliente.
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
                                     </table>
                                 </div>
 
@@ -1763,6 +1909,212 @@
 <!-- /.content -->
 @endsection
 
+<div class="modal fade" id="modalActivateCard" tabindex="-1" role="dialog" aria-labelledby="modalActivateCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalActivateCardLabel">Ativar Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formActivateCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="activateCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma a ativação do cartão
+                        <strong id="activateCardLabel">-</strong>?
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="activate_card_uuid">
+                    <input type="hidden" name="emp_id" id="activate_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="activateCardSubmit">Ativar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBlockCard" tabindex="-1" role="dialog" aria-labelledby="modalBlockCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBlockCardLabel">Bloquear Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formBlockCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="blockCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma o bloqueio do cartão
+                        <strong id="blockCardLabel">-</strong>?
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="block_card_uuid">
+                    <input type="hidden" name="emp_id" id="block_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="blockCardSubmit">Bloquear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDeleteCard" tabindex="-1" role="dialog" aria-labelledby="modalDeleteCardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDeleteCardLabel">Excluir Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formDeleteCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="deleteCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <p class="mb-3">
+                        Confirma a exclusão do cartão
+                        <strong id="deleteCardLabel">-</strong>?
+                    </p>
+
+                    <p class="small text-muted mb-3">
+                        O registro permanecerá armazenado para auditoria, porém será marcado como excluído.
+                    </p>
+
+                    <input type="hidden" name="card_uuid" id="delete_card_uuid">
+                    <input type="hidden" name="emp_id" id="delete_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="deleteCardSubmit">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditCard" tabindex="-1" role="dialog" aria-labelledby="modalEditCardLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditCardLabel">Editar Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formEditCard" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="editCardAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Cartão selecionado</span>
+                        <strong id="editCardLabel">-</strong>
+                    </div>
+
+                    <input type="hidden" name="card_uuid" id="edit_card_uuid">
+                    <input type="hidden" name="emp_id" id="edit_card_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+
+                    <div class="form-group">
+                        <label for="edit_card_desc">Descrição do cartão</label>
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               id="edit_card_desc"
+                               name="card_desc"
+                               maxlength="255"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_card_limite">Limite do cartão</label>
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               id="edit_card_limite"
+                               name="card_limite"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="editCardSubmit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalResetCardPassword" tabindex="-1" role="dialog" aria-labelledby="modalResetCardPasswordLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalResetCardPasswordLabel">Atualizar Senha do Cartão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formResetCardPassword" autocomplete="off" novalidate>
+                <div class="modal-body">
+                    <div id="resetCardPasswordAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Cartão selecionado</span>
+                        <strong id="resetCardPasswordCardLabel">-</strong>
+                    </div>
+
+                    <input type="hidden" name="card_uuid" id="reset_card_password_card_uuid">
+                    <input type="hidden" name="emp_id" id="reset_card_password_emp_id" value="{{ $cliente->emp_id ?? '' }}">
+                    <input type="hidden" name="password_token" id="reset_card_password_token">
+
+                    <div class="form-group">
+                        <label for="reset_card_password">Nova senha (4 dígitos)</label>
+                        <input type="password"
+                               class="form-control form-control-sm"
+                               id="reset_card_password"
+                               name="password"
+                               minlength="4"
+                               maxlength="4"
+                               pattern="\d{4}"
+                               inputmode="numeric"
+                               autocomplete="new-password"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reset_card_password_confirmation">Confirmar nova senha</label>
+                        <input type="password"
+                               class="form-control form-control-sm"
+                               id="reset_card_password_confirmation"
+                               name="password_confirmation"
+                               minlength="4"
+                               maxlength="4"
+                               pattern="\d{4}"
+                               inputmode="numeric"
+                               autocomplete="new-password"
+                               required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="resetCardPasswordSubmit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 
 
@@ -1881,6 +2233,944 @@
 
         // Chama ao carregar
         toggleBtnImprimir();
+
+        let cardPasswordToken = null;
+        let cardPasswordCryptoKey = null;
+
+        const $modalActivateCard = $('#modalActivateCard');
+        const $activateCardForm = $('#formActivateCard');
+        const $activateCardAlert = $('#activateCardAlert');
+        const $activateCardSubmit = $('#activateCardSubmit');
+        const $activateCardLabel = $('#activateCardLabel');
+        const $activateCardUuid = $('#activate_card_uuid');
+        const $activateCardEmpId = $('#activate_card_emp_id');
+
+        const $modalBlockCard = $('#modalBlockCard');
+        const $blockCardForm = $('#formBlockCard');
+        const $blockCardAlert = $('#blockCardAlert');
+        const $blockCardSubmit = $('#blockCardSubmit');
+        const $blockCardLabel = $('#blockCardLabel');
+        const $blockCardUuid = $('#block_card_uuid');
+        const $blockCardEmpId = $('#block_card_emp_id');
+
+        const $modalDeleteCard = $('#modalDeleteCard');
+        const $deleteCardForm = $('#formDeleteCard');
+        const $deleteCardAlert = $('#deleteCardAlert');
+        const $deleteCardSubmit = $('#deleteCardSubmit');
+        const $deleteCardLabel = $('#deleteCardLabel');
+        const $deleteCardUuid = $('#delete_card_uuid');
+        const $deleteCardEmpId = $('#delete_card_emp_id');
+
+        const $modalEditCard = $('#modalEditCard');
+        const $editCardForm = $('#formEditCard');
+        const $editCardAlert = $('#editCardAlert');
+        const $editCardSubmit = $('#editCardSubmit');
+        const $editCardLabel = $('#editCardLabel');
+        const $editCardUuid = $('#edit_card_uuid');
+        const $editCardEmpId = $('#edit_card_emp_id');
+        const $editCardDesc = $('#edit_card_desc');
+        const $editCardLimite = $('#edit_card_limite');
+
+        const $modalResetCardPassword = $('#modalResetCardPassword');
+        const $resetCardPasswordForm = $('#formResetCardPassword');
+        const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
+        const $resetCardPasswordSubmit = $('#resetCardPasswordSubmit');
+        const $resetCardPasswordCardLabel = $('#resetCardPasswordCardLabel');
+        const $resetCardPasswordInput = $('#reset_card_password');
+        const $resetCardPasswordConfirmationInput = $('#reset_card_password_confirmation');
+        const $resetCardPasswordTokenInput = $('#reset_card_password_token');
+
+        function clearActivateCardValidation() {
+            if (!$activateCardForm.length) {
+                return;
+            }
+
+            $activateCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($activateCardAlert.length) {
+                $activateCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearResetCardPasswordValidation() {
+            if (!$resetCardPasswordForm.length) {
+                return;
+            }
+
+            $resetCardPasswordForm.find('.is-invalid').removeClass('is-invalid');
+            $resetCardPasswordForm.find('.invalid-feedback').text('');
+
+            if ($resetCardPasswordAlert.length) {
+                $resetCardPasswordAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearBlockCardValidation() {
+            if (!$blockCardForm.length) {
+                return;
+            }
+
+            $blockCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($blockCardAlert.length) {
+                $blockCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearDeleteCardValidation() {
+            if (!$deleteCardForm.length) {
+                return;
+            }
+
+            $deleteCardForm.find('.is-invalid').removeClass('is-invalid');
+            if ($deleteCardAlert.length) {
+                $deleteCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearEditCardValidation() {
+            if (!$editCardForm.length) {
+                return;
+            }
+
+            $editCardForm.find('.is-invalid').removeClass('is-invalid');
+            $editCardForm.find('.invalid-feedback').text('');
+            if ($editCardAlert.length) {
+                $editCardAlert.addClass('d-none').text('');
+            }
+        }
+
+        function clearCardPasswordCryptoMaterials() {
+            cardPasswordToken = null;
+            cardPasswordCryptoKey = null;
+            if ($resetCardPasswordTokenInput.length) {
+                $resetCardPasswordTokenInput.val('');
+            }
+        }
+
+        function pemToArrayBuffer(pem) {
+            const cleaned = pem
+                .replace(/-----BEGIN PUBLIC KEY-----/g, '')
+                .replace(/-----END PUBLIC KEY-----/g, '')
+                .replace(/\s+/g, '');
+
+            const binary = window.atob(cleaned);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index += 1) {
+                bytes[index] = binary.charCodeAt(index);
+            }
+            return bytes.buffer;
+        }
+
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let index = 0; index < bytes.byteLength; index += 1) {
+                binary += String.fromCharCode(bytes[index]);
+            }
+            return window.btoa(binary);
+        }
+
+        async function fetchCardPasswordCryptoMaterials() {
+            if (!window.crypto || !window.crypto.subtle || typeof window.TextEncoder === 'undefined') {
+                throw new Error('Criptografia não suportada pelo navegador.');
+            }
+
+            if (cardPasswordCryptoKey && cardPasswordToken) {
+                return cardPasswordCryptoKey;
+            }
+
+            const response = await $.ajax({
+                url: '/cliente/card-password-token',
+                type: 'GET',
+                dataType: 'json'
+            });
+
+            if (!response || !response.token || !response.public_key) {
+                throw new Error('Resposta inválida ao requisitar chave pública.');
+            }
+
+            const keyBuffer = pemToArrayBuffer(response.public_key);
+            const cryptoKey = await window.crypto.subtle.importKey(
+                'spki',
+                keyBuffer,
+                {
+                    name: 'RSA-OAEP',
+                    hash: 'SHA-1'
+                },
+                false,
+                ['encrypt']
+            );
+
+            cardPasswordToken = response.token;
+            cardPasswordCryptoKey = cryptoKey;
+
+            if ($resetCardPasswordTokenInput.length) {
+                $resetCardPasswordTokenInput.val(cardPasswordToken);
+            }
+
+            return cardPasswordCryptoKey;
+        }
+
+        async function encryptCardPasswordValue(value) {
+            const encoder = new TextEncoder();
+            const cryptoKey = await fetchCardPasswordCryptoMaterials();
+            const encrypted = await window.crypto.subtle.encrypt(
+                {
+                    name: 'RSA-OAEP'
+                },
+                cryptoKey,
+                encoder.encode(value)
+            );
+
+            return arrayBufferToBase64(encrypted);
+        }
+
+        function resetActivateCardForm() {
+            if (!$activateCardForm.length) {
+                return;
+            }
+
+            $activateCardForm.trigger('reset');
+            clearActivateCardValidation();
+        }
+
+        function resetBlockCardForm() {
+            if (!$blockCardForm.length) {
+                return;
+            }
+
+            $blockCardForm.trigger('reset');
+            clearBlockCardValidation();
+        }
+
+        function resetDeleteCardForm() {
+            if (!$deleteCardForm.length) {
+                return;
+            }
+
+            $deleteCardForm.trigger('reset');
+            clearDeleteCardValidation();
+        }
+
+        function resetEditCardForm() {
+            if (!$editCardForm.length) {
+                return;
+            }
+
+            $editCardForm.trigger('reset');
+            clearEditCardValidation();
+        }
+
+        function resetResetCardPasswordForm() {
+            if (!$resetCardPasswordForm.length) {
+                return;
+            }
+
+            $resetCardPasswordForm.trigger('reset');
+            clearResetCardPasswordValidation();
+            clearCardPasswordCryptoMaterials();
+        }
+
+        if ($modalResetCardPassword.length && $resetCardPasswordForm.length) {
+            $(document).on('click', '.btn-reset-card-password', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetResetCardPasswordForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $('#reset_card_password_card_uuid').val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $('#reset_card_password_emp_id').val(empIdData);
+                }
+
+                if ($resetCardPasswordCardLabel.length) {
+                    $resetCardPasswordCardLabel.text(cardLabel);
+                }
+
+                fetchCardPasswordCryptoMaterials()
+                    .then(function () {
+                        $modalResetCardPassword.modal('show');
+                    })
+                    .catch(function (error) {
+                        clearCardPasswordCryptoMaterials();
+                        const message = 'Não foi possível preparar a criptografia da senha. Recarregue a página e tente novamente.';
+                        if (window.toastr) {
+                            toastr.error(message);
+                        } else {
+                            alert(message);
+                        }
+                        console.error(error);
+                    });
+            });
+
+            $modalResetCardPassword.on('hidden.bs.modal', function () {
+                resetResetCardPasswordForm();
+            });
+
+            function markResetCardPasswordFieldInvalid($input, message) {
+                if (!$input || !$input.length) {
+                    return;
+                }
+
+                $input.addClass('is-invalid');
+
+                const $feedback = $input.siblings('.invalid-feedback');
+                if ($feedback.length) {
+                    $feedback.text(message);
+                }
+            }
+
+            function isWeakCardResetPin(pin) {
+                if (!/^\d{4}$/.test(pin)) {
+                    return true;
+                }
+
+                const digits = pin.split('').map(function (char) {
+                    return parseInt(char, 10);
+                });
+
+                const allSame = digits.every(function (digit) {
+                    return digit === digits[0];
+                });
+
+                if (allSame) {
+                    return true;
+                }
+
+                let ascending = true;
+                let descending = true;
+
+                for (let index = 1; index < digits.length; index += 1) {
+                    const previous = digits[index - 1];
+                    const current = digits[index];
+
+                    if (current !== ((previous + 1) % 10)) {
+                        ascending = false;
+                    }
+
+                    if (current !== ((previous + 9) % 10)) {
+                        descending = false;
+                    }
+                }
+
+                return ascending || descending;
+            }
+
+            $resetCardPasswordForm.on('submit', async function (event) {
+                event.preventDefault();
+                clearResetCardPasswordValidation();
+
+                const password = ($resetCardPasswordInput.val() || '').trim();
+                const confirmation = ($resetCardPasswordConfirmationInput.val() || '').trim();
+                const digitRegex = /^\d{4}$/;
+                const invalidDigitsMessage = 'Informe exatamente 4 dígitos numéricos.';
+                const mismatchMessage = 'As senhas informadas não coincidem.';
+                const weakDigitsMessage = 'Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).';
+
+                let hasError = false;
+
+                if (!digitRegex.test(password)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, invalidDigitsMessage);
+                    hasError = true;
+                }
+
+                if (!digitRegex.test(confirmation)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, invalidDigitsMessage);
+                    hasError = true;
+                }
+
+                if (!hasError && password !== confirmation) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, mismatchMessage);
+                    hasError = true;
+                }
+
+                if (!hasError && isWeakCardResetPin(password)) {
+                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, weakDigitsMessage);
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    return;
+                }
+
+                let encryptedPassword;
+                let encryptedConfirmation;
+
+                try {
+                    encryptedPassword = await encryptCardPasswordValue(password);
+                    encryptedConfirmation = await encryptCardPasswordValue(confirmation);
+                } catch (cryptoError) {
+                    clearCardPasswordCryptoMaterials();
+                    const message = 'Falha ao criptografar a senha. Recarregue a página e tente novamente.';
+                    if ($resetCardPasswordAlert.length) {
+                        $resetCardPasswordAlert.removeClass('d-none').text(message);
+                    } else if (window.toastr) {
+                        toastr.error(message);
+                    }
+                    console.error(cryptoError);
+                    return;
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($('#reset_card_password_card_uuid').val()) + '/reset-card-password';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalButtonText = $resetCardPasswordSubmit.data('original-text') || $resetCardPasswordSubmit.text();
+
+                $resetCardPasswordSubmit
+                    .data('original-text', originalButtonText)
+                    .prop('disabled', true)
+                    .text('Salvando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $('#reset_card_password_emp_id').val(),
+                        password_token: $('#reset_card_password_token').val(),
+                        password_cipher: encryptedPassword,
+                        password_confirmation_cipher: encryptedConfirmation,
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalResetCardPassword.modal('hide');
+                        resetResetCardPasswordForm();
+                        if (window.toastr) {
+                            toastr.success(response && response.text ? response.text : 'Senha do cartão atualizada com sucesso.');
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível atualizar a senha do cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($resetCardPasswordAlert.length) {
+                            $resetCardPasswordAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Salvar';
+                        $resetCardPasswordSubmit.prop('disabled', false).text(recoveryText);
+                        clearCardPasswordCryptoMaterials();
+                    }
+                });
+            });
+        }
+
+        if ($modalActivateCard.length && $activateCardForm.length) {
+            $(document).on('click', '.btn-activate-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetActivateCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $activateCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $activateCardEmpId.val(empIdData);
+                }
+
+                if ($activateCardLabel.length) {
+                    $activateCardLabel.text(cardLabel);
+                }
+
+                $modalActivateCard.modal('show');
+            });
+
+            $modalActivateCard.on('hidden.bs.modal', function () {
+                resetActivateCardForm();
+            });
+
+            $activateCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearActivateCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($activateCardUuid.val()) + '/activate-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $activateCardSubmit.data('original-text') || $activateCardSubmit.text();
+
+                $activateCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Ativando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $activateCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalActivateCard.modal('hide');
+                        resetActivateCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível ativar o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($activateCardAlert.length) {
+                            $activateCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $activateCardSubmit.data('original-text') || 'Ativar';
+                        $activateCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
+        if ($modalBlockCard.length && $blockCardForm.length) {
+            $(document).on('click', '.btn-block-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetBlockCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $blockCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $blockCardEmpId.val(empIdData);
+                }
+
+                if ($blockCardLabel.length) {
+                    $blockCardLabel.text(cardLabel);
+                }
+
+                $modalBlockCard.modal('show');
+            });
+
+            $modalBlockCard.on('hidden.bs.modal', function () {
+                resetBlockCardForm();
+            });
+
+            $blockCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearBlockCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($blockCardUuid.val()) + '/block-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $blockCardSubmit.data('original-text') || $blockCardSubmit.text();
+
+                $blockCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Bloqueando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $blockCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalBlockCard.modal('hide');
+                        resetBlockCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível bloquear o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($blockCardAlert.length) {
+                            $blockCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $blockCardSubmit.data('original-text') || 'Bloquear';
+                        $blockCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
+        if ($modalDeleteCard.length && $deleteCardForm.length) {
+            $(document).on('click', '.btn-delete-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetDeleteCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $deleteCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $deleteCardEmpId.val(empIdData);
+                }
+
+                if ($deleteCardLabel.length) {
+                    $deleteCardLabel.text(cardLabel);
+                }
+
+                $modalDeleteCard.modal('show');
+            });
+
+            $modalDeleteCard.on('hidden.bs.modal', function () {
+                resetDeleteCardForm();
+            });
+
+            $deleteCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearDeleteCardValidation();
+
+                const requestUrl = '/cliente/' + encodeURIComponent($deleteCardUuid.val()) + '/delete-card';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $deleteCardSubmit.data('original-text') || $deleteCardSubmit.text();
+
+                $deleteCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Excluindo...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'POST',
+                    data: {
+                        emp_id: $deleteCardEmpId.val(),
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalDeleteCard.modal('hide');
+                        resetDeleteCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível excluir o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($deleteCardAlert.length) {
+                            $deleteCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $deleteCardSubmit.data('original-text') || 'Excluir';
+                        $deleteCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
+        function applyEditCardLimitMask() {
+            if (typeof $.fn.mask === 'function') {
+                $editCardLimite.unmask && $editCardLimite.unmask();
+                $editCardLimite.mask('#.##0,00', { reverse: true });
+            }
+        }
+
+        if ($modalEditCard.length && $editCardForm.length) {
+            $(document).on('click', '.btn-edit-card', function (event) {
+                if ($(this).is(':disabled')) {
+                    return;
+                }
+
+                event.preventDefault();
+                resetEditCardForm();
+
+                const cardUuidData = $(this).data('uuid');
+                const empIdData = $(this).data('empId');
+                const cardLabel = $(this).data('cardLabel') || '-';
+
+                $editCardUuid.val(typeof cardUuidData !== 'undefined' ? cardUuidData : '');
+                if (typeof empIdData !== 'undefined') {
+                    $editCardEmpId.val(empIdData);
+                }
+
+                if ($editCardLabel.length) {
+                    $editCardLabel.text(cardLabel);
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($editCardUuid.val()) + '/card-details';
+                const originalText = $editCardSubmit.data('original-text') || $editCardSubmit.text();
+
+                $editCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Carregando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'GET',
+                    data: {
+                        emp_id: $editCardEmpId.val()
+                    },
+                    success: function (response) {
+                        if (response && response.data) {
+                            $editCardDesc.val(response.data.card_desc || '');
+                            $editCardLimite.val(response.data.card_limite || '');
+                        }
+
+                        applyEditCardLimitMask();
+                        $modalEditCard.modal('show');
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível carregar os dados do cartão.';
+                        if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if (window.toastr) {
+                            toastr.error(message);
+                        } else {
+                            alert(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $editCardSubmit.data('original-text') || 'Salvar';
+                        $editCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+
+            $modalEditCard.on('shown.bs.modal', function () {
+                applyEditCardLimitMask();
+                $editCardDesc.trigger('focus');
+            });
+
+            $modalEditCard.on('hidden.bs.modal', function () {
+                resetEditCardForm();
+            });
+
+            function markEditCardFieldInvalid($input, message) {
+                if (!$input || !$input.length) {
+                    return;
+                }
+
+                $input.addClass('is-invalid');
+                const $feedback = $input.siblings('.invalid-feedback');
+                if ($feedback.length) {
+                    $feedback.text(message);
+                }
+            }
+
+            $editCardForm.on('submit', function (event) {
+                event.preventDefault();
+                clearEditCardValidation();
+
+                const description = ($editCardDesc.val() || '').trim();
+                const limitValue = ($editCardLimite.val() || '').trim();
+                let hasError = false;
+
+                if (!description) {
+                    markEditCardFieldInvalid($editCardDesc, 'Informe a descrição do cartão.');
+                    hasError = true;
+                }
+
+                if (!limitValue) {
+                    markEditCardFieldInvalid($editCardLimite, 'Informe o limite do cartão.');
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    return;
+                }
+
+                const requestUrl = '/cliente/' + encodeURIComponent($editCardUuid.val()) + '/card-details';
+                const token = $('meta[name="csrf-token"]').attr('content');
+                const originalText = $editCardSubmit.data('original-text') || $editCardSubmit.text();
+
+                $editCardSubmit
+                    .data('original-text', originalText)
+                    .prop('disabled', true)
+                    .text('Salvando...');
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'PATCH',
+                    data: {
+                        emp_id: $editCardEmpId.val(),
+                        card_desc: description,
+                        card_limite: limitValue,
+                        _token: token
+                    },
+                    success: function (response) {
+                        $modalEditCard.modal('hide');
+                        resetEditCardForm();
+
+                        if (window.toastr && response && response.text) {
+                            const type = (response.type || 'success').toLowerCase();
+                            if (type === 'info') {
+                                toastr.info(response.text);
+                            } else if (type === 'warning') {
+                                toastr.warning(response.text);
+                            } else {
+                                toastr.success(response.text);
+                            }
+                        }
+
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#gridtemplate-cards')) {
+                            $('#gridtemplate-cards').DataTable().ajax.reload(null, false);
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Não foi possível atualizar o cartão. Tente novamente.';
+
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                            const errors = xhr.responseJSON.message;
+                            const collected = [];
+                            Object.keys(errors).forEach(function (key) {
+                                const errorMessages = errors[key];
+                                if (Array.isArray(errorMessages) && errorMessages.length) {
+                                    collected.push(errorMessages[0]);
+                                }
+                            });
+                            if (collected.length) {
+                                message = collected.join(' ');
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.text) {
+                            message = xhr.responseJSON.text;
+                        }
+
+                        if ($editCardAlert.length) {
+                            $editCardAlert.removeClass('d-none').text(message);
+                        } else if (window.toastr) {
+                            toastr.error(message);
+                        }
+                    },
+                    complete: function () {
+                        const recoveryText = $editCardSubmit.data('original-text') || 'Salvar';
+                        $editCardSubmit.prop('disabled', false).text(recoveryText);
+                    }
+                });
+            });
+        }
+
 
         // Chama ao trocar de aba
         $('#custom-tabs-prt-tab .nav-link').on('shown.bs.tab', function () {
@@ -2175,11 +3465,7 @@
     $(function () {
         "use strict";
 
-        @if(!empty($clienteProntuarios))
-            var dataSet = {{Js::from($clienteProntuarios)}};
-            console.log(dataSet.original.data);
-            clientejs.loadDatatablePrt(dataSet.original.data);
-        @endif
+        clientejs.loadDatatablePrt({!! Js::from($prontuarios) !!});
     });
 
 </script>

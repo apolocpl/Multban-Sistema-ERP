@@ -127,7 +127,21 @@
                                 <li class="breadcrumb-item"><a href="/">Home</a></li>
                                 <li class="breadcrumb-item"><a href="/{{Request::segment(1)}}">@yield('page.title')</a>
                                 </li>
-                                <li class="breadcrumb-item active">{!!ucfirst((Request::segment(2)))!!}</li>
+                                @php
+                                    $defaultBreadcrumb = Request::segment(2);
+                                    if (is_string($defaultBreadcrumb) && $defaultBreadcrumb !== '') {
+                                        $defaultBreadcrumb = ucfirst($defaultBreadcrumb);
+                                    } else {
+                                        $defaultBreadcrumb = '';
+                                    }
+                                    $breadcrumbLabel = $__env->yieldContent('page.breadcrumb', $defaultBreadcrumb);
+                                    if (! is_string($breadcrumbLabel)) {
+                                        $breadcrumbLabel = '';
+                                    } else {
+                                        $breadcrumbLabel = trim($breadcrumbLabel);
+                                    }
+                                @endphp
+                                <li class="breadcrumb-item active">{{ $breadcrumbLabel }}</li>
                                 @else
                                 <li class="breadcrumb-item active">Home</li>
                                 @endif
