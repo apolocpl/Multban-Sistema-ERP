@@ -24,7 +24,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1458,52 +1457,101 @@ class ClienteController extends Controller
             $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
             $input = $request->all();
 
-            $input['cliente_doc'] = removerCNPJ($request->clicgc);
-            $input['cliente_cel'] = removerMascaraTelefone($request->clicep);
-            $input['cliente_telfixo'] = removerMascaraTelefone($request->clicep);
-            $input['cliente_cel_s'] = removerMascaraTelefone($request->clicep);
-            $input['cliente_cep'] = removerMascaraCEP($request->clicep);
+            $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
+            $input['cliente_rendam'] = formatarTextoParaDecimal($request->cliente_rendam);
+            $input['cliente_cel'] = removerMascaraTelefone($request->cliente_cel);
+            $input['cliente_telfixo'] = removerMascaraTelefone($request->cliente_telfixo);
+            $input['cliente_cel_s'] = $request->filled('cliente_cel_s')
+                ? removerMascaraTelefone($request->cliente_cel_s)
+                : $cliente->cliente_cel_s;
+            $input['cliente_cep'] = removerMascaraCEP($request->cliente_cep);
+            $input['cliente_cep_s'] = removerMascaraCEP($request->cliente_cep_s);
 
             $validator = Validator::make($input, $cliente->rules($id), $cliente->messages(), $cliente->attributes());
 
             if ($validator->fails()) {
                 return response()->json([
-                    'message'   => $validator->errors(),
-
-                ], 422);
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            // Verifica se ouve mudanças nos campos, se sim grava na auditoria
-            foreach ($input as $key => $value) {
-                if (Arr::exists($cliente->toArray(), $key)) {
-                    if ($value != $cliente->$key) {
-                        if ($key == 'updated_at' || $key == 'created_at') {
-                        } else {
+            $originalData = $cliente->getOriginal();
+            $userRoles = Auth::user()->roles->pluck('name')->all();
+            $canChangeStatus = in_array('admin', $userRoles, true);
 
-                            $logAuditoria = new LogAuditoria;
-                            $logAuditoria->auddat = date('Y-m-d H:i:s');
-                            $logAuditoria->audusu = Auth::user()->username;
-                            $logAuditoria->audtar = 'Alterou o campo ' . $key;
-                            $logAuditoria->audarq = $cliente->getTable();
-                            $logAuditoria->audlan = $cliente->id;
-                            $logAuditoria->audant = $cliente->$key;
-                            $logAuditoria->auddep = $value;
-                            $logAuditoria->audnip = request()->ip();
+            $cliente->cliente_tipo = $request->cliente_tipo;
+            $cliente->convenio_id = $request->convenio_id;
+            $cliente->carteirinha = $request->carteirinha;
+            $cliente->cliente_dt_nasc = $this->normalizeDate($request->cliente_dt_nasc);
+            $cliente->cliente_doc = $input['cliente_doc'];
+            $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
+            $cliente->cliente_pasprt = $request->cliente_pasprt;
+            if ($canChangeStatus) {
+                $cliente->cliente_sts = $request->cliente_sts;
+            }
+            $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
+            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
+            $cliente->cliente_nm_card = $request->cliente_nm_card;
+            $cliente->cliente_email = $request->cliente_email;
+            $cliente->cliente_email_s = $request->cliente_email_s;
+            $cliente->cliente_cel = $input['cliente_cel'];
+            $cliente->cliente_cel_s = $input['cliente_cel_s'];
+            $cliente->cliente_telfixo = $input['cliente_telfixo'];
+            $cliente->cliente_rendam = $input['cliente_rendam'];
+            $cliente->cliente_rdam_s = $request->cliente_rdam_s;
+            $cliente->cliente_dt_fech = $request->cliente_dt_fech;
+            $cliente->cliente_cep = $input['cliente_cep'];
+            $cliente->cliente_end = mb_strtoupper(rtrim($request->cliente_end), 'UTF-8');
+            $cliente->cliente_endnum = $request->cliente_endnum;
+            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->cliente_endcmp), 'UTF-8');
+            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->cliente_endbair), 'UTF-8');
+            $cliente->cliente_endcid = $request->cliente_endcid;
+            $cliente->cliente_endest = $request->cliente_endest;
+            $cliente->cliente_endpais = $request->cliente_endpais;
+            $cliente->cliente_cep_s = $input['cliente_cep_s'];
+            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->cliente_end_s), 'UTF-8');
+            $cliente->cliente_endnum_s = $request->cliente_endnum_s;
+            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->cliente_endcmp_s), 'UTF-8');
+            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->cliente_endbair_s), 'UTF-8');
+            $cliente->cliente_endcid_s = $request->cliente_endcid_s;
+            $cliente->cliente_endest_s = $request->cliente_endest_s;
+            $cliente->cliente_endpais_s = $request->cliente_endpais_s;
+            $cliente->cliente_score = $request->cliente_score;
+            $cliente->cliente_lmt_sg = $request->cliente_lmt_sg;
+            $cliente->modificador = Auth::user()->user_id;
+            $cliente->dthr_ch = Carbon::now();
 
-                            $logAuditoria->save();
-                        }
-                    }
+            $updatedAttributes = $cliente->getAttributes();
+            foreach ($originalData as $key => $oldValue) {
+                if (!array_key_exists($key, $updatedAttributes)) {
+                    continue;
                 }
+
+                $newValue = $updatedAttributes[$key];
+                if ($newValue == $oldValue || in_array($key, ['updated_at', 'created_at'], true)) {
+                    continue;
+                }
+
+                $logAuditoria = new LogAuditoria;
+                $logAuditoria->auddat = date('Y-m-d H:i:s');
+                $logAuditoria->audusu = Auth::user()->username;
+                $logAuditoria->audtar = 'Alterou o campo ' . $key;
+                $logAuditoria->audarq = $cliente->getTable();
+                $logAuditoria->audlan = $cliente->id;
+                $logAuditoria->audant = $oldValue;
+                $logAuditoria->auddep = $newValue;
+                $logAuditoria->audnip = request()->ip();
+                $logAuditoria->save();
             }
 
             $cliente->save();
 
             return response()->json([
-                'message'   => 'Cliente atualizado com sucesso.',
+                'message' => 'Cliente atualizado com sucesso.',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'message'   => $e->getMessage(),
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
