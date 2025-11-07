@@ -13,5 +13,9 @@ class CardMod extends Model
 
     protected $primaryKey = 'card_mod';
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
     public $timestamps = false;
 }

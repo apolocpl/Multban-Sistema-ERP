@@ -13,5 +13,9 @@ class CardTipo extends Model
 
     protected $primaryKey = 'card_tp';
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
     public $timestamps = false;
 }
