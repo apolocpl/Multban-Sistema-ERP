@@ -787,11 +787,11 @@ class ClienteController extends Controller
             $cliente = new Cliente;
             $input = $request->all();
 
-            $input['cliente_nome'] = rtrim($request->cliente_nome);
-            $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
-            $input['cliente_rendam'] = formatarTextoParaDecimal($request->cliente_rendam);
+            $input['cliente_nome'] = rtrim($request->input('cliente_nome'));
+            $input['cliente_doc'] = removerCNPJ($request->input('cliente_doc'));
+            $input['cliente_rendam'] = formatarTextoParaDecimal($request->input('cliente_rendam'));
 
-            $clienteChk = Cliente::where('cliente_doc', removerCNPJ($request->cliente_doc))->first();
+            $clienteChk = Cliente::where('cliente_doc', removerCNPJ($request->input('cliente_doc')))->first();
             if ($clienteChk) {
                 return response()->make(json_encode([
                     'message_type' => 'Já existe um cliente cadastrado com esse CPF/CNPJ.',
@@ -807,44 +807,44 @@ class ClienteController extends Controller
                 ]), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
             }
 
-            $cliente->cliente_tipo = $request->cliente_tipo;
+            $cliente->cliente_tipo = $request->input('cliente_tipo');
             $cliente->convenio_id = $request->convenio_id;
             $cliente->carteirinha = $request->carteirinha;
-            $cliente->cliente_dt_nasc = $this->normalizeDate($request->cliente_dt_nasc);
-            $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
-            $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
-            $cliente->cliente_pasprt = $request->cliente_pasprt;
-            $cliente->cliente_sts = ! $canChangeStatus ? 'NA' : $request->cliente_sts; /* Cliente nasce com o status "Em Análise" */
+            $cliente->cliente_dt_nasc = $this->normalizeDate($request->input('cliente_dt_nasc'));
+            $cliente->cliente_doc = removerCNPJ($request->input('cliente_doc'));
+            $cliente->cliente_rg = removerCNPJ($request->input('cliente_rg'));
+            $cliente->cliente_pasprt = $request->input('cliente_pasprt');
+            $cliente->cliente_sts = ! $canChangeStatus ? 'NA' : $request->input('cliente_sts'); /* Cliente nasce com o status "Em Análise" */
             $cliente->cliente_uuid = Str::uuid()->toString();
-            $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
-            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
-            $cliente->cliente_nm_card = $request->cliente_nm_card;
-            $cliente->cliente_email = $request->cliente_email;
-            $cliente->cliente_email_s = $request->cliente_email_s;
-            $cliente->cliente_cel = removerMascaraTelefone($request->cliente_cel);
-            $cliente->cliente_cel_s = removerMascaraTelefone($request->cliente_cel_s);
-            $cliente->cliente_telfixo = removerMascaraTelefone($request->cliente_telfixo);
+            $cliente->cliente_nome = mb_strtoupper(rtrim($request->input('cliente_nome')), 'UTF-8');
+            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->input('cliente_nm_alt')), 'UTF-8');
+            $cliente->cliente_nm_card = $request->input('cliente_nm_card');
+            $cliente->cliente_email = $request->input('cliente_email');
+            $cliente->cliente_email_s = $request->input('cliente_email_s');
+            $cliente->cliente_cel = removerMascaraTelefone($request->input('cliente_cel'));
+            $cliente->cliente_cel_s = removerMascaraTelefone($request->input('cliente_cel_s'));
+            $cliente->cliente_telfixo = removerMascaraTelefone($request->input('cliente_telfixo'));
             $cliente->cliente_rendam = $input['cliente_rendam'];
-            $cliente->cliente_rdam_s = $request->cliente_rdam_s;
-            $cliente->cliente_dt_fech = $request->cliente_dt_fech;
-            $cliente->cliente_cep = removerMascaraCEP($request->cliente_cep);
-            $cliente->cliente_end = mb_strtoupper(rtrim($request->cliente_end), 'UTF-8');
-            $cliente->cliente_endnum = $request->cliente_endnum;
-            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->cliente_endcmp), 'UTF-8');
-            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->cliente_endbair), 'UTF-8');
-            $cliente->cliente_endcid = $request->cliente_endcid;
-            $cliente->cliente_endest = $request->cliente_endest;
-            $cliente->cliente_endpais = $request->cliente_endpais;
-            $cliente->cliente_cep_s = removerMascaraCEP($request->cliente_cep_s);
-            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->cliente_end_s), 'UTF-8');
-            $cliente->cliente_endnum_s = $request->cliente_endnum_s;
-            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->cliente_endcmp_s), 'UTF-8');
-            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->cliente_endbair_s), 'UTF-8');
-            $cliente->cliente_endcid_s = $request->cliente_endcid_s;
-            $cliente->cliente_endest_s = $request->cliente_endest_s;
-            $cliente->cliente_endpais_s = $request->cliente_endpais_s;
-            $cliente->cliente_score = $request->cliente_score;
-            $cliente->cliente_lmt_sg = $request->cliente_lmt_sg;
+            $cliente->cliente_rdam_s = formatarTextoParaDecimal($request->input('cliente_rdam_s'));
+            $cliente->cliente_dt_fech = $request->input('cliente_dt_fech');
+            $cliente->cliente_cep = removerMascaraCEP($request->input('cliente_cep'));
+            $cliente->cliente_end = mb_strtoupper(rtrim($request->input('cliente_end')), 'UTF-8');
+            $cliente->cliente_endnum = $request->input('cliente_endnum');
+            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->input('cliente_endcmp')), 'UTF-8');
+            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->input('cliente_endbair')), 'UTF-8');
+            $cliente->cliente_endcid = $request->input('cliente_endcid');
+            $cliente->cliente_endest = $request->input('cliente_endest');
+            $cliente->cliente_endpais = $request->input('cliente_endpais');
+            $cliente->cliente_cep_s = removerMascaraCEP($request->input('cliente_cep_s'));
+            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->input('cliente_end_s')), 'UTF-8');
+            $cliente->cliente_endnum_s = $request->input('cliente_endnum_s');
+            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->input('cliente_endcmp_s')), 'UTF-8');
+            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->input('cliente_endbair_s')), 'UTF-8');
+            $cliente->cliente_endcid_s = $request->input('cliente_endcid_s');
+            $cliente->cliente_endest_s = $request->input('cliente_endest_s');
+            $cliente->cliente_endpais_s = $request->input('cliente_endpais_s');
+            $cliente->cliente_score = $request->input('cliente_score');
+            $cliente->cliente_lmt_sg = $request->input('cliente_lmt_sg');
             $cliente->criador = Auth::user()->user_id;
             $cliente->modificador = Auth::user()->user_id;
             $cliente->dthr_cr = Carbon::now();
@@ -1455,73 +1455,75 @@ class ClienteController extends Controller
 
             $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
             if ($cliente->cliente_sts === 'EX') {
-                return response(response()->json([
+                return response()->json([
                     'message_type' => 'Este cliente está excluído e não pode ser alterado.',
                     'message'      => [],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY)->getContent(), Response::HTTP_UNPROCESSABLE_ENTITY);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             $input = $request->all();
 
-            $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
-            $input['cliente_rendam'] = formatarTextoParaDecimal($request->cliente_rendam);
-            $input['cliente_cel'] = removerMascaraTelefone($request->cliente_cel);
-            $input['cliente_telfixo'] = removerMascaraTelefone($request->cliente_telfixo);
+            $input['cliente_doc'] = removerCNPJ($request->input('cliente_doc'));
+            $input['cliente_rendam'] = formatarTextoParaDecimal($request->input('cliente_rendam'));
+            $input['cliente_rdam_s'] = formatarTextoParaDecimal($request->input('cliente_rdam_s'));
+            $input['cliente_cel'] = removerMascaraTelefone($request->input('cliente_cel'));
+            $input['cliente_telfixo'] = removerMascaraTelefone($request->input('cliente_telfixo'));
             $input['cliente_cel_s'] = $request->filled('cliente_cel_s')
-                ? removerMascaraTelefone($request->cliente_cel_s)
+                ? removerMascaraTelefone($request->input('cliente_cel_s'))
                 : $cliente->cliente_cel_s;
-            $input['cliente_cep'] = removerMascaraCEP($request->cliente_cep);
-            $input['cliente_cep_s'] = removerMascaraCEP($request->cliente_cep_s);
+            $input['cliente_cep'] = removerMascaraCEP($request->input('cliente_cep'));
+            $input['cliente_cep_s'] = removerMascaraCEP($request->input('cliente_cep_s'));
 
             $validator = Validator::make($input, $cliente->rules($id), $cliente->messages(), $cliente->attributes());
 
             if ($validator->fails()) {
-                $payload = ['message' => $validator->errors()];
-                return response()->make(json_encode($payload), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
+                return response()->json([
+                    'message' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $originalData = $cliente->getOriginal();
             $userRoles = Auth::user()->roles->pluck('name')->all();
             $canChangeStatus = in_array('admin', $userRoles, true);
 
-            $cliente->cliente_tipo = $request->cliente_tipo;
+            $cliente->cliente_tipo = $request->input('cliente_tipo');
             $cliente->convenio_id = $request->convenio_id;
             $cliente->carteirinha = $request->carteirinha;
-            $cliente->cliente_dt_nasc = $this->normalizeDate($request->cliente_dt_nasc);
+            $cliente->cliente_dt_nasc = $this->normalizeDate($request->input('cliente_dt_nasc'));
             $cliente->cliente_doc = $input['cliente_doc'];
-            $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
-            $cliente->cliente_pasprt = $request->cliente_pasprt;
+            $cliente->cliente_rg = removerCNPJ($request->input('cliente_rg'));
+            $cliente->cliente_pasprt = $request->input('cliente_pasprt');
             if ($canChangeStatus) {
-                $cliente->cliente_sts = $request->cliente_sts;
+                $cliente->cliente_sts = $request->input('cliente_sts');
             }
-            $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_nome), 'UTF-8');
-            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->cliente_nm_alt), 'UTF-8');
-            $cliente->cliente_nm_card = $request->cliente_nm_card;
-            $cliente->cliente_email = $request->cliente_email;
-            $cliente->cliente_email_s = $request->cliente_email_s;
+            $cliente->cliente_nome = mb_strtoupper(rtrim($request->input('cliente_nome')), 'UTF-8');
+            $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->input('cliente_nm_alt')), 'UTF-8');
+            $cliente->cliente_nm_card = $request->input('cliente_nm_card');
+            $cliente->cliente_email = $request->input('cliente_email');
+            $cliente->cliente_email_s = $request->input('cliente_email_s');
             $cliente->cliente_cel = $input['cliente_cel'];
             $cliente->cliente_cel_s = $input['cliente_cel_s'];
             $cliente->cliente_telfixo = $input['cliente_telfixo'];
             $cliente->cliente_rendam = $input['cliente_rendam'];
-            $cliente->cliente_rdam_s = $request->cliente_rdam_s;
-            $cliente->cliente_dt_fech = $request->cliente_dt_fech;
+            $cliente->cliente_rdam_s = $input['cliente_rdam_s'];
+            $cliente->cliente_dt_fech = $request->input('cliente_dt_fech');
             $cliente->cliente_cep = $input['cliente_cep'];
-            $cliente->cliente_end = mb_strtoupper(rtrim($request->cliente_end), 'UTF-8');
-            $cliente->cliente_endnum = $request->cliente_endnum;
-            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->cliente_endcmp), 'UTF-8');
-            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->cliente_endbair), 'UTF-8');
-            $cliente->cliente_endcid = $request->cliente_endcid;
-            $cliente->cliente_endest = $request->cliente_endest;
-            $cliente->cliente_endpais = $request->cliente_endpais;
+            $cliente->cliente_end = mb_strtoupper(rtrim($request->input('cliente_end')), 'UTF-8');
+            $cliente->cliente_endnum = $request->input('cliente_endnum');
+            $cliente->cliente_endcmp = mb_strtoupper(rtrim($request->input('cliente_endcmp')), 'UTF-8');
+            $cliente->cliente_endbair = mb_strtoupper(rtrim($request->input('cliente_endbair')), 'UTF-8');
+            $cliente->cliente_endcid = $request->input('cliente_endcid');
+            $cliente->cliente_endest = $request->input('cliente_endest');
+            $cliente->cliente_endpais = $request->input('cliente_endpais');
             $cliente->cliente_cep_s = $input['cliente_cep_s'];
-            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->cliente_end_s), 'UTF-8');
-            $cliente->cliente_endnum_s = $request->cliente_endnum_s;
-            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->cliente_endcmp_s), 'UTF-8');
-            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->cliente_endbair_s), 'UTF-8');
-            $cliente->cliente_endcid_s = $request->cliente_endcid_s;
-            $cliente->cliente_endest_s = $request->cliente_endest_s;
-            $cliente->cliente_endpais_s = $request->cliente_endpais_s;
-            $cliente->cliente_score = $request->cliente_score;
-            $cliente->cliente_lmt_sg = $request->cliente_lmt_sg;
+            $cliente->cliente_end_s = mb_strtoupper(rtrim($request->input('cliente_end_s')), 'UTF-8');
+            $cliente->cliente_endnum_s = $request->input('cliente_endnum_s');
+            $cliente->cliente_endcmp_s = mb_strtoupper(rtrim($request->input('cliente_endcmp_s')), 'UTF-8');
+            $cliente->cliente_endbair_s = mb_strtoupper(rtrim($request->input('cliente_endbair_s')), 'UTF-8');
+            $cliente->cliente_endcid_s = $request->input('cliente_endcid_s');
+            $cliente->cliente_endest_s = $request->input('cliente_endest_s');
+            $cliente->cliente_endpais_s = $request->input('cliente_endpais_s');
+            $cliente->cliente_score = $request->input('cliente_score');
+            $cliente->cliente_lmt_sg = $request->input('cliente_lmt_sg');
             $cliente->modificador = Auth::user()->user_id;
             $cliente->dthr_ch = Carbon::now();
 
@@ -1940,7 +1942,7 @@ class ClienteController extends Controller
             $prontuariosQuery = ClienteProntuario::where('emp_id', $empresaId);
 
             if ($request->filled('cliente_id')) {
-                $cliente = $this->getClienteForUserOrFail((int) $request->cliente_id, 'manageRelatedData');
+                $cliente = $this->getClienteForUserOrFail((int) $request->input('cliente_id'), 'manageRelatedData');
                 $prontuariosQuery->where('cliente_id', $cliente->cliente_id);
             }
 
@@ -2046,23 +2048,23 @@ class ClienteController extends Controller
             ->where('tbdm_clientes_emp.emp_id', $empresaId);
 
         if ($request->filled('cliente_sts')) {
-            $clientesQuery->where('tbdm_clientes_geral.cliente_sts', $request->cliente_sts);
+            $clientesQuery->where('tbdm_clientes_geral.cliente_sts', $request->input('cliente_sts'));
         }
 
         if ($request->filled('cliente_tipo')) {
-            $clientesQuery->where('tbdm_clientes_geral.cliente_tipo', $request->cliente_tipo);
+            $clientesQuery->where('tbdm_clientes_geral.cliente_tipo', $request->input('cliente_tipo'));
         }
 
         if ($request->filled('cliente_id')) {
-            if (is_numeric($request->cliente_id)) {
-                $clientesQuery->where('tbdm_clientes_geral.cliente_id', $request->cliente_id);
+            if (is_numeric($request->input('cliente_id'))) {
+                $clientesQuery->where('tbdm_clientes_geral.cliente_id', $request->input('cliente_id'));
             } else {
-                $clientesQuery->where('tbdm_clientes_geral.cliente_nome', 'like', '%' . $request->cliente_id . '%');
+                $clientesQuery->where('tbdm_clientes_geral.cliente_nome', 'like', '%' . $request->input('cliente_id') . '%');
             }
         }
 
         if ($request->filled('cliente_doc')) {
-            $clientesQuery->where('tbdm_clientes_geral.cliente_doc', removerCNPJ($request->cliente_doc));
+            $clientesQuery->where('tbdm_clientes_geral.cliente_doc', removerCNPJ($request->input('cliente_doc')));
         }
 
         if ($request->filled('nome_multban')) {
@@ -2172,7 +2174,7 @@ class ClienteController extends Controller
 
             $empresaId = $this->authenticatedEmpresaId((int) $request->input('emp_id'));
 
-            if (empty($request->cliente_id)) {
+            if (empty($request->input('cliente_id'))) {
                 return response()->json([
                     'message_type' => 'Cliente ainda não cadatrado, favor cadastrar o cliente antes de criar o cartão.',
                     'message'      => [],
@@ -2225,7 +2227,7 @@ class ClienteController extends Controller
                 $cnpj = substr(removerCNPJ($empresa->emp_cnpj), 0, 7);
             }
 
-            $cliente = $this->getClienteForUserOrFail((int) $request->cliente_id, 'manageRelatedData');
+            $cliente = $this->getClienteForUserOrFail((int) $request->input('cliente_id'), 'manageRelatedData');
             $cpf = '';
             if ($cliente) {
                 $cpf = substr(removerCNPJ($cliente->cliente_doc), 0, 7);
