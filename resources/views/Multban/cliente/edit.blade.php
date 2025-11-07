@@ -2159,6 +2159,27 @@
 
     $(document).ready(function () {
 
+        (function persistActiveClienteTab() {
+            const clienteIdInput = document.getElementById('cliente_id');
+            const storageKey = 'cliente_edit_active_tab_' + (clienteIdInput && clienteIdInput.value ? clienteIdInput.value : 'new');
+            const $tabToggles = $('a[data-toggle="pill"], a[data-toggle="tab"]');
+
+            const savedTarget = sessionStorage.getItem(storageKey);
+            if (savedTarget) {
+                const $savedTab = $tabToggles.filter('[href="' + savedTarget + '"]').first();
+                if ($savedTab.length) {
+                    $savedTab.tab('show');
+                }
+            }
+
+            $tabToggles.on('shown.bs.tab', function (event) {
+                const target = $(event.target).attr('href');
+                if (target) {
+                    sessionStorage.setItem(storageKey, target);
+                }
+            });
+        })();
+
         @if ( request()->has('pront') )
             $('#btnCancelar').attr('onclick', 'location.href="{{ route('agendamento.edit', request('pront')) }}"');
 
