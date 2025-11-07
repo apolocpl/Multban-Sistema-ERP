@@ -770,7 +770,7 @@ class ClienteController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         DB::beginTransaction();
         try {
             $emp_id = $this->tenantManager->ensure();
@@ -793,19 +793,18 @@ class ClienteController extends Controller
 
             $clienteChk = Cliente::where('cliente_doc', removerCNPJ($request->cliente_doc))->first();
             if ($clienteChk) {
-                return response()->json([
+                return response()->make(json_encode([
                     'message_type' => 'Já existe um cliente cadastrado com esse CPF/CNPJ.',
                     'message'      => ['cliente_doc' => ['Já existe um cliente cadastrado com esse CPF/CNPJ.']],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                ]), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
             }
 
             $validator = Validator::make($input, $cliente->rules(), $cliente->messages(), $cliente->attributes());
 
             if ($validator->fails()) {
-                return response()->json([
+                return response()->make(json_encode([
                     'message'   => $validator->errors(),
-
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                ]), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
             }
 
             $cliente->cliente_tipo = $request->cliente_tipo;
@@ -884,16 +883,16 @@ class ClienteController extends Controller
 
             // Session::flash('success', "Cliente " . str_pad($cliente->cliente_id, 5, "0", STR_PAD_LEFT) . " adicionado com sucesso.");
 
-            return response()->json([
+            return response()->make(json_encode([
                 'message'   => 'Cliente ' . str_pad($cliente->cliente_id, 5, '0', STR_PAD_LEFT) . ' adicionado com sucesso.',
                 'redirect'  => route('cliente.edit', ['id' => $cliente->cliente_id]),
-            ]);
+            ]), Response::HTTP_OK, ['Content-Type' => 'application/json']);
         } catch (Exception|\Throwable $e) {
             DB::rollBack();
 
-            return response()->json([
+            return response(response()->json([
                 'message'   => $e->getMessage(),
-            ], 500);
+            ], 500)->getContent(), 500);
         }
     }
 
@@ -1456,10 +1455,10 @@ class ClienteController extends Controller
 
             $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
             if ($cliente->cliente_sts === 'EX') {
-                return response()->json([
+                return response(response()->json([
                     'message_type' => 'Este cliente está excluído e não pode ser alterado.',
                     'message'      => [],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY)->getContent(), Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             $input = $request->all();
 
@@ -1476,9 +1475,8 @@ class ClienteController extends Controller
             $validator = Validator::make($input, $cliente->rules($id), $cliente->messages(), $cliente->attributes());
 
             if ($validator->fails()) {
-                return response()->json([
-                    'message' => $validator->errors(),
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                $payload = ['message' => $validator->errors()];
+                return response()->make(json_encode($payload), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
             }
 
             $originalData = $cliente->getOriginal();
@@ -1552,13 +1550,13 @@ class ClienteController extends Controller
 
             $cliente->save();
 
-            return response()->json([
+            return response(response()->json([
                 'message' => 'Cliente atualizado com sucesso.',
-            ]);
+            ])->getContent());
         } catch (\Throwable $e) {
-            return response()->json([
+            return response(response()->json([
                 'message' => $e->getMessage(),
-            ], 500);
+            ], 500)->getContent(), 500);
         }
     }
 
@@ -1577,22 +1575,22 @@ class ClienteController extends Controller
                 $cliente->cliente_sts = EmpresaStatusEnum::EXCLUIDO;
                 $cliente->save();
 
-                return response()->json([
+                return response(response()->json([
                     'title' => 'Sucesso',
                     'text'  => 'Registro Excluído com sucesso!',
                     'type'  => 'success',
-                ]);
+                ])->getContent());
             }
 
-            return response()->json([
+            return response(response()->json([
                 'title' => 'Erro',
                 'text'  => 'Registro não encontrado!',
                 'type'  => 'error',
-            ]);
+            ])->getContent());
         } catch (\Throwable $e) {
-            return response()->json([
+            return response()->make(json_encode([
                 'message'   => $e->getMessage(),
-            ], 500);
+            ]), 500, ['Content-Type' => 'application/json']);
         }
     }
 
