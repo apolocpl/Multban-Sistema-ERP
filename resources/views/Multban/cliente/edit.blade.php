@@ -2185,20 +2185,11 @@
 
         @endif
 
-         // Verifica o status do usuário e ajusta o texto do botão de ativação/inativação
+        // Ajusta o estado inicial do botão Excluir (texto do botão é controlado via JS global)
         if ("{{$cliente->cliente_sts}}" == "EX" ) {
-            $("#btnInativar").text("Ativar");
-            $("#btnInativar").prepend('<i class="fa fa-check"></i> ');
             $("#btnExcluir").prop('disabled', true);
-
-
-        } else if ("{{$cliente->cliente_sts}}" == "AT") {
-            $("#btnInativar").text("Inativar");
-            $("#btnInativar").prepend('<i class="fa fa-ban"></i> ');
-            $("#btnExcluir").prop('disabled', false);}
-         else {
-            $("#btnInativar").text("Inativar");
-            $("#btnInativar").prepend('<i class="fa fa-ban"></i> ');
+        } else {
+            $("#btnExcluir").prop('disabled', false);
         }
         // Exibição de mensagens de alerta
         $(".alert-dismissible")

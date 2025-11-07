@@ -1250,34 +1250,50 @@ $(function () {
         e.preventDefault();
         Pace.restart();
         Pace.track(function () {
-            $('#user_sts').val('EX');
-            $('#user_sts').trigger('change');
+            $('#cliente_sts').val('EX');
+            $('#cliente_sts').trigger('change');
             $('#btnSalvar').trigger('click');
             $("#btnExcluir").prop('disabled', true);
         });
     });
 
+    function updateClienteStatusButton(status) {
+        var $btn = $('#btnInativar');
+        if (!$btn.length) {
+            return;
+        }
+
+        if (status === 'IN' || status === 'EX') {
+            $btn.html('<i class="fa fa-check"></i> Ativar');
+        } else {
+            $btn.html('<i class="fa fa-ban"></i> Inativar');
+        }
+    }
+
+    $(function () {
+        updateClienteStatusButton($('#cliente_sts').val());
+        $('#cliente_sts').on('change', function () {
+            updateClienteStatusButton($(this).val());
+        });
+    });
+
     $('body').on('click', '#btnInativar', function (e) {
-        console.log($(this).text())
-        var status = $(this).text().trim();
+        var currentStatus = $('#cliente_sts').val();
 
         e.preventDefault();
         Pace.restart();
         Pace.track(function () {
-            if (status === 'Ativar') {
-                $('#user_sts').val('AT');
+            var nextStatus = currentStatus === 'AT' ? 'IN' : 'AT';
 
-                $("#btnInativar").text("Inativar");
-                $("#btnInativar").prepend('<i class="fa fa-check"></i> ');
-            } else if (status === 'Inativar') {
-                $('#user_sts').val('IN');
-                $("#btnInativar").text("Ativar");
-                $("#btnInativar").prepend('<i class="fa fa-ban"></i> ');
-
+            if (currentStatus === 'EX') {
+                nextStatus = 'AT';
             }
+
+            $('#cliente_sts').val(nextStatus);
+            updateClienteStatusButton(nextStatus);
             $("#btnExcluir").prop('disabled', false);
 
-            $('#user_sts').trigger('change');
+            $('#cliente_sts').trigger('change');
             $('#btnSalvar').trigger('click');
 
         });
