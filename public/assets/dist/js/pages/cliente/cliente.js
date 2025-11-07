@@ -1270,10 +1270,36 @@ $(function () {
         }
     }
 
+    function toggleClienteEditLock(status) {
+        var isExcluded = status === 'EX';
+        var $form = $('#formPrincipal');
+
+        if (!$form.length) {
+            return;
+        }
+
+        $form.find('input:not([type="hidden"])').prop('disabled', isExcluded);
+        $form.find('textarea').prop('disabled', isExcluded);
+        $form.find('select').each(function () {
+            $(this).prop('disabled', isExcluded);
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).trigger('change.select2');
+            }
+        });
+
+        $('#btnSalvar, #btnInativar, #btnExcluir, #btnCriarCartao').prop('disabled', isExcluded);
+        $('#modalCriarCartao').find('input, select, textarea, button').prop('disabled', isExcluded);
+    }
+
     $(function () {
-        updateClienteStatusButton($('#cliente_sts').val());
+        var initialStatus = $('#cliente_sts').val();
+        updateClienteStatusButton(initialStatus);
+        toggleClienteEditLock(initialStatus);
+
         $('#cliente_sts').on('change', function () {
-            updateClienteStatusButton($(this).val());
+            var status = $(this).val();
+            updateClienteStatusButton(status);
+            toggleClienteEditLock(status);
         });
     });
 

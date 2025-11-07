@@ -1455,6 +1455,12 @@ class ClienteController extends Controller
         try {
 
             $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
+            if ($cliente->cliente_sts === 'EX') {
+                return response()->json([
+                    'message_type' => 'Este cliente está excluído e não pode ser alterado.',
+                    'message'      => [],
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
             $input = $request->all();
 
             $input['cliente_doc'] = removerCNPJ($request->cliente_doc);
