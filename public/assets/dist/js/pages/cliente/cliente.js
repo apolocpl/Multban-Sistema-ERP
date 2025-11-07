@@ -1035,8 +1035,6 @@ $(function () {
         }
         //formId, btnSubmit, btnPesquisar, URL, Modal
         clientejs.submitForm('formCriarCartao', this, 'btnPesquisarPdMsg', url, "modalCriarCartao");
-        $('#gridtemplate-cards').DataTable().clear().destroy();
-        clientejs.gridDataTable(colunasWf, [], true, false, "obtergridpesquisa-work-flow", "gridtemplate-cards", "tabs-work-flow");
     });
 
 
