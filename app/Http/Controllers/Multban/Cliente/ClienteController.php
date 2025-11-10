@@ -466,27 +466,6 @@ class ClienteController extends Controller
     }
 
     /**
-     * Decrypt an encrypted password value using the provided private key.
-     */
-    private function decryptCardPasswordValue(string $privateKey, string $cipherText): ?string
-    {
-        $decodedCipher = base64_decode($cipherText, true);
-
-        if ($decodedCipher === false) {
-            return null;
-        }
-
-        $decrypted = '';
-        $success = openssl_private_decrypt($decodedCipher, $decrypted, $privateKey, OPENSSL_PKCS1_OAEP_PADDING);
-
-        if (! $success) {
-            return null;
-        }
-
-        return $decrypted;
-    }
-
-    /**
      * Format the cartão status badge.
      */
     private function formatCardStatusBadge(?string $statusCode, string $statusDesc): string
@@ -942,19 +921,10 @@ class ClienteController extends Controller
             $validator = Validator::make(
                 $request->all(),
                 [
-                    'emp_id'                         => ['required', 'integer'],
-                    'password_token'                 => ['required', 'string'],
-                    'password_cipher'                => ['required', 'string'],
-                    'password_confirmation_cipher'   => ['required', 'string'],
+                    'emp_id' => ['required', 'integer'],
                 ],
                 [
-                    'password_token.required'               => 'Não foi possível preparar a criptografia da senha. Recarregue a página e tente novamente.',
-                    'password_cipher.required'              => 'Informe a nova senha do cartão.',
-                    'password_confirmation_cipher.required' => 'Confirme a nova senha do cartão.',
-                ],
-                [
-                    'password_cipher'              => 'nova senha',
-                    'password_confirmation_cipher' => 'confirmação da senha',
+                    'emp_id.required' => 'Empresa obrigatória para enviar o link de senha.',
                 ]
             );
 
@@ -964,57 +934,7 @@ class ClienteController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $validated = $validator->validated();
-
-            $cacheKey = $this->cardPasswordTokenCacheKey($validated['password_token']);
-            $privateKey = Cache::pull($cacheKey);
-
-            if (! $privateKey) {
-                return response()->json([
-                    'message' => [
-                        'password_cipher' => ['Sessão expirada para redefinição de senha. Gere uma nova solicitação.'],
-                    ],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            $password = $this->decryptCardPasswordValue($privateKey, $validated['password_cipher']);
-            $passwordConfirmation = $this->decryptCardPasswordValue($privateKey, $validated['password_confirmation_cipher']);
-
-            unset($privateKey);
-
-            if ($password === null || $passwordConfirmation === null) {
-                return response()->json([
-                    'message' => [
-                        'password_cipher' => ['Não foi possível processar a nova senha do cartão. Tente novamente.'],
-                    ],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            if ($password !== $passwordConfirmation) {
-                return response()->json([
-                    'message' => [
-                        'password_confirmation_cipher' => ['As senhas informadas não coincidem.'],
-                    ],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            if (! preg_match('/^\d{4}$/', $password)) {
-                return response()->json([
-                    'message' => [
-                        'password_cipher' => ['A nova senha deve conter exatamente 4 dígitos numéricos.'],
-                    ],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            if ($this->isWeakCardPassword($password)) {
-                return response()->json([
-                    'message' => [
-                        'password_cipher' => ['Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).'],
-                    ],
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            $empresaId = $this->authenticatedEmpresaId((int) $validated['emp_id']);
+            $empresaId = $this->authenticatedEmpresaId((int) $validator->validated()['emp_id']);
 
             $card = ClienteCard::query()
                 ->where('card_uuid', $cardUuid)
@@ -1023,19 +943,9 @@ class ClienteController extends Controller
 
             $this->getClienteForUserOrFail((int) $card->cliente_id, 'manageRelatedData');
 
-            DB::connection('dbsysclient')
-                ->table('tbdm_clientes_card')
-                ->where('card_uuid', $cardUuid)
-                ->where('emp_id', $empresaId)
-                ->update([
-                    'card_pass'   => Hash::make($password),
-                    'modificador' => Auth::user()->user_id,
-                    'dthr_ch'     => Carbon::now(),
-                ]);
-
             return response()->json([
-                'title' => 'Sucesso',
-                'text'  => 'Senha do cartão atualizada com sucesso.',
+                'title' => 'Solicitação registrada',
+                'text'  => 'Um link para criação de nova senha do cartão será enviado para o cliente pelos canais disponíveis.',
                 'type'  => 'success',
             ]);
         } catch (ModelNotFoundException $exception) {

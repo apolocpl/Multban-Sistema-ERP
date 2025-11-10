@@ -2058,7 +2058,7 @@
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalResetCardPasswordLabel">Atualizar Senha do Cartão</h5>
+                <h5 class="modal-title" id="modalResetCardPasswordLabel">Enviar link de nova senha</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -2074,41 +2074,14 @@
 
                     <input type="hidden" name="card_uuid" id="reset_card_password_card_uuid">
                     <input type="hidden" name="emp_id" id="reset_card_password_emp_id" value="{{ $cliente->emp_id ?? '' }}">
-                    <input type="hidden" name="password_token" id="reset_card_password_token">
-
-                    <div class="form-group">
-                        <label for="reset_card_password">Nova senha (4 dígitos)</label>
-                        <input type="password"
-                               class="form-control form-control-sm"
-                               id="reset_card_password"
-                               name="password"
-                               minlength="4"
-                               maxlength="4"
-                               pattern="\d{4}"
-                               inputmode="numeric"
-                               autocomplete="new-password"
-                               required>
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reset_card_password_confirmation">Confirmar nova senha</label>
-                        <input type="password"
-                               class="form-control form-control-sm"
-                               id="reset_card_password_confirmation"
-                               name="password_confirmation"
-                               minlength="4"
-                               maxlength="4"
-                               pattern="\d{4}"
-                               inputmode="numeric"
-                               autocomplete="new-password"
-                               required>
-                        <div class="invalid-feedback"></div>
-                    </div>
+                    <p class="mb-0">
+                        Confirme o envio de um link para que o cliente defina uma nova senha do cartão.
+                        O link será encaminhado pelos canais disponíveis (e-mail e outros).
+                    </p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary btn-sm" id="resetCardPasswordSubmit">Salvar</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="resetCardPasswordSubmit">Enviar link</button>
                 </div>
             </form>
         </div>
@@ -2246,9 +2219,6 @@
         // Chama ao carregar
         toggleBtnImprimir();
 
-        let cardPasswordToken = null;
-        let cardPasswordCryptoKey = null;
-
         const $modalActivateCard = $('#modalActivateCard');
         const $activateCardForm = $('#formActivateCard');
         const $activateCardAlert = $('#activateCardAlert');
@@ -2288,9 +2258,8 @@
         const $resetCardPasswordAlert = $('#resetCardPasswordAlert');
         const $resetCardPasswordSubmit = $('#resetCardPasswordSubmit');
         const $resetCardPasswordCardLabel = $('#resetCardPasswordCardLabel');
-        const $resetCardPasswordInput = $('#reset_card_password');
-        const $resetCardPasswordConfirmationInput = $('#reset_card_password_confirmation');
-        const $resetCardPasswordTokenInput = $('#reset_card_password_token');
+        const $resetCardPasswordCardUuidInput = $('#reset_card_password_card_uuid');
+        const $resetCardPasswordEmpIdInput = $('#reset_card_password_emp_id');
 
         function clearActivateCardValidation() {
             if (!$activateCardForm.length) {
@@ -2350,92 +2319,6 @@
             }
         }
 
-        function clearCardPasswordCryptoMaterials() {
-            cardPasswordToken = null;
-            cardPasswordCryptoKey = null;
-            if ($resetCardPasswordTokenInput.length) {
-                $resetCardPasswordTokenInput.val('');
-            }
-        }
-
-        function pemToArrayBuffer(pem) {
-            const cleaned = pem
-                .replace(/-----BEGIN PUBLIC KEY-----/g, '')
-                .replace(/-----END PUBLIC KEY-----/g, '')
-                .replace(/\s+/g, '');
-
-            const binary = window.atob(cleaned);
-            const bytes = new Uint8Array(binary.length);
-            for (let index = 0; index < binary.length; index += 1) {
-                bytes[index] = binary.charCodeAt(index);
-            }
-            return bytes.buffer;
-        }
-
-        function arrayBufferToBase64(buffer) {
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            for (let index = 0; index < bytes.byteLength; index += 1) {
-                binary += String.fromCharCode(bytes[index]);
-            }
-            return window.btoa(binary);
-        }
-
-        async function fetchCardPasswordCryptoMaterials() {
-            if (!window.crypto || !window.crypto.subtle || typeof window.TextEncoder === 'undefined') {
-                throw new Error('Criptografia não suportada pelo navegador.');
-            }
-
-            if (cardPasswordCryptoKey && cardPasswordToken) {
-                return cardPasswordCryptoKey;
-            }
-
-            const response = await $.ajax({
-                url: '/cliente/card-password-token',
-                type: 'GET',
-                dataType: 'json'
-            });
-
-            if (!response || !response.token || !response.public_key) {
-                throw new Error('Resposta inválida ao requisitar chave pública.');
-            }
-
-            const keyBuffer = pemToArrayBuffer(response.public_key);
-            const cryptoKey = await window.crypto.subtle.importKey(
-                'spki',
-                keyBuffer,
-                {
-                    name: 'RSA-OAEP',
-                    hash: 'SHA-1'
-                },
-                false,
-                ['encrypt']
-            );
-
-            cardPasswordToken = response.token;
-            cardPasswordCryptoKey = cryptoKey;
-
-            if ($resetCardPasswordTokenInput.length) {
-                $resetCardPasswordTokenInput.val(cardPasswordToken);
-            }
-
-            return cardPasswordCryptoKey;
-        }
-
-        async function encryptCardPasswordValue(value) {
-            const encoder = new TextEncoder();
-            const cryptoKey = await fetchCardPasswordCryptoMaterials();
-            const encrypted = await window.crypto.subtle.encrypt(
-                {
-                    name: 'RSA-OAEP'
-                },
-                cryptoKey,
-                encoder.encode(value)
-            );
-
-            return arrayBufferToBase64(encrypted);
-        }
-
         function resetActivateCardForm() {
             if (!$activateCardForm.length) {
                 return;
@@ -2479,7 +2362,6 @@
 
             $resetCardPasswordForm.trigger('reset');
             clearResetCardPasswordValidation();
-            clearCardPasswordCryptoMaterials();
         }
 
         if ($modalResetCardPassword.length && $resetCardPasswordForm.length) {
@@ -2504,158 +2386,52 @@
                     $resetCardPasswordCardLabel.text(cardLabel);
                 }
 
-                fetchCardPasswordCryptoMaterials()
-                    .then(function () {
-                        $modalResetCardPassword.modal('show');
-                    })
-                    .catch(function (error) {
-                        clearCardPasswordCryptoMaterials();
-                        const message = 'Não foi possível preparar a criptografia da senha. Recarregue a página e tente novamente.';
-                        if (window.toastr) {
-                            toastr.error(message);
-                        } else {
-                            alert(message);
-                        }
-                        console.error(error);
-                    });
+                $modalResetCardPassword.modal('show');
             });
 
             $modalResetCardPassword.on('hidden.bs.modal', function () {
                 resetResetCardPasswordForm();
             });
 
-            function markResetCardPasswordFieldInvalid($input, message) {
-                if (!$input || !$input.length) {
-                    return;
-                }
-
-                $input.addClass('is-invalid');
-
-                const $feedback = $input.siblings('.invalid-feedback');
-                if ($feedback.length) {
-                    $feedback.text(message);
-                }
-            }
-
-            function isWeakCardResetPin(pin) {
-                if (!/^\d{4}$/.test(pin)) {
-                    return true;
-                }
-
-                const digits = pin.split('').map(function (char) {
-                    return parseInt(char, 10);
-                });
-
-                const allSame = digits.every(function (digit) {
-                    return digit === digits[0];
-                });
-
-                if (allSame) {
-                    return true;
-                }
-
-                let ascending = true;
-                let descending = true;
-
-                for (let index = 1; index < digits.length; index += 1) {
-                    const previous = digits[index - 1];
-                    const current = digits[index];
-
-                    if (current !== ((previous + 1) % 10)) {
-                        ascending = false;
-                    }
-
-                    if (current !== ((previous + 9) % 10)) {
-                        descending = false;
-                    }
-                }
-
-                return ascending || descending;
-            }
-
-            $resetCardPasswordForm.on('submit', async function (event) {
+            $resetCardPasswordForm.on('submit', function (event) {
                 event.preventDefault();
                 clearResetCardPasswordValidation();
 
-                const password = ($resetCardPasswordInput.val() || '').trim();
-                const confirmation = ($resetCardPasswordConfirmationInput.val() || '').trim();
-                const digitRegex = /^\d{4}$/;
-                const invalidDigitsMessage = 'Informe exatamente 4 dígitos numéricos.';
-                const mismatchMessage = 'As senhas informadas não coincidem.';
-                const weakDigitsMessage = 'Utilize uma combinação menos previsível (evite sequências e dígitos repetidos).';
+                const cardUuid = ($resetCardPasswordCardUuidInput.val() || '').trim();
+                const empId = ($resetCardPasswordEmpIdInput.val() || '').trim();
 
-                let hasError = false;
-
-                if (!digitRegex.test(password)) {
-                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, invalidDigitsMessage);
-                    hasError = true;
-                }
-
-                if (!digitRegex.test(confirmation)) {
-                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, invalidDigitsMessage);
-                    hasError = true;
-                }
-
-                if (!hasError && password !== confirmation) {
-                    markResetCardPasswordFieldInvalid($resetCardPasswordConfirmationInput, mismatchMessage);
-                    hasError = true;
-                }
-
-                if (!hasError && isWeakCardResetPin(password)) {
-                    markResetCardPasswordFieldInvalid($resetCardPasswordInput, weakDigitsMessage);
-                    hasError = true;
-                }
-
-                if (hasError) {
-                    return;
-                }
-
-                let encryptedPassword;
-                let encryptedConfirmation;
-
-                try {
-                    encryptedPassword = await encryptCardPasswordValue(password);
-                    encryptedConfirmation = await encryptCardPasswordValue(confirmation);
-                } catch (cryptoError) {
-                    clearCardPasswordCryptoMaterials();
-                    const message = 'Falha ao criptografar a senha. Recarregue a página e tente novamente.';
+                if (!cardUuid || !empId) {
                     if ($resetCardPasswordAlert.length) {
-                        $resetCardPasswordAlert.removeClass('d-none').text(message);
-                    } else if (window.toastr) {
-                        toastr.error(message);
+                        $resetCardPasswordAlert.removeClass('d-none').text('Não foi possível identificar o cartão selecionado.');
                     }
-                    console.error(cryptoError);
                     return;
                 }
 
-                const requestUrl = '/cliente/' + encodeURIComponent($('#reset_card_password_card_uuid').val()) + '/reset-card-password';
+                const requestUrl = '/cliente/' + encodeURIComponent(cardUuid) + '/reset-card-password';
                 const token = $('meta[name="csrf-token"]').attr('content');
                 const originalButtonText = $resetCardPasswordSubmit.data('original-text') || $resetCardPasswordSubmit.text();
 
                 $resetCardPasswordSubmit
                     .data('original-text', originalButtonText)
                     .prop('disabled', true)
-                    .text('Salvando...');
+                    .text('Enviando...');
 
                 $.ajax({
                     url: requestUrl,
                     type: 'POST',
                     data: {
-                        emp_id: $('#reset_card_password_emp_id').val(),
-                        password_token: $('#reset_card_password_token').val(),
-                        password_cipher: encryptedPassword,
-                        password_confirmation_cipher: encryptedConfirmation,
+                        emp_id: empId,
                         _token: token
                     },
                     success: function (response) {
                         $modalResetCardPassword.modal('hide');
                         resetResetCardPasswordForm();
                         if (window.toastr) {
-                            toastr.success(response && response.text ? response.text : 'Senha do cartão atualizada com sucesso.');
+                            toastr.success(response && response.text ? response.text : 'Link para nova senha enviado com sucesso.');
                         }
                     },
                     error: function (xhr) {
-                        let message = 'Não foi possível atualizar a senha do cartão. Tente novamente.';
+                        let message = 'Não foi possível enviar o link. Tente novamente.';
 
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
                             const errors = xhr.responseJSON.message;
@@ -2680,9 +2456,8 @@
                         }
                     },
                     complete: function () {
-                        const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Salvar';
+                        const recoveryText = $resetCardPasswordSubmit.data('original-text') || 'Enviar link';
                         $resetCardPasswordSubmit.prop('disabled', false).text(recoveryText);
-                        clearCardPasswordCryptoMaterials();
                     }
                 });
             });
