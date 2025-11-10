@@ -11,6 +11,13 @@ class TbtrfTitulos extends Model
 
     protected $table = 'tbtr_f_titulos';
 
+    // A chave primária da tabela é id_fatura (UUID/string)
+    protected $primaryKey = 'id_fatura';
+
+    // id_fatura não é auto-increment (é UUID/strings)
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     public $timestamps = false;
 
     protected $fillable = [

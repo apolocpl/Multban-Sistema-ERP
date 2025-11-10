@@ -99,9 +99,9 @@ return new class extends Migration
             $table->decimal('vlr_base_item', 10, 2)->nullable();
             $table->decimal('perc_toti', 5, 2)->nullable();
             $table->integer('qtd_pts_utlz_item')->nullable();
-            $table->decimal('vlr_bpar_split_item', 10, 2)->nullable();
-            $table->decimal('vlr_jpar_item', 10, 2)->nullable();
-            $table->decimal('vlr_bpar_cj_item', 10, 2)->nullable();
+            $table->decimal('vlr_bsplit_item', 10, 2)->nullable();
+            $table->decimal('vlr_bjrs_item', 10, 2)->nullable();
+            $table->decimal('vlr_bsplit_cj_item', 10, 2)->nullable();
             $table->decimal('vlr_atrm_item', 10, 2)->nullable();
             $table->decimal('vlr_atrj_item', 10, 2)->nullable();
             $table->decimal('vlr_acr_mn', 10, 2)->nullable();

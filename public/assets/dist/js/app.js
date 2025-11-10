@@ -1626,7 +1626,7 @@ function notify(type, message) {
     //     Pace.restart();
     //     Pace.track(function () {
     //         socket.emit("chama guiche", {
-    //             idvenda: $(".IncOrDecToCart").val(),
+    //             idvenda: $(".quantityToCart").val(),
     //         });
     //     });
     // });

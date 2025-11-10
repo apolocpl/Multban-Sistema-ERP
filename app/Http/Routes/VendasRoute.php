@@ -22,5 +22,11 @@ class VendasRoute
         // Rota para cancelar venda
         Route::post('/pdv-web/cancelar-venda', [PdvWebController::class, 'cancelarVenda']);
 
+        // Rota para calcular parcelas
+        Route::get('/pdv-web/calcular-parcelas', [PdvWebController::class, 'calcularParcelas']);
+
+        // Rota para preencher a tabela de resgate de pontos
+        Route::post('/pdv-web/resgatar-tabela', [PdvWebController::class, 'preencherTabelaResgateHtml']);
+
     }
 }

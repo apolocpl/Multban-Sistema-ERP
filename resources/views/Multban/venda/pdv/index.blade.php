@@ -121,6 +121,11 @@
                                         id="item-quantity" value="1" placeholder="1">
                                 </div>
                                 <div class="form-group col">
+                                    <label>Preço: (F4)</label>
+                                    <input autocomplete="off" type="text" class="form-control form-control-sm money"
+                                        id="item-price" value="0,00" placeholder="1">
+                                </div>
+                                <div class="form-group col">
                                     <label>Desconto: (F3)</label>
                                     <div class="input-group mb-3 input-group-sm">
                                         <input autocomplete="off" type="text" class="form-control form-control-sm money"
@@ -130,11 +135,6 @@
                                                 class="btn btn-primary btn-sm">%</button>
                                         </span>
                                     </div>
-                                </div>
-                                <div class="form-group col">
-                                    <label>Preço: (F4)</label>
-                                    <input autocomplete="off" type="text" class="form-control form-control-sm money"
-                                        id="item-price" value="0,00" placeholder="1">
                                 </div>
                                 <div class="form-group col">
                                     <label>Subtotal:</label>
@@ -208,7 +208,7 @@
                                             <h3><strong>Total:</strong></h3>
                                         </td>
                                         <td class="text-right ">
-                                            <h3 class="valorTotal">R$ 0,00</h3>
+                                            <h3 id="p_valorTotal">R$ 0,00</h3>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -239,59 +239,6 @@
                 </div>
             </div>
 
-            {{-- <!-- CONTEÚDO DE PESQUISA - NÃO UTILIZADO -->
-            <div class="row animated bounceInLeft" id="listaDePedidos" style="display:none;">
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 pull-left">
-                    <div class="card p-1">
-                        <table class="table table-striped table-bordered table-head-fixed" id="tablePed">
-                            <thead>
-                                <tr>
-                                    <th>ID Pedido</th>
-                                    <th>Cliente</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                </div>
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8">
-                    <div class="card p-1" id="invoiceShow">
-                        <div class="invoice p-3 mb-3">
-                            <!-- title row -->
-                            <div class="row">
-                                <div class="col-12">
-                                    <h4>
-                                        empresas razaosocia.
-                                        <small class="float-right" id="dataped"></small>
-                                    </h4>
-                                </div>
-                                <!-- /.col -->
-                            </div>
-                            <!-- info row -->
-                            <div class="row invoice-primary">
-                            </div>
-                            <!-- /.row -->
-
-                            <!-- Table row -->
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header border-0 bg-light">
-                                            <h3 class="card-title title-vendasituacao"></h3>
-                                        </div>
-                                        <div class="card-body" id="pedidos-by-cli">
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- /.col -->
-                            </div>
-                            <!-- /.row -->
-
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
         </div>
 
     </section>
@@ -663,130 +610,6 @@
         </div>
     </div>
 
-    {{-- <!-- MODAL PARA CADASTRO DE NOVOS CLIENTES -->
-    <div class="modal inmodal" id="modalCliente" tabindex="-1" role="dialog" aria-hidden="true">
-
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content animated bounceInRight">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="total_amount_modal">Cliente</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-
-                <div class="modal-body clearfix">
-                    <div class="form-row">
-                        <div class="form-group col-md-12">
-                            <label for="celular">Pesquisar Cliente:</label>
-                            <select id="idsearchphone" autofocus="autofocus" name="idsearchphone"
-                                class="form-control select2 select2-hidden-accessible"
-                                data-placeholder="PESQUISE PELO TELEFONE" style="width: 100%;" aria-hidden="true">
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-4">
-                            <label for="razaosocial" id="labelrazaosocial">Nome:</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o nome" name="razaosocial" type="text"
-                                id="razaosocial" value="">
-
-                            <input class="form-control  form-control-sm" placeholder="Digite o nome" name="nomefantasia" type="hidden"
-                                id="nomefantasia" value="">
-
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="celular" id="labelcelular">Celular:</label>
-                            <input class="form-control cell_with_ddd form-control-sm" placeholder="Digite o celular" name="celular"
-                                type="text" id="celular" value="">
-
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="telefone" id="labeltelefone">Telefone:</label>
-                            <input class="form-control phone_with_ddd form-control-sm" placeholder="Digite o telefone" name="telefone"
-                                type="text" id="telefone" value="">
-
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="form-row">
-                        <div class="form-goup col-md-3>
-                            <label for='cep'>CEP</label>
-                            <div class="input-group mb-3 input-group-sm">
-                                <input type="text" autofocus="autofocus" class="form-control cep form-control-sm" id="cep" name="cep"
-                                    value="" placeholder="Digite o CEP">
-                                <span class="input-group-append">
-                                    <button type="button" id="btnPesquisarCep" class="btn btn-default"><i
-                                            class="fa fa-search"></i></button>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for='endereco'>Endereço (Logradouro)</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o Endereço" name="endereco" type="text"
-                                id="endereco" value="">
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label for='numero'>Número</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o Número" name="numero" type="text" id="numero"
-                                value="">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-4">
-                            <label for='complemento'>Complemento</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o Complemento" name="complemento" type="text"
-                                id="complemento" value="">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for='bairro'>Bairro</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o Bairro" name="bairro" type="text" id="bairro"
-                                value="">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for='pontoreferencia'>Ponto de referência</label>
-                            <input class="form-control  form-control-sm" placeholder="Digite o Ponto de referência" name="pontoreferencia"
-                                type="text" id="pontoreferencia" value="">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for='idcidade'>Cidade</label>
-                            <select id="idcidade" name="idcidade" class="form-control select2 select2-hidden-accessible"
-                                data-placeholder="PESQUISE A CIDADE" style="width: 100%;" aria-hidden="true">
-                                <option value=""></option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for='idestado'>Estado</label>
-                            <select id="idestado" name="idestado" class="form-control select2 select2-hidden-accessible"
-                                data-placeholder="PESQUISE O ESTADO" style="width: 100%;" aria-hidden="true">
-                                <option value=""></option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for='idenderecotipo'>Tipo</label>
-                            <select id="idenderecotipo" name="idenderecotipo"
-                                class="form-control select2 select2-hidden-accessible"
-                                data-placeholder="SELECIONE O TIPO DE ENDEREÇO" style="width: 100%;" aria-hidden="true">
-
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-12 text-right">
-                        <button type="button" id="ClearForm" class="btn btn-danger">Cancelar</button>
-                        <button type="button" id="salvarCliente" class="btn btn-primary btn-sm">OK</button>
-                        <span id="errorMessage" style="color:red"> </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div> --}}
-
     <!---------------------------------------------->
     <!-- SCRIPTS ----------------------------------->
     <!---------------------------------------------->
@@ -1013,14 +836,14 @@
         }
 
         /* Chrome, Safari, Edge, Opera */
-        .IncOrDecToCart::-webkit-outer-spin-button,
-        .IncOrDecToCart::-webkit-inner-spin-button {
+        .quantityToCart::-webkit-outer-spin-button,
+        .quantityToCart::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
 
         /* Firefox */
-        .IncOrDecToCart[type=number] {
+        .quantityToCart[type=number] {
             -moz-appearance: textfield;
         }
 

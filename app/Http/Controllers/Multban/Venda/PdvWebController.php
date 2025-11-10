@@ -35,6 +35,7 @@ class PdvWebController extends Controller
      */
     public function realizarVenda(Request $request)
     {
+
         try {
             DB::connection('dbsysclient')->beginTransaction();
 
@@ -55,7 +56,7 @@ class PdvWebController extends Controller
             $tipoPagto = $request->input('tipoPagto');                            // Tipo de pagamento (ex: 'DN', 'CARTAO', etc.)
             $carrinho_venda = $request->input('carrinho');                        // array de itens
             $check_reembolso = $request->input('check_reembolso', null); // Identifica se o processo é para reembolso
-            $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');        // Data da primeira parcela
+            $dt_primeira_parc = $request->input('dt_primeira_parc');              // Data da primeira parcela
             $parcelas = $request->input('parcelas');                              // Número de parcelas
             $jurosTotal = $request->input('jurosTotal');                          // Juros total da venda
             $tax_categ = $request->input('tax_categ');                            // Categoria da taxa (À Vista / 30 / 60 / 90)
@@ -93,8 +94,6 @@ class PdvWebController extends Controller
             $pgt_mtjr = 0;                                                             // Valor de Multa e Juros do Pagamento
             $vlr_rec = 0;                                                              // Valor Recebido
 
-
-
             $checkout_pago = $request->input('checkout_pago');                    // Valor total pago
             $checkout_troco = $request->input('valortroco');                      // Valor total de troco
             $checkout_descontado = $request->input('checkout_descontado');        // Valor total descontado
@@ -107,8 +106,6 @@ class PdvWebController extends Controller
             $valorParcelaSemJuros = $request->input('valorParcelaSemJuros');      // Valor da parcela sem juros
             $jurosTotalParcela = $request->input('jurosTotalParcela');            // Juros total da parcela
             $card_categ = $request->input('card_categ');                          // Categoria do cartão
-
-
 
             /////////////////////////////////////////////////////////////////////////////
             // CARREGA DADOS DA EMPRESA DO USUÁRIO LOGADO
@@ -134,11 +131,7 @@ class PdvWebController extends Controller
             $isnt_pixblt = $empresaParam->isnt_pixblt ? $empresaParam->isnt_pixblt : 0;                // Isenção Pix e Boleto
             $parc_com_jrs = $empresaParam->parc_com_jrs ? $empresaParam->parc_com_jrs : 0;             // Comissão Parcelamento com Juros
 
-
-
-
             $vlr_bolepix = $empresaParam->vlr_bolepix ? $empresaParam->vlr_bolepix : 0;                // Valor Boleto + Pix
-
             $pp_particular = $empresaParam->pp_particular ? $empresaParam->pp_particular : 0;          // Pagamento Particular
             $pp_franquia = $empresaParam->pp_franquia ? $empresaParam->pp_franquia : 0;                // Pagamento Franquia
             $pp_mult = $empresaParam->pp_mult ? $empresaParam->pp_mult : 0;                            // Pagamento Multi Cartão
@@ -147,27 +140,27 @@ class PdvWebController extends Controller
             $tax_antfundo = $empresaParam->tax_antfundo ? $empresaParam->tax_antfundo : 0;             // Taxa Antecipação Fundo
             $perc_rec_ant = $empresaParam->perc_rec_ant ? $empresaParam->perc_rec_ant : 0;             // Percentual Recebido Antecipação
 
-
             /////////////////////////////////////////////////////////////////////////////
             // CALCULA DIAS DE PRAZO, SE HOUVER
             $diasPrazo = null;
             $data_venc = Carbon::today();
-            if ($dataPrimeiraParcela) {
-                $dataPrimeira = Carbon::parse($dataPrimeiraParcela);
+            if ($dt_primeira_parc) {
+                $dataPrimeira = Carbon::parse($dt_primeira_parc);
                 $hoje = Carbon::today();
                 $diasPrazo = $hoje->diffInDays($dataPrimeira, false);
-                $data_venc = Carbon::parse($dataPrimeiraParcela);
+                $data_venc = Carbon::parse($dt_primeira_parc);
             }
 
             /////////////////////////////////////////////////////////////////////////////
             // BUSCA A TAXA DE ACORDO COM A CATEGORIA E PARCELAS
-            $taxpos = EmpresaTaxpos::where('emp_id', $emp_id)
-                ->where('tax_categ', $tax_categ)
-                ->where('parc_de', '<=', $parcelas)
-                ->where('parc_ate', '>=', $parcelas)
-                ->first();
-
-            $tax_pos = null;
+            $taxpos = null;
+            if ($tax_categ && $parcelas) {
+                $taxpos = EmpresaTaxpos::where('emp_id', $emp_id)
+                    ->where('tax_categ', $tax_categ)
+                    ->where('parc_de', '<=', $parcelas)
+                    ->where('parc_ate', '>=', $parcelas)
+                    ->first();
+            }
             if ($taxpos) {
                 $tax_pos = $taxpos->tax;
             }
@@ -333,26 +326,43 @@ class PdvWebController extends Controller
 
                 // as demais parcelas são incrementadas de 1 mês
                 if ($parcela > 1) {
-                    $data_venc = $data_venc->copy()->addMonth();
+                    $data_venc = $data_venc->copy()->addMonthNoOverflow();
                 }
 
                 // TBTR_F_TITULOS - Somente para cartão de crédito
                 // Verifica se já existe fatura para o cliente, cartão e data de vencimento
-                // se já existir, usa o id_fatura existente
-                // se não existir, cria uma nova fatura
+
                 $id_fatura = null;
                 if (in_array($tipoPagto, ['CM'], true)) {
                     if ($emp_id && $cliente_id && $card_uuid && $data_venc) {
 
-                        Log::info("Verificando fatura para emp_id: $emp_id, cliente_id: $cliente_id, card_uuid: $card_uuid, data_venc: $data_venc");
                         $fatura = TbtrFTitulos::where('emp_id', $emp_id)
                             ->where('cliente_id', $cliente_id)
                             ->where('card_uuid', $card_uuid)
+                            ->where('fatura_sts', 1)
                             ->where('data_venc', $data_venc)
                             ->first();
 
+                        // se já existir, usa o id_fatura existente e alterar o valor total
                         if ($fatura) {
                             $id_fatura = $fatura->id_fatura;
+
+                            $vlr_fatura_gravada = floatval($fatura->vlr_tot ?? 0);
+                            $vlr_fatura_novo = floatval($vlr_btot_cj_parcela ?? 0);
+
+                            // Atualiza o valor da fatura existente
+                            $novo_vlr_tot = $vlr_fatura_gravada + $vlr_fatura_novo;
+
+                            $fatura->vlr_tot = $novo_vlr_tot;
+                            if (property_exists($fatura, 'modificador')) {
+                                $fatura->modificador = $user_id;
+                            }
+                            if (property_exists($fatura, 'dthr_ch')) {
+                                $fatura->dthr_ch = now();
+                            }
+                            $fatura->save();
+
+                        // se não existir, cria uma nova fatura
                         } else {
                             // cria nova fatura
                             $id_fatura = (string) Str::uuid();
@@ -368,7 +378,7 @@ class PdvWebController extends Controller
                                                 : Carbon::parse($data_venc)->subDays(10),
                                 'data_venc'   => $data_venc,
                                 'data_pgto'   => null,
-                                'vlr_tot'     => $vlr_btot_split_parcela ?? 0,
+                                'vlr_tot'     => $vlr_btot_cj_parcela ?? 0,
                                 'vlr_pgto'    => 0,
                                 'criador'     => $user_id,
                                 'dthr_cr'     => now(),
@@ -453,7 +463,6 @@ class PdvWebController extends Controller
                     $hParcela->save();
                 }
 
-
                 // //////////////////////////////////////////////////////////////////////////////////////
                 // GRAVA OS DADOS NA TABELA TBTR_I_TITULOS
                 //          Para cada item no carrinho
@@ -476,10 +485,15 @@ class PdvWebController extends Controller
                     $vlr_dec_mn = 0;
 
                     $vlr_base_item = $vlr_brt_item - $vlr_dec_item - $vlr_dec_mn;
-                    $qtd_pts_utlz_item = $qtd_pts_utlz * $perc_toti / 100;
+                    $qtd_pts_utlz_item = $qtd_pts_utlz * $perc_toti;
 
-                    $vlr_bpar_split_item = ($vlr_base_item - $qtd_pts_utlz_item) / $parcelas;
-                    $vlr_jpar_item = ($jurosTotal * $perc_toti / 100) / $parcelas;
+                    $vlr_split_item = ($vlr_base_item - $qtd_pts_utlz_item);
+                    $vlr_bpar_split_item = $vlr_split_item / $parcelas;
+
+                    $vlr_j_item = ($jurosTotal * $perc_toti);
+                    $vlr_jpar_item = ($vlr_j_item / $parcelas);
+
+                    $vlr_split_cj_item = $vlr_split_item + $vlr_j_item;
                     $vlr_bpar_cj_item = $vlr_bpar_split_item + $vlr_jpar_item;
 
                     // VALOR RECEBIDO
@@ -495,19 +509,18 @@ class PdvWebController extends Controller
                         $vlr_rec = $vlr_bpar_cj_item;
                     }
 
-                    $vlr_atrm_item = $vlr_atr_m * $perc_toti / 100;
-                    $vlr_atrj_item = $vlr_atr_j * $perc_toti / 100;
+                    $vlr_atrm_item = $vlr_atr_m * $perc_toti;
+                    $vlr_atrj_item = $vlr_atr_j * $perc_toti;
                     $vlr_acr_mn = 0;
-                    $ant_desc_item = $ant_desc * $perc_toti / 100;
-                    $pgt_vlr_item = $pgt_vlr * $perc_toti / 100;
-                    $pgt_desc_item = $pgt_desc *  $perc_toti / 100;
-                    $pgt_mtjr_item = $pgt_mtjr * $perc_toti / 100;
-                    $vlr_rec_item = $vlr_rec * $perc_toti / 100;
-                    $pts_disp_part_item = $pts_disp_part * $perc_toti / 100;
-                    $pts_disp_fraq_item = $pts_disp_fraq * $perc_toti / 100;
-                    $pts_disp_mult_item = $pts_disp_mult * $perc_toti / 100;
-                    $pts_disp_cash_item = $pts_disp_cash * $perc_toti / 100;
-
+                    $ant_desc_item = $ant_desc * $perc_toti;
+                    $pgt_vlr_item = $pgt_vlr * $perc_toti;
+                    $pgt_desc_item = $pgt_desc *  $perc_toti;
+                    $pgt_mtjr_item = $pgt_mtjr * $perc_toti;
+                    $vlr_rec_item = $vlr_rec * $perc_toti;
+                    $pts_disp_part_item = $pts_disp_part * $perc_toti;
+                    $pts_disp_fraq_item = $pts_disp_fraq * $perc_toti;
+                    $pts_disp_mult_item = $pts_disp_mult * $perc_toti;
+                    $pts_disp_cash_item = $pts_disp_cash * $perc_toti;
 
                     // ///////////////
                     // TBTR_I_TITULOS
@@ -531,9 +544,9 @@ class PdvWebController extends Controller
                             'vlr_base_item'       => $vlr_base_item,
                             'vlr_dec_item'        => $vlr_dec_item,
                             'vlr_dec_mn'          => $vlr_dec_mn,
-                            'vlr_bpar_split_item' => $vlr_bpar_split_item,
-                            'vlr_jpar_item'       => $vlr_jpar_item,
-                            'vlr_bpar_cj_item'    => $vlr_bpar_cj_item,
+                            'vlr_bsplit_item'     => $vlr_split_item,
+                            'vlr_bjrs_item'       => $vlr_j_item,
+                            'vlr_bsplit_cj_item'  => $vlr_split_cj_item,
                             'vlr_atrm_item'       => $vlr_atrm_item,
                             'vlr_atrj_item'       => $vlr_atrj_item,
                             'vlr_acr_mn'          => $vlr_acr_mn,
@@ -560,13 +573,9 @@ class PdvWebController extends Controller
                     // TBTR_S_TITULOS - CARTÃO E BOLETO
                     if (in_array($tipoPagto, ['CM', 'BL'], true)) {
 
-                        Log::info('Parcela ' . $parcela . ' - Item ' . $item_seq);
-
                         // TAXA BACEN
                         $vlr_bacen = 0;
                         if ($taxa_bacen > 0) {
-
-                                $vlr_bacen = $vlr_bpar_split_item * $taxa_bacen / 100;
 
                                 // Desconta Taxa Bacen da empresa
                                 $data = [
@@ -580,8 +589,8 @@ class PdvWebController extends Controller
                                     'lanc_tp' => 'TAXA_BAC',
                                     'recebedor' => $emp_id,
 
-                                    'tax_adm' => $taxa_bacen,
-                                    'vlr_plan' => -abs(floatval($vlr_bacen)),
+                                    'tax_adm' => 0,
+                                    'vlr_plan' => -abs(floatval($taxa_bacen)),
                                     'perc_real' => 0,
                                     'vlr_real' => 0,
                                     'criador' => $user_id,
@@ -605,8 +614,8 @@ class PdvWebController extends Controller
                                     'lanc_tp' => 'TAXA_BAC',
                                     'recebedor' => $cdg_multban,
 
-                                    'tax_adm' => $taxa_bacen,
-                                    'vlr_plan' => $vlr_bacen,
+                                    'tax_adm' => 0,
+                                    'vlr_plan' => $taxa_bacen,
                                     'perc_real' => 0,
                                     'vlr_real' => 0,
                                     'criador' => $user_id,
@@ -811,6 +820,7 @@ class PdvWebController extends Controller
 
                         // JUROS DA VENDA
                         if ($vlr_jpar_item > 0) {
+
                             $vlr_juros_empresa = $vlr_jpar_item * $parc_com_jrs / 100;
                             $vlr_juros_multban = $vlr_jpar_item - $vlr_juros_empresa;
 
@@ -900,8 +910,8 @@ class PdvWebController extends Controller
 
                         // SE A EMPRESA LOGADA FOR WHITE LABEL, PRECISAMOS PROPORCIONAR OS VALORES
                         if ($emp_wlde && $emp_comwl) {
-                            $vlr_pix = $vlr_pix * ($emp_comwl / 100);
-                            $vlr_pix_wl = $vlr_pix * (1 - $emp_comwl / 100);
+                            $vlr_pix = $vlr_pix * $emp_comwl / 100;
+                            $vlr_pix_wl = $vlr_pix * (100 - $emp_comwl);
 
                             // VALORES DA EMPRESA WHITE LABEL
                             $data = [
@@ -1138,12 +1148,184 @@ class PdvWebController extends Controller
         //
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function pdv()
     {
-        // Busca todas as regras de parcelamento
-        // $RegrasParc = RegrasParc::all();
-        // return view('Multban.venda.pdv.index', compact('RegrasParc'));
+        //
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // CALCULA AS PARCELAS DE UMA VENDA
+    public function calcularParcelas(Request $request)
+    {
+        // loga a chegada da requisição (ajuda a depurar)
+        try {
+            $user = Auth::user();
+        } catch (\Throwable $e) {
+            // se logging falhar não interrompe o fluxo
+            Log::warning('calcularParcelas: falha ao logar params', ['err' => $e->getMessage()]);
+        }
+
+        if (! $user) {
+            return response()->json(['success' => false, 'error' => 'Usuário não autenticado'], 401);
+        }
+
+        $emp_id = $user->emp_id;
+        $empresaParam = EmpresaParam::find($emp_id);
+
+        $tipo = $request->input('tipo', 'card'); // 'card' or 'boleto'
+        $valorText = $request->input('valortotalacobrar') ?? $request->input('total') ?? '0';
+        $totalVenda = $this->parseBRLPhp($valorText);
+
+        // limite de parcelas (prioriza empresaParam)
+        $parclib = 1;
+        if ($empresaParam && $tipo === 'card' && $empresaParam->card_posparc) {
+            $parclib = intval($empresaParam->card_posparc);
+        } elseif ($empresaParam && $tipo === 'boleto' && $empresaParam->blt_parclib) {
+            $parclib = intval($empresaParam->blt_parclib);
+        } else {
+            $parclib = intval($request->input('parclib', 1));
+        }
+        if ($parclib <= 0) $parclib = 1;
+
+        // parâmetros de juros (apenas usados para cartão)
+        $parc_cjuros_flag = false;
+        $parc_jr_deprc_val = 0;
+        $tax_jrsparc_val = 0;
+        if ($empresaParam) {
+            $parc_cjuros_flag = !! $empresaParam->parc_cjuros;
+            $parc_jr_deprc_val = intval(preg_replace('/\D/', '', (string) ($empresaParam->parc_jr_deprc ?? '0'))) ?: 0;
+            $tax_raw = $empresaParam->tax_jrsparc ?? 0;
+            if (is_string($tax_raw)) $tax_raw = str_replace(',', '.', $tax_raw);
+            $tax_jrsparc_val = floatval($tax_raw) ?: 0;
+        }
+
+        $vendaSemJuros = $request->input('vendaSemJuros', 0);
+        $options = [];
+
+        for ($i = 1; $i <= $parclib; $i++) {
+            $parcelaValor = 0.0;
+            $descricaoJuros = '';
+            $totalVendaComJuros = 0.0;
+            $vlr_tot_juros = 0.0;
+            $vlr_tot_parc = 0.0;
+
+            if ($tipo === 'card' && $parc_cjuros_flag && $parc_jr_deprc_val > 0 && $i >= $parc_jr_deprc_val && ! (bool) $vendaSemJuros) {
+                // calcula juros
+                $perc_tot_juros = ($i * $tax_jrsparc_val) / 100.0;
+                $vlr_tot_juros = $totalVenda * $perc_tot_juros;
+                $totalVendaComJuros = $totalVenda + $vlr_tot_juros;
+                $vlr_tot_juros_parc = $vlr_tot_juros / max(1, $i);
+                $vlr_tot_parc = $totalVenda / max(1, $i);
+                $parcelaValor = $totalVendaComJuros / max(1, $i);
+                $descricaoJuros = ' - com juros';
+            } else {
+                $parcelaValor = $i > 0 ? ($totalVenda / $i) : $totalVenda;
+                $totalVendaComJuros = 0.0;
+                $vlr_tot_juros = 0.0;
+                $vlr_tot_parc = $totalVenda / max(1, $i);
+            }
+
+            $parcelaValorFormatado = $this->formatBRLPhp($parcelaValor);
+            $numParcela = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+
+            $options[] = [
+                'value' => $i,
+                'data' => [
+                    'parcelas' => $numParcela,
+                    'total_venda_com_juros' => number_format($totalVendaComJuros, 2, '.', ''),
+                    'total_juros' => number_format($vlr_tot_juros, 2, '.', ''),
+                    'valor_parcela' => number_format($vlr_tot_parc, 2, '.', ''),
+                    'valor_parcela_com_juros' => number_format($parcelaValor, 2, '.', ''),
+                ],
+                'label' => "{$numParcela} X R$ {$parcelaValorFormatado}{$descricaoJuros}",
+            ];
+        }
+
+        return response()->json(['success' => true, 'options' => $options]);
+    }
+
+    /**
+     * Converte string BRL ('1.234,56' ou '1234,56' ou 'R$ 1.234,56') para float
+     */
+    private function parseBRLPhp($str)
+    {
+        if ($str === null || $str === '') return 0.0;
+        // remove R$ e espaços
+        $s = preg_replace('/R\$|\s+/', '', (string) $str);
+        // se houver vírgula, normaliza: remove pontos de milhar e troca vírgula por ponto
+        if (strpos($s, ',') !== false) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        } else {
+            // nenhum separador decimal - remove pontos (milhar) apenas
+            $s = str_replace('.', '', $s);
+        }
+        return floatval($s);
+    }
+
+    /**
+     * Formata número para padrão BRL (ex: 1234.5 => '1.234,50')
+     */
+    private function formatBRLPhp($valor)
+    {
+        return number_format(floatval($valor), 2, ',', '.');
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // RENDERIZA O HTML DA TABELA DE RESGATE DE PONTOS
+    protected function renderResgateTableHtml(array $cartoes): string
+    {
+        $html = '';
+
+        foreach ($cartoes as $cartao) {
+            $id = isset($cartao['id']) ? e($cartao['id']) : '';
+            $numero = isset($cartao['numero']) ? e($cartao['numero']) : '';
+
+            $html .= '<tr class="bg-light">';
+            $html .= '<td colspan="4" style="text-align:left; font-size:1em;">';
+            $html .= '<span style="font-weight:bold;">CARTÃO:</span> ' . $numero;
+            $html .= '</td></tr>';
+
+            $programas = [
+                ['nome' => 'Programa Particular', 'campo' => 'pontos_part', 'valor' => $cartao['pontos_part'] ?? 0],
+                ['nome' => 'Programa Franquia',   'campo' => 'pontos_fraq', 'valor' => $cartao['pontos_fraq'] ?? 0],
+                ['nome' => 'Programa Multban',    'campo' => 'pontos_mult', 'valor' => $cartao['pontos_mult'] ?? 0],
+                ['nome' => 'Cash Back',           'campo' => 'pontos_cash', 'valor' => $cartao['pontos_cash'] ?? 0],
+            ];
+
+            foreach ($programas as $prog) {
+                $valor = floatval($prog['valor']);
+                // Formatação BRL (2 decimais, vírgula)
+                $valorFmt = number_format($valor, 2, ',', '.');
+                $valorZeroFmt = number_format(0, 2, ',', '.');
+
+                $html .= '<tr data-cartao="' . e($id) . '" data-programa="' . e($prog['campo']) . '">';
+                $html .= '<td>' . e($prog['nome']) . '</td>';
+                $html .= '<td class="pontos-disponiveis">' . $valorFmt . '</td>';
+                $html .= '<td style="text-align:center; vertical-align:middle;">';
+                $html .= '<input type="text" class="form-control form-control-sm pontos-utilizar" style="width:90px; text-align:right;" data-max="' . $valorFmt . '" value="' . $valorZeroFmt . '">';
+                $html .= '</td>';
+                $html .= '<td><input type="checkbox" class="utilizar-tudo"><span style="margin-left:8px;">Selecionar Tudo</span></td>';
+                $html .= '</tr>';
+            }
+        }
+
+        return $html;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // PREENCHE A TABELA DE RESGATE DE PONTOS VIA AJAX
+    public function preencherTabelaResgateHtml(Request $request)
+    {
+        $cartoes = $request->input('cartoes', []);
+        $html = $this->renderResgateTableHtml($cartoes);
+
+        return response()->json(['success' => true, 'html' => $html]);
+    }
+
 }
 
 
