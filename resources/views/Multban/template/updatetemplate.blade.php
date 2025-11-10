@@ -34,8 +34,8 @@
     @if (!request()->is('*/inserir'))
         <!-- FAIXA DE OPÇÕES INATIVAR -->
         <button id="btnInativar" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-times"></i> Inativar</button>
-        <!-- FAIXA DE OPÇÕES EXCLUIR -->
-        <button id="btnExcluir" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-trash"></i> Excluir</button>
+        <!-- FAIXA DE OPÇÕES BLOQUEAR -->
+        <button id="btnExcluir" type="button" class="btn btn-primary btn-sm"><i class="icon fas fa-lock"></i> Bloquear</button>
     @endif
 
     <!-- FAIXA DE OPÇÕES VOLTAR -->

@@ -155,11 +155,11 @@ class ClienteController extends Controller
 
         if (in_array('cliente.destroy', $permissions, true)) {
             $disabled = '';
-            if ($statusCode === EmpresaStatusEnum::EXCLUIDO) {
+            if ($statusCode === EmpresaStatusEnum::EXCLUIDO || $statusCode === EmpresaStatusEnum::BLOQUEADO) {
                 $disabled = 'disabled';
             }
 
-            $buttons[] = '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+            $buttons[] = '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $cliente->cliente_id . '" title="Bloquear"><i class="fas fa-user-lock"></i></button>';
         }
 
         return implode('', $buttons);
@@ -1484,12 +1484,12 @@ class ClienteController extends Controller
 
             $cliente = $this->getClienteForUserOrFail((int) $id, 'delete');
             if ($cliente) {
-                $cliente->cliente_sts = EmpresaStatusEnum::EXCLUIDO;
+                $cliente->cliente_sts = EmpresaStatusEnum::BLOQUEADO;
                 $cliente->save();
 
                 return response(response()->json([
                     'title' => 'Sucesso',
-                    'text'  => 'Registro Excluído com sucesso!',
+                    'text'  => 'Registro bloqueado com sucesso!',
                     'type'  => 'success',
                 ])->getContent());
             }
@@ -2015,10 +2015,10 @@ class ClienteController extends Controller
 
                 if (in_array('cliente.destroy', $this->permissions)) {
                     $disabled = '';
-                    if ($row->status->cliente_sts == EmpresaStatusEnum::EXCLUIDO) {
+                    if ($row->status->cliente_sts == EmpresaStatusEnum::EXCLUIDO || $row->status->cliente_sts == EmpresaStatusEnum::BLOQUEADO) {
                         $disabled = 'disabled';
                     }
-                    $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $row->cliente_id . '" title="Excluir"><i class="far fa-trash-alt"></i></button>';
+                    $btn .= '<button href="#" class="btn btn-sm btn-primary mr-1" ' . $disabled . ' id="delete_grid_id" data-url="cliente" data-id="' . $row->cliente_id . '" title="Bloquear"><i class="fas fa-user-lock"></i></button>';
                 }
                 $btn .= '';
 

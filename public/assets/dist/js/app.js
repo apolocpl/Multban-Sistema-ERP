@@ -399,14 +399,24 @@ function notify(type, message) {
             }
         },
         swalDelete: function (id, urlDelete) {
+            var deleteTitle = "Excluir?";
+            var deleteText = "Deseja realmente excluir?";
+            var confirmText = "Sim, excluir!";
+
+            if (urlDelete === 'cliente') {
+                deleteTitle = 'Bloquear?';
+                deleteText = 'Deseja realmente bloquear o registro?';
+                confirmText = 'Sim, bloquear!';
+            }
+
             Swal.fire({
-                title: "Excluir?",
-                text: "Deseja realmente excluir?",
+                title: deleteTitle,
+                text: deleteText,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                confirmButtonText: "Sim, excluir!",
+                confirmButtonText: confirmText,
                 showLoaderOnConfirm: true,
                 preConfirm: function () {
                     return new Promise(function (resolve) {

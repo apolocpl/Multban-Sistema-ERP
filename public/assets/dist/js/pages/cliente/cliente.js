@@ -1246,14 +1246,87 @@ $(function () {
         }
     }
 
-    $('body').on('click', '#btnExcluir', function (e) {
-        e.preventDefault();
+    var pendingClienteAction = null;
+    var $clienteActionModal = $('#modalConfirmClienteAction');
+    var $clienteActionModalMessage = $('#clienteActionModalMessage');
+    var $clienteActionModalConfirm = $('#clienteActionModalConfirm');
+
+    function openClienteActionModal(actionConfig) {
+        if (!$clienteActionModal.length || !$clienteActionModalConfirm.length) {
+            executeClienteStatusChange(actionConfig);
+            return;
+        }
+
+        pendingClienteAction = actionConfig;
+
+        if ($clienteActionModalMessage.length) {
+            $clienteActionModalMessage.text(actionConfig.message || 'Deseja prosseguir com esta ação?');
+        }
+
+        var confirmLabel = actionConfig.confirmLabel || 'Confirmar';
+        $clienteActionModalConfirm.text(confirmLabel).prop('disabled', false);
+
+        $clienteActionModal.modal('show');
+    }
+
+    function executeClienteStatusChange(actionConfig) {
+        if ($clienteActionModal.length) {
+            $clienteActionModal.modal('hide');
+        }
+
         Pace.restart();
         Pace.track(function () {
-            $('#cliente_sts').val('EX');
+            $('#cliente_sts').val(actionConfig.nextStatus);
             $('#cliente_sts').trigger('change');
             $('#btnSalvar').trigger('click');
-            $("#btnExcluir").prop('disabled', true);
+        });
+    }
+
+    if ($clienteActionModal.length && $clienteActionModalConfirm.length) {
+        $clienteActionModalConfirm.on('click', function () {
+            if (!pendingClienteAction) {
+                $clienteActionModal.modal('hide');
+                return;
+            }
+
+            $clienteActionModalConfirm.prop('disabled', true);
+            executeClienteStatusChange(pendingClienteAction);
+        });
+
+        $clienteActionModal.on('hidden.bs.modal', function () {
+            pendingClienteAction = null;
+            $clienteActionModalConfirm.prop('disabled', false).text('Confirmar');
+        });
+    }
+
+    function updateClienteBlockButton(status) {
+        var $btn = $('#btnExcluir');
+        if (!$btn.length) {
+            return;
+        }
+
+        if (status === 'BL') {
+            $btn.html('<i class="icon fas fa-unlock"></i> Desbloquear');
+        } else {
+            $btn.html('<i class="icon fas fa-lock"></i> Bloquear');
+        }
+
+        $btn.prop('disabled', status === 'EX');
+    }
+
+    $('body').on('click', '#btnExcluir', function (e) {
+        e.preventDefault();
+
+        var currentStatus = $('#cliente_sts').val();
+        var nextStatus = currentStatus === 'BL' ? 'AT' : 'BL';
+        var isBlocking = nextStatus === 'BL';
+        var actionLabel = isBlocking ? 'bloquear' : 'desbloquear';
+
+        openClienteActionModal({
+            type: 'block',
+            nextStatus: nextStatus,
+            message: 'Deseja realmente ' + actionLabel + ' este cliente?',
+            confirmLabel: 'Sim, ' + actionLabel
         });
     });
 
@@ -1263,7 +1336,7 @@ $(function () {
             return;
         }
 
-        if (status === 'IN' || status === 'EX') {
+        if (status === 'IN' || status === 'EX' || status === 'BL') {
             $btn.html('<i class="fa fa-check"></i> Ativar');
         } else {
             $btn.html('<i class="fa fa-ban"></i> Inativar');
@@ -1272,34 +1345,40 @@ $(function () {
 
     function toggleClienteEditLock(status) {
         var isExcluded = status === 'EX';
+        var isBlocked = status === 'BL';
+        var shouldLockForm = isExcluded || isBlocked;
         var $form = $('#formPrincipal');
 
         if (!$form.length) {
             return;
         }
 
-        $form.find('input:not([type="hidden"])').prop('disabled', isExcluded);
-        $form.find('textarea').prop('disabled', isExcluded);
+        $form.find('input:not([type="hidden"])').prop('disabled', shouldLockForm);
+        $form.find('textarea').prop('disabled', shouldLockForm);
         $form.find('select').each(function () {
-            $(this).prop('disabled', isExcluded);
+            $(this).prop('disabled', shouldLockForm);
             if ($(this).hasClass('select2-hidden-accessible')) {
                 $(this).trigger('change.select2');
             }
         });
 
-        $('#btnSalvar, #btnInativar, #btnExcluir, #btnCriarCartao').prop('disabled', isExcluded);
-        $('#modalCriarCartao').find('input, select, textarea, button').prop('disabled', isExcluded);
+        $('#btnSalvar, #btnCriarCartao').prop('disabled', shouldLockForm);
+        $('#btnInativar').prop('disabled', isExcluded);
+        $('#btnExcluir').prop('disabled', isExcluded);
+        $('#modalCriarCartao').find('input, select, textarea, button').prop('disabled', shouldLockForm);
     }
 
     $(function () {
         var initialStatus = $('#cliente_sts').val();
         updateClienteStatusButton(initialStatus);
         toggleClienteEditLock(initialStatus);
+        updateClienteBlockButton(initialStatus);
 
         $('#cliente_sts').on('change', function () {
             var status = $(this).val();
             updateClienteStatusButton(status);
             toggleClienteEditLock(status);
+            updateClienteBlockButton(status);
         });
     });
 
@@ -1307,21 +1386,21 @@ $(function () {
         var currentStatus = $('#cliente_sts').val();
 
         e.preventDefault();
-        Pace.restart();
-        Pace.track(function () {
-            var nextStatus = currentStatus === 'AT' ? 'IN' : 'AT';
 
-            if (currentStatus === 'EX') {
-                nextStatus = 'AT';
-            }
+        var nextStatus = currentStatus === 'AT' ? 'IN' : 'AT';
 
-            $('#cliente_sts').val(nextStatus);
-            updateClienteStatusButton(nextStatus);
-            $("#btnExcluir").prop('disabled', false);
+        if (currentStatus === 'EX' || currentStatus === 'BL') {
+            nextStatus = 'AT';
+        }
 
-            $('#cliente_sts').trigger('change');
-            $('#btnSalvar').trigger('click');
+        var isInactivating = nextStatus === 'IN';
+        var actionLabel = isInactivating ? 'inativar' : 'ativar';
 
+        openClienteActionModal({
+            type: 'inactive',
+            nextStatus: nextStatus,
+            message: 'Deseja realmente ' + actionLabel + ' este cliente?',
+            confirmLabel: 'Sim, ' + actionLabel
         });
     });
 
