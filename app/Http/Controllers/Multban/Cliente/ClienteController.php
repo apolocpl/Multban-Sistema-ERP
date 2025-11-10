@@ -1249,6 +1249,11 @@ class ClienteController extends Controller
             $descricao = mb_strtoupper(rtrim($validated['card_desc']), 'UTF-8');
             $limite = formatarTextoParaDecimal($validated['card_limite']);
 
+            $saldoAtual = (float) ($card->card_saldo_vlr ?? 0);
+            $limiteAtual = (float) ($card->card_limite ?? 0);
+            $valorUtilizado = max($limiteAtual - $saldoAtual, 0);
+            $novoSaldo = max($limite - $valorUtilizado, 0);
+
             DB::connection('dbsysclient')
                 ->table('tbdm_clientes_card')
                 ->where('card_uuid', $cardUuid)
@@ -1256,6 +1261,7 @@ class ClienteController extends Controller
                 ->update([
                     'card_desc'    => $descricao,
                     'card_limite'  => $limite,
+                    'card_saldo_vlr' => $novoSaldo,
                     'modificador'  => Auth::user()->user_id,
                     'dthr_ch'      => Carbon::now(),
                 ]);
