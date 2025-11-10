@@ -37,6 +37,11 @@
             <input type="hidden" id="empresa_id" name="empresa_id" value="{{$empresa->emp_id}}" />
             <input type="hidden" id="is_edit" value="1" />
 
+            @php
+                $clienteHasId = ! empty($cliente->cliente_id);
+                $tabsLockedMessage = 'Disponível após salvar o cadastro do cliente.';
+            @endphp
+
             <div class="card card-primary card-outline card-outline-tabs">
                 <!-- MENU ABAS/TABS -->
                 <div class="card-header p-0 pt-1 border-bottom-0">
@@ -53,30 +58,33 @@
                                 role="tab" aria-controls="tabs-endereco" aria-selected="false">Endereço</a>
                         </li>
 
+                        {{-- Tabs de Compras, Score e Cartões temporariamente ocultas para este release --}}
+
                         <li class="nav-item">
-                            <a class="nav-link" id="tabs-compras-tab" data-toggle="pill" href="#tabs-compras" role="tab"
-                                aria-controls="tabs-compras" aria-selected="false">Compras Realizadas</a>
+                            @if ($clienteHasId)
+                                <a class="nav-link {{request()->has('pront') ? 'active' : ''}}" id="tabs-prontuario-tab"
+                                    data-toggle="pill" href="#tabs-prontuario" role="tab"
+                                    aria-controls="tabs-prontuario" aria-selected="false">Prontuário</a>
+                            @else
+                                <a class="nav-link disabled tab-locked" id="tabs-prontuario-tab"
+                                    href="javascript:void(0)" role="button" aria-controls="tabs-prontuario"
+                                    aria-selected="false" aria-disabled="true" tabindex="-1"
+                                    data-toggle="tooltip" data-placement="bottom"
+                                    title="{{ $tabsLockedMessage }}">Prontuário</a>
+                            @endif
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" id="tabs-score-tab" data-toggle="pill" href="#tabs-score" role="tab"
-                                aria-controls="tabs-score" aria-selected="false">SCORE</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" id="tabs-cartoes-tab" data-toggle="pill" href="#tabs-cartoes" role="tab"
-                                aria-controls="tabs-cartoes" aria-selected="false">Cartões</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{request()->has('pront') ? 'active' : ''}}" id="tabs-prontuario-tab"
-                                data-toggle="pill" href="#tabs-prontuario" role="tab" aria-controls="tabs-prontuario"
-                                aria-selected="false">Prontuário</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" id="tabs-atendimento-tab" data-toggle="pill" href="#tabs-atendimento"
-                                role="tab" aria-controls="tabs-atendimento" aria-selected="false">Atendimento</a>
+                            @if ($clienteHasId)
+                                <a class="nav-link" id="tabs-atendimento-tab" data-toggle="pill" href="#tabs-atendimento"
+                                    role="tab" aria-controls="tabs-atendimento" aria-selected="false">Atendimento</a>
+                            @else
+                                <a class="nav-link disabled tab-locked" id="tabs-atendimento-tab"
+                                    href="javascript:void(0)" role="button" aria-controls="tabs-atendimento"
+                                    aria-selected="false" aria-disabled="true" tabindex="-1"
+                                    data-toggle="tooltip" data-placement="bottom"
+                                    title="{{ $tabsLockedMessage }}">Atendimento</a>
+                            @endif
                         </li>
 
                     </ul>
@@ -486,7 +494,7 @@
                             </div>
                         </div>
 
-                        <!-- ABA COMPRAS REALIZADAS -->
+{{--                        <!-- ABA COMPRAS REALIZADAS -->
                         <div class="tab-pane fade" id="tabs-compras" role="tabpanel" aria-labelledby="tabs-compras-tab">
 
                             <div class="card card-primary">
@@ -757,8 +765,9 @@
                             </div>
 
                         </div>
+--}}
 
-                        <!-- ABA SCORE -->
+{{--                        <!-- ABA SCORE -->
                         <div class="tab-pane fade" id="tabs-score" role="tabpanel" aria-labelledby="tabs-score-tab">
                             <div class="card card-primary">
                                 <div class="card-body">
@@ -865,8 +874,9 @@
                                 </div>
                             </div>
                         </div>
+--}}
 
-                        <!-- ABA CARTÕES -->
+{{--                        <!-- ABA CARTÕES -->
                         <div class="tab-pane fade" id="tabs-cartoes" role="tabpanel" aria-labelledby="tabs-cartoes-tab">
                             <div class="card card-primary">
                                 <div class="card-body">
@@ -1001,6 +1011,7 @@
                                 </div>
                             </div>
                         </div>
+--}}
 
                         <!--ABA PROTUÁRIO-->
                         <div class="tab-pane fade {{request()->has('pront') ? 'active show' : ''}}" id="tabs-prontuario"
@@ -2151,6 +2162,19 @@
   })
 
     $(document).ready(function () {
+
+        const $lockedTabs = $('.tab-locked');
+        if ($lockedTabs.length && $.fn.tooltip) {
+            $lockedTabs.tooltip({
+                trigger: 'hover',
+                container: 'body'
+            });
+        }
+
+        $(document).on('click', '.tab-locked', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        });
 
         (function persistActiveClienteTab() {
             const clienteIdInput = document.getElementById('cliente_id');
