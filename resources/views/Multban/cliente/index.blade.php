@@ -113,61 +113,72 @@
         <!-- CORPO DO QUADRO DO GRID DE CLIENTES -->
         <div class="card-body">
 
-            <div class="table-responsive">
-                <table id="gridtemplate" class="table table-striped table-bordered nowrap">
-                    <thead>
-                        <tr>
-                            <th>Ações</th>
-                            <th>Código</th>
-                            <th>Nome</th>
-                            <th>CNPJ/CPF</th>
-                            <th>Cliente Tipo</th>
-                            <th>E-mail</th>
-                            <th>Telefone</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                </table>
+            @php
+                $clientesCollection = collect($clientesRecentes ?? []);
+            @endphp
+
+            @if ($clientesCollection->isEmpty())
+                <p class="text-center text-muted mb-3">Nenhum cliente encontrado.</p>
+            @endif
+
+            <div class="d-none d-lg-block">
+                <div class="table-responsive">
+                    <table id="gridtemplate" class="table table-striped table-bordered nowrap mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ações</th>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>CNPJ/CPF</th>
+                                <th>Cliente Tipo</th>
+                                <th>E-mail</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($clientesCollection as $clienteRow)
+                            <tr>
+                                <td>{!! $clienteRow['action'] !!}</td>
+                                <td>{{ $clienteRow['cliente_id'] }}</td>
+                                <td>{{ $clienteRow['cliente_nome'] }}</td>
+                                <td>{{ $clienteRow['cliente_doc'] }}</td>
+                                <td>{!! $clienteRow['cliente_tipo_badge'] !!}</td>
+                                <td>{{ $clienteRow['cliente_email'] }}</td>
+                                <td>{{ $clienteRow['cliente_cel'] }}</td>
+                                <td>{!! $clienteRow['cliente_status_badge'] !!}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            TROCAR O FILTRO EMPRESA PARA NOME MULTBAN, CAMPO EMP_NMULT DA TABELA TBDM_EMPRESA_GERAL</br>
-            </br>
-            OS FILTROS NOME MULTBAN E NOME DO CLIENTE TEM QUE SER NO MESMO ESQUEMA DAS TAGS, ONDE A TAG DIGITADA TB PODE
-            SER UMA OPÇÃO PARA FILTRAR
-            </br>
-            O FILTRO STATUS DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_TP</br>
-            </br>
-            O FILTRO TIPO DE CLIENTE DEVE TRAZER OS VALORES PARA OPÇÃO DE SELEÇÃO, DA TABELA TBDM_CLIENTE_STS</br>
-            </br>
-            AO CADASTRAR UM NOVO CLIENTE, O SISTEMA PRECISA GRAVAR OS DADOS NA TABELA TBDM_CLIENTES_EMP, ESTA TABELA
-            INDICA</br>
-            O RELACIONAMENTO ENTRE UM CLIENTE E UMA EMPRESA, ISSO É PARA QUE UMA EMPRESA SÓ POSSA ACESSAR OS CLIENTES
-            QUE ELA CADASTROU</br>
-            AO PESQUISAR UM CLIENTE, O SISTEMA DEVE FAZER OBRIGATORIAMENTE UM JOIN ENTRE AS TABELAS TBDM_CLIENTES_GERAL
-            E TBDM_CLIENTES_EMP,</br>
-            SE O CLIENTE NÃO ESTIVER RELACIONADO A EMPRESA DO USUÁRIO LOGADO, ELE NÃO PODE APARECER COMO UMA OPÇÃO DE
-            FILTRO</br>
-            </br>
-            AO CRIAR UM NOVO CARTÃO, O STATUS DEVE NASCER SEMPRE "EM ANÁLISE", AO CLICAR EM "SALVAR", O SISTEMA DEVE
-            ENVIAR UM EMAIL E UM WHATS</br>
-            PARA O NOVO CLIENTE, COM OS CONTRATOS DE PRESTAÇÃO DE SERVIÇO DA MULTBAN, ALGUNS DIZERES QUE JÁ ESTARÃO
-            CADASTRADOS NO "PADRÃO DE MENSAGENS"</br>
-            E UM BOTÃO PARA QUE ELE ACEITE OS TERMOS DO CONTRATO E VALIDE O CADASTRO do CARTÃO</br>
-            QUANDO O CLIENTE CLICAR NO BOTÃO, O SISTEMA DEVE ALTERAR O STATUS DO CADATRO PARA "AUTORIZADO"</br>
-            ASSIM QUE O CLIENTE AUTORIZAR O CADASTRO, ELE DEVE RECEBER UM OUTO EMAIL E UM OUTRO WHATS</br>
-            COM UM LINK PARA CADASTRO DA SENHA PESSOAL</br>
-            </br>
-            AO CRIAR UM NOVO CLIENTE, QUANDO O USUÁRIO DIGITAR O CPF, O SISTEMA DEVE VERIFICAR SE ESTE CPF JÁ EXISTE NA
-            BASE, SE JÁ EXISTIR</br>
-            CADASTRADO PARA UMA OUTRA EMPRESA, O SISTEMA DEVE APRESENTAR UMA MSG NA TELA INFORMANDO QUE O CLIENTE JÁ
-            POSSUÍ CADASTRO</br>
-            EM OUTRA EMPRESA E PERGUNTANDO SE DESEJA SOLICITAR ACESSO AOS DADOS DO CLIENTE, SE O USUÁRIO CLICAR EM SIM,
-            O SISTEMA</br>
-            DEVE ENVIAR UM EMAIL E UMA MSG NO WHATS DO CLIENTE PARA QUE ELE AUTORIZE O ACESSO, QUANDO O CLIENTE CLICAR
-            EM COMPARTILHAR</br>
-            O SISTEMA DEVE CADASTRAR UM NOVO REGISTRO NA TABELA TBDM_CLIENTES_EMP COM O CÓDIGO NA EMPRESA QUE SOLICITOU
-            ACESSO AO CADASTRO DELE
-
+            <div class="d-lg-none">
+                @foreach($clientesCollection as $clienteRow)
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="font-weight-bold">#{{ $clienteRow['cliente_id'] }}</span>
+                                <span>{!! $clienteRow['cliente_status_badge'] !!}</span>
+                            </div>
+                            <p class="mb-1 small text-muted">Nome</p>
+                            <p class="mb-2 font-weight-bold">{{ $clienteRow['cliente_nome'] }}</p>
+                            <p class="mb-1 small text-muted">Documento</p>
+                            <p class="mb-2">{{ $clienteRow['cliente_doc'] }}</p>
+                            <p class="mb-1 small text-muted">Tipo</p>
+                            <div class="mb-2">{!! $clienteRow['cliente_tipo_badge'] !!}</div>
+                            <p class="mb-1 small text-muted">E-mail</p>
+                            <p class="mb-2">{{ $clienteRow['cliente_email'] }}</p>
+                            <p class="mb-1 small text-muted">Telefone</p>
+                            <p class="mb-3">{{ $clienteRow['cliente_cel'] }}</p>
+                            <div class="d-flex flex-wrap">
+                                {!! $clienteRow['action'] !!}
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 

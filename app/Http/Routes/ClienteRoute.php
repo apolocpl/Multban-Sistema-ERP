@@ -26,12 +26,19 @@ class ClienteRoute
 
         // cartão
         Route::post('cliente/store-card', [ClienteController::class, 'storeCard']);
+        Route::post('cliente/{card_uuid}/reset-card-password', [ClienteController::class, 'resetCardPassword']);
         Route::get('cliente/create-card', [ClienteController::class, 'createCard']);
         Route::get('cliente/{emp_id}/edit-card', [ClienteController::class, 'editCard']);
+        Route::get('cliente/{card_uuid}/card-details', [ClienteController::class, 'showCardDetails']);
+        Route::patch('cliente/{card_uuid}/card-details', [ClienteController::class, 'updateCardDetails']);
+        Route::post('cliente/{card_uuid}/activate-card', [ClienteController::class, 'activateCard']);
+        Route::post('cliente/{card_uuid}/block-card', [ClienteController::class, 'blockCard']);
+        Route::post('cliente/{card_uuid}/delete-card', [ClienteController::class, 'deleteCard']);
         Route::patch('cliente/update-card', [ClienteController::class, 'updateCard']);
         Route::delete('cliente/{emp_id}/destroy-card', [ClienteController::class, 'destroyCard']);
 
         Route::post('cliente/get-obter-grid-pesquisa-card', [ClienteController::class, 'getObterGridPesquisaCard']);
+        Route::get('cliente/card-password-token', [ClienteController::class, 'createCardPasswordToken']);
 
         Route::post('cliente/store-prontuario', [ClienteController::class, 'storeProntuario']);
         Route::post('cliente/update-prontuario/{id}', [ClienteController::class, 'updateProntuario']);

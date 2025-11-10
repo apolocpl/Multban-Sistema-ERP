@@ -28,7 +28,7 @@ O Multban e uma plataforma ERP desenvolvida em Laravel voltada para a gestao int
 ## Como iniciar o projeto
 1. **Clonar o repositorio**
    ```bash
-   git clone <url-do-repo>
+   git clone git@github.com:DevMultMais/Multban-Sistema-ERP.git
    cd Multban-Sistema-ERP
    ```
 2. **Configurar variaveis de ambiente**
