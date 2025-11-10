@@ -20,6 +20,7 @@ class CreateTbdmClientesEmpTable extends Migration
             $table->uuid('cliente_uuid');
             $table->string('cliente_doc', 14);
             $table->string('cliente_pasprt', 15)->nullable();
+            $table->string('cliente_sts', 2)->default('NA');
             $table->string('cad_liberado', 1);
             //FIELDS
             $table->integer('criador');

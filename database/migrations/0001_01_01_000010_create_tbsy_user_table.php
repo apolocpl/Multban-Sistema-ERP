@@ -47,7 +47,7 @@ class CreateTbsyUserTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             // KEYS
-            $table->primary(['user_id', 'user_logon', 'user_sts', 'emp_id', 'user_cpf']);
+            $table->primary(['user_id']);
             // FOREIGN KEY
             // $table->foreign('emp_id')->references('emp_id')->on('db_sys_client.tbdm_empresa_geral');
         });

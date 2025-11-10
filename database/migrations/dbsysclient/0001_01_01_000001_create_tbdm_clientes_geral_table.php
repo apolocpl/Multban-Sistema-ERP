@@ -20,7 +20,6 @@ class CreateTbdmClientesGeralTable extends Migration
             $table->integer('cliente_tipo')->length(2);
             $table->string('cliente_doc', 14)->unique();
             $table->string('cliente_pasprt', 15)->nullable();
-            $table->string('cliente_sts', 2);
             //FIELDS
             $table->string('cliente_nome', 255);
             $table->string('cliente_rg', 12)->nullable();

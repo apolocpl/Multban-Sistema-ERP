@@ -57,15 +57,34 @@ class ClienteController extends Controller
     {
         $empresaId = $this->tenantManager->ensure();
 
-        $cliente = Cliente::where('cliente_id', $clienteId)
-            ->whereHas('empresa', function ($query) use ($empresaId) {
-                $query->where('tbdm_clientes_emp.emp_id', $empresaId);
+        $cliente = Cliente::query()
+            ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.cliente_sts')
+            ->join('tbdm_clientes_emp', function ($join) use ($empresaId) {
+                $join->on('tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
+                    ->where('tbdm_clientes_emp.emp_id', $empresaId);
             })
+            ->where('tbdm_clientes_geral.cliente_id', $clienteId)
             ->firstOrFail();
 
         $this->authorize($ability, $cliente);
 
         return $cliente;
+    }
+
+    /**
+     * Persist cliente status on the pivot table for the provided empresa.
+     */
+    private function updateClienteStatusForEmpresa(int $clienteId, int $empresaId, string $status): void
+    {
+        DB::connection('dbsysclient')
+            ->table('tbdm_clientes_emp')
+            ->where('cliente_id', $clienteId)
+            ->where('emp_id', $empresaId)
+            ->update([
+                'cliente_sts' => $status,
+                'modificador' => Auth::user()->user_id,
+                'dthr_ch'     => Carbon::now(),
+            ]);
     }
 
     /**
@@ -644,11 +663,14 @@ class ClienteController extends Controller
                 $nomeMultbanOptions[] = $empresa->emp_nmult;
             }
 
-            $recentes = Cliente::with(['status', 'tipo'])
-                ->whereHas('clienteEmp', function ($query) use ($empresaId) {
-                    $query->where('emp_id', $empresaId);
+            $recentes = Cliente::query()
+                ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.cliente_sts')
+                ->join('tbdm_clientes_emp', function ($join) use ($empresaId) {
+                    $join->on('tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
+                        ->where('tbdm_clientes_emp.emp_id', $empresaId);
                 })
-                ->orderByDesc('cliente_id')
+                ->with(['status', 'tipo'])
+                ->orderByDesc('tbdm_clientes_geral.cliente_id')
                 ->limit(10)
                 ->get();
 
@@ -786,6 +808,8 @@ class ClienteController extends Controller
                 ]), Response::HTTP_UNPROCESSABLE_ENTITY, ['Content-Type' => 'application/json']);
             }
 
+            $clienteStatus = ! $canChangeStatus ? 'NA' : $request->input('cliente_sts');
+
             $cliente->cliente_tipo = $request->input('cliente_tipo');
             $cliente->convenio_id = $request->convenio_id;
             $cliente->carteirinha = $request->carteirinha;
@@ -793,7 +817,6 @@ class ClienteController extends Controller
             $cliente->cliente_doc = removerCNPJ($request->input('cliente_doc'));
             $cliente->cliente_rg = removerCNPJ($request->input('cliente_rg'));
             $cliente->cliente_pasprt = $request->input('cliente_pasprt');
-            $cliente->cliente_sts = ! $canChangeStatus ? 'NA' : $request->input('cliente_sts'); /* Cliente nasce com o status "Em Análise" */
             $cliente->cliente_uuid = Str::uuid()->toString();
             $cliente->cliente_nome = mb_strtoupper(rtrim($request->input('cliente_nome')), 'UTF-8');
             $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->input('cliente_nm_alt')), 'UTF-8');
@@ -837,6 +860,7 @@ class ClienteController extends Controller
                 'cliente_uuid'   => $cliente->cliente_uuid,
                 'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                 'cliente_pasprt' => $cliente->cliente_pasprt,
+                'cliente_sts'    => $clienteStatus,
                 'cad_liberado'   => '',
                 'criador'        => Auth::user()->user_id,
                 'dthr_cr'        => Carbon::now(),
@@ -1369,6 +1393,7 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->tenantManager->ensure();
             $cliente = $this->getClienteForUserOrFail((int) $id, 'update');
             if ($cliente->cliente_sts === 'EX') {
                 return response()->json([
@@ -1408,9 +1433,7 @@ class ClienteController extends Controller
             $cliente->cliente_doc = $input['cliente_doc'];
             $cliente->cliente_rg = removerCNPJ($request->input('cliente_rg'));
             $cliente->cliente_pasprt = $request->input('cliente_pasprt');
-            if ($canChangeStatus) {
-                $cliente->cliente_sts = $request->input('cliente_sts');
-            }
+            $novoStatus = $canChangeStatus ? $request->input('cliente_sts') : ($cliente->cliente_sts ?? 'NA');
             $cliente->cliente_nome = mb_strtoupper(rtrim($request->input('cliente_nome')), 'UTF-8');
             $cliente->cliente_nm_alt = mb_strtoupper(rtrim($request->input('cliente_nm_alt')), 'UTF-8');
             $cliente->cliente_nm_card = $request->input('cliente_nm_card');
@@ -1468,6 +1491,10 @@ class ClienteController extends Controller
 
             $cliente->save();
 
+            if ($novoStatus) {
+                $this->updateClienteStatusForEmpresa($cliente->cliente_id, $empresaId, $novoStatus);
+            }
+
             return response(response()->json([
                 'message' => 'Cliente atualizado com sucesso.',
             ])->getContent());
@@ -1488,10 +1515,10 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->tenantManager->ensure();
             $cliente = $this->getClienteForUserOrFail((int) $id, 'delete');
             if ($cliente) {
-                $cliente->cliente_sts = EmpresaStatusEnum::BLOQUEADO;
-                $cliente->save();
+                $this->updateClienteStatusForEmpresa($cliente->cliente_id, $empresaId, EmpresaStatusEnum::BLOQUEADO);
 
                 return response(response()->json([
                     'title' => 'Sucesso',
@@ -1516,10 +1543,10 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->tenantManager->ensure();
             $cliente = $this->getClienteForUserOrFail((int) $id, 'updateStatus');
             if ($cliente) {
-                $cliente->cliente_sts = EmpresaStatusEnum::INATIVO;
-                $cliente->save();
+                $this->updateClienteStatusForEmpresa($cliente->cliente_id, $empresaId, EmpresaStatusEnum::INATIVO);
 
                 return response()->json([
                     'title' => 'Sucesso',
@@ -1546,11 +1573,11 @@ class ClienteController extends Controller
     {
         try {
 
+            $empresaId = $this->tenantManager->ensure();
             $cliente = $this->getClienteForUserOrFail((int) $id, 'updateStatus');
 
             if ($cliente) {
-                $cliente->cliente_sts = EmpresaStatusEnum::ATIVO;
-                $cliente->save();
+                $this->updateClienteStatusForEmpresa($cliente->cliente_id, $empresaId, EmpresaStatusEnum::ATIVO);
 
                 return response()->json([
                     'title' => 'Sucesso',
@@ -1587,9 +1614,11 @@ class ClienteController extends Controller
             ];
         }
 
-        $query = Cliente::whereHas('clienteEmp', function ($q) use ($emp_id) {
-            $q->where('emp_id', $emp_id);
-        });
+        $query = Cliente::query()
+            ->join('tbdm_clientes_emp', function ($join) use ($emp_id) {
+                $join->on('tbdm_clientes_emp.cliente_id', '=', 'tbdm_clientes_geral.cliente_id')
+                    ->where('tbdm_clientes_emp.emp_id', $emp_id);
+            });
 
         if (is_numeric($parametro)) {
             $query->where('cliente_doc', 'LIKE', '%' . $parametro . '%');
@@ -1597,9 +1626,14 @@ class ClienteController extends Controller
             $query->where('cliente_nome', 'LIKE', '%' . $parametro . '%');
         }
 
-        $clientes = $query->select(
-            DB::raw('cliente_id as id, cliente_id, cliente_doc, cliente_sts, cliente_dt_fech, UPPER(cliente_nome) as text')
-        )->get();
+        $clientes = $query->select([
+            DB::raw('tbdm_clientes_geral.cliente_id as id'),
+            'tbdm_clientes_geral.cliente_id',
+            'tbdm_clientes_geral.cliente_doc',
+            'tbdm_clientes_emp.cliente_sts',
+            'tbdm_clientes_geral.cliente_dt_fech',
+            DB::raw('UPPER(tbdm_clientes_geral.cliente_nome) as text'),
+        ])->get();
 
         foreach ($clientes as $cliente) {
             $cliente->cartoes = ClienteCard::where('cliente_id', $cliente->cliente_id)
@@ -1960,11 +1994,11 @@ class ClienteController extends Controller
 
         $clientesQuery = Cliente::query()
             ->join('tbdm_clientes_emp', 'tbdm_clientes_geral.cliente_id', '=', 'tbdm_clientes_emp.cliente_id')
-            ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.emp_id')
+            ->select('tbdm_clientes_geral.*', 'tbdm_clientes_emp.emp_id', 'tbdm_clientes_emp.cliente_sts')
             ->where('tbdm_clientes_emp.emp_id', $empresaId);
 
         if ($request->filled('cliente_sts')) {
-            $clientesQuery->where('tbdm_clientes_geral.cliente_sts', $request->input('cliente_sts'));
+            $clientesQuery->where('tbdm_clientes_emp.cliente_sts', $request->input('cliente_sts'));
         }
 
         if ($request->filled('cliente_tipo')) {

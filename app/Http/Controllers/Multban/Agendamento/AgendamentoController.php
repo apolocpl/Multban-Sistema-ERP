@@ -220,7 +220,6 @@ class AgendamentoController extends Controller
                 $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
                 $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
                 $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
-                $cliente->cliente_sts = 'NA'; /* Cliente nasce com o status "Em Análise" */
                 $cliente->cliente_uuid = Str::uuid()->toString();
                 $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
                 $cliente->cliente_email = $request->cliente_email;
@@ -240,6 +239,7 @@ class AgendamentoController extends Controller
                     'cliente_uuid'   => $cliente->cliente_uuid,
                     'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
+                    'cliente_sts'    => 'NA',
                     'cad_liberado'   => '',
                     'criador'        => Auth::user()->user_id,
                     'dthr_cr'        => Carbon::now(),
@@ -402,7 +402,6 @@ class AgendamentoController extends Controller
                 $cliente->cliente_dt_nasc = $request->cliente_dt_nasc ? Carbon::createFromFormat('d/m/Y', $request->cliente_dt_nasc)->format('Y-m-d') : null;
                 $cliente->cliente_doc = removerCNPJ($request->cliente_doc);
                 $cliente->cliente_rg = removerCNPJ($request->cliente_rg);
-                $cliente->cliente_sts = 'NA'; /* Cliente nasce com o status "Em Análise" */
                 $cliente->cliente_uuid = Str::uuid()->toString();
                 $cliente->cliente_nome = mb_strtoupper(rtrim($request->cliente_id), 'UTF-8');
                 $cliente->cliente_email = $request->cliente_email;
@@ -422,6 +421,7 @@ class AgendamentoController extends Controller
                     'cliente_uuid'   => $cliente->cliente_uuid,
                     'cliente_doc'    => removerCNPJ($cliente->cliente_doc),
                     'cliente_pasprt' => $cliente->cliente_pasprt,
+                    'cliente_sts'    => 'NA',
                     'cad_liberado'   => '',
                     'criador'        => Auth::user()->user_id,
                     'dthr_cr'        => Carbon::now(),

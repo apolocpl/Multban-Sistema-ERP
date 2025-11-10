@@ -7,6 +7,7 @@ use App\Models\Multban\Endereco\Cidade;
 use App\Models\Multban\Endereco\Estados;
 use App\Models\Multban\Endereco\Pais;
 use App\Models\Multban\Traits\DbSysClientTrait;
+use App\Support\Tenancy\TenantManager;
 use Illuminate\Database\Eloquent\Model;
 
 class Cliente extends Model
@@ -162,12 +163,30 @@ class Cliente extends Model
     // RELACIONAMENTO ENTRE AS TABELAS TBDM_CLIENTES_GERAL e TBDM_CLIENTES_EMP
     public function clienteEmp()
     {
-        return $this->hasOne(ClienteEmp::class, 'cliente_id', 'cliente_id');
+        return $this->hasMany(ClienteEmp::class, 'cliente_id', 'cliente_id');
     }
 
     // RELACIONAMENTO ENTRE AS TABELAS TBDM_CLIENTES_GERAL e TBDM_CLIENTES_CARD
     public function clienteCard()
     {
         return $this->hasMany(ClienteCard::class, 'cliente_id', 'cliente_id');
+    }
+
+    public function getClienteStsAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+
+        $tenantManager = app()->make(TenantManager::class);
+        $empresaId = $tenantManager->id();
+
+        if ($empresaId === null) {
+            return null;
+        }
+
+        return $this->clienteEmp()
+            ->where('emp_id', $empresaId)
+            ->value('cliente_sts');
     }
 }
